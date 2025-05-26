@@ -1,0 +1,142 @@
+/***********************Search************************/
+.search-container {
+  display: flex;
+  max-width: 500px;
+  margin: 0 auto;
+  border-radius: 50px;
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.search-input {
+  flex: 1;
+  padding: 15px 20px;
+  border: none;
+  outline: none;
+  font-size: clamp(14px, 2vw, 16px);
+  background: #f8f8f8;
+  color: #333;
+  width: 100%;
+}
+
+.search-button {
+  width: 60px;
+  background: #777;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+}
+
+.search-icon {
+  width: 40px;
+  height: 40px;
+  fill: white;
+  color: white;
+}
+
+.search-input:focus {
+  background: #fff;
+}
+
+.search-button:hover {
+  background: #e4263c;
+}
+
+/*Courses Link*/
+.links-courses {
+  color: #001933;
+  text-decoration: none;
+}
+/*cards*/
+.card {
+  border-top: none;
+  border-bottom: none;
+  border-left: none;
+  border-radius: 0;
+}
+
+.card-body {
+  padding: 80px;
+}
+
+/********************Card Buttons**********************/
+.btn-79,
+.btn-79 *,
+.btn-79 :after,
+.btn-79 :before,
+.btn-79:after,
+.btn-79:before {
+  border: 0 solid;
+  box-sizing: border-box;
+}
+.btn-79 {
+  -webkit-tap-highlight-color: transparent;
+  appearance: button;
+  background-color: #000;
+  background-image: none;
+  cursor: pointer;
+  font-family: sans-serif;
+  font-size: 17px;
+  line-height: 1.5;
+  margin: 0;
+  mask-image: -webkit-radial-gradient(#000, #ff0303);
+  padding: 0;
+  mix-blend-mode: normal;
+  position: relative;
+  z-index: 1;
+}
+.btn-79:disabled {
+  cursor: default;
+}
+.btn-79:-moz-focusring {
+  outline: auto;
+}
+.btn-79 svg {
+  display: block;
+}
+.btn-79 [hidden] {
+  display: none;
+}
+.btn-79 {
+  --height: 80px;
+  background: none;
+  border-radius: 999px;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  height: var(--height);
+  mask-image: none;
+  padding: 0 1em;
+  position: relative;
+}
+.btn-79:before {
+  background: #e31515;
+  opacity: 0.4;
+  border-radius: 50px;
+  content: "";
+  height: calc(var(--height) / 1.7);
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: 0.2s;
+  width: calc(var(--height) / 1.7);
+}
+.btn-79:hover:before {
+  left: 0;
+  width: 100%;
+  background-color: #e4263c;
+  opacity: 0.8;
+}
+.btn-79 span {
+  mix-blend-mode: normal;
+  color: #000;
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 1;
+}
