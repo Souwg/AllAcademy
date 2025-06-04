@@ -5,7 +5,7 @@ import image from "../../img/Logo.png";
 
 export const Navbar = () => {
   return (
-    <nav className="navbar navbar-expand-lg bg-body-tertiary mt-2 mx-0">
+    <nav className="navbar navbar-expand-lg bg-body-tertiary mt-2 mx-0 mb-4">
       <div className="container">
         <div className="d-flex flex-wrap align-items-center justify-content-between w-100">
           {/* Logo y botón toggler */}
@@ -20,7 +20,7 @@ export const Navbar = () => {
                     height: "4rem",
                     maxHeight: "60px",
                     width: "auto",
-                    transition: "all 0.3s ease", // Para animación suave al cambiar tamaño
+                    transition: "all 0.3s ease",
                   }}
                 />
               </Link>
@@ -38,10 +38,10 @@ export const Navbar = () => {
             </button>
           </div>
 
-          {/* Menú de navegación */}
-          <div className="col-12 col-lg-4 order-lg-2">
+          {/* Menú de navegación - Modificado */}
+          <div className="col-12 col-lg-auto order-lg-2 mx-lg-auto">
             <div className="collapse navbar-collapse" id="navbarNavDropdown">
-              <ul className="navbar-nav">
+              <ul className="navbar-nav pt-4" style={{ gap: "2rem" }}>
                 <li className="nav-item">
                   <Link
                     to="/"
@@ -49,7 +49,7 @@ export const Navbar = () => {
                     style={{
                       color: "#001933",
                       fontWeight: "600",
-                      fontSize: "17px",
+                      fontSize: "18px",
                     }}
                     aria-current="page"
                   >
@@ -58,15 +58,15 @@ export const Navbar = () => {
                 </li>
                 <li className="nav-item">
                   <Link
-                    to="/"
+                    to="/allCourses"
                     className="nav-link links"
                     style={{
                       color: "#001933",
                       fontWeight: "600",
-                      fontSize: "17px",
+                      fontSize: "18px",
                     }}
                   >
-                    Features
+                    Courses
                   </Link>
                 </li>
                 <li className="nav-item">
@@ -76,7 +76,7 @@ export const Navbar = () => {
                     style={{
                       color: "#001933",
                       fontWeight: "600",
-                      fontSize: "17px",
+                      fontSize: "18px",
                     }}
                   >
                     Pricing
@@ -89,7 +89,7 @@ export const Navbar = () => {
                     style={{
                       color: "#001933",
                       fontWeight: "600",
-                      fontSize: "17px",
+                      fontSize: "18px",
                     }}
                     role="button"
                     data-bs-toggle="dropdown"
@@ -120,7 +120,7 @@ export const Navbar = () => {
           </div>
 
           {/* Botones */}
-          <div className="col-12 col-lg-auto order-lg-3 mt-3 mt-lg-0">
+          <div className="col-12 col-lg-auto order-lg-3 mt-3 mt-lg-0 pt-3">
             <div className="d-grid gap-2 d-md-flex justify-content-md-end">
               <button
                 className="btn me-md-2"
@@ -129,7 +129,7 @@ export const Navbar = () => {
                   backgroundColor: "#E4263C",
                   color: "#fff",
                   fontWeight: "600",
-                  fontSize: "17px",
+                  fontSize: "18px",
                   whiteSpace: "nowrap",
                 }}
                 type="button"
@@ -144,7 +144,7 @@ export const Navbar = () => {
                   borderWidth: "3px",
                   color: "#001933",
                   fontWeight: "600",
-                  fontSize: "17px",
+                  fontSize: "18px",
                   whiteSpace: "nowrap",
                 }}
                 type="button"

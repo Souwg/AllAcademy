@@ -11,7 +11,8 @@
 /*title Popular courses*/
 .popular-courses-header {
   text-align: start;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
+  margin-top: 8rem;
 }
 
 .title-with-line {
@@ -46,5 +47,5 @@
   /* Opcional: Personalizar el subrayado */
   text-decoration-thickness: 3px; /* Grosor del subrayado */
   text-underline-offset: 3px; /* Espacio entre texto y subrayado */
-  color: #e4263c;
+  color: #2d3078;
 }

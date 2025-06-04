@@ -25,6 +25,16 @@ export const Footer = () => {
                 className="img-fluid"
                 style={{ height: "3.5rem", marginTop: "1rem" }}
               />
+              <p
+                className="text-light mt-4 mb-0 me-lg-4 pe-lg-4 text-center text-md-start"
+                style={{
+                  fontSize: "clamp(14px, 1.8vw, 16px)",
+                  lineHeight: "1.5",
+                }}
+              >
+                We're always in search for talented and motivated people. Don't
+                be shy introduce yourself!
+              </p>
             </div>
 
             {/**********Courses**********/}
@@ -73,7 +83,7 @@ export const Footer = () => {
                   {/* Añadí me-3 para margen derecho */}
                   <i
                     className="fa-solid fa-mobile-screen"
-                    style={{ fontSize: "35px", color: "#fff" }}
+                    style={{ fontSize: "25px", color: "#fff" }}
                   ></i>
                 </div>
                 <div className="col ps-0 text-light">
@@ -87,7 +97,7 @@ export const Footer = () => {
                   {/* Añadí me-3 para margen derecho */}
                   <i
                     className="fa-solid fa-envelope"
-                    style={{ fontSize: "35px", color: "#fff" }}
+                    style={{ fontSize: "25px", color: "#fff" }}
                   ></i>
                 </div>
                 <div className="col ps-0 text-light">
