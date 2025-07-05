@@ -54,37 +54,39 @@ export const AllCourses = () => (
   <div
     className="container-fluid"
     style={{
-      background: "#f8f9fa",
+      background: "#f7f7f7",
       padding: "2rem 0",
       borderTopLeftRadius: "4rem",
       borderTopRightRadius: "4rem",
     }}
   >
-    <h2
-      className="text-center"
-      style={{
-        marginTop: "10rem",
-        fontSize: "3rem",
-        fontWeight: "700",
-        marginBottom: "1.5rem",
-        color: "#001933",
-      }}
-    >
-      All Courses
-    </h2>
-    <span
-      className="d-flex justify-content-center align-items-center"
-      style={{ color: "#001933" }}
-    >
-      <Link
-        className="text-decoration-none mb-3 me-2"
-        to="/"
+    <div className="row">
+      <h2
+        className="text-center"
+        style={{
+          marginTop: "10rem",
+          fontSize: "3rem",
+          fontWeight: "700",
+          marginBottom: "1.5rem",
+          color: "#001933",
+        }}
+      >
+        All Courses
+      </h2>
+      <span
+        className="d-flex justify-content-center align-items-center"
         style={{ color: "#001933" }}
       >
-        Home
-      </Link>
-      <p style={{ color: "#001933" }}>/ All Courses</p>
-    </span>
+        <Link
+          className="text-decoration-none mb-3 me-2"
+          to="/"
+          style={{ color: "#001933" }}
+        >
+          Home
+        </Link>
+        <p style={{ color: "#001933" }}>/ All Courses</p>
+      </span>
+    </div>
 
     <div className="container text-center">
       <div className="row">

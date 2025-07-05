@@ -3,12 +3,13 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import ScrollToTop from "./component/scrollToTop";
 import { BackendURL } from "./component/backendURL";
 
-import { Home } from "./pages/home";
-import { AboutSearch } from "./pages/aboutSearchHome";
-import { ChooseCourses } from "./pages/chooseCoursesHome";
+import { Home } from "./pages/home/home";
+import { AboutSearch } from "./pages/home/aboutSearchHome";
+import { ChooseCourses } from "./pages/home/chooseCoursesHome";
 import { AllCourses } from "./pages/allCourses";
-import { SkillsHome } from "./pages/skillsHome";
-import { Single } from "./pages/single";
+import { SkillsHome } from "./pages/home/skillsHome";
+import { Signup } from "./pages/signup";
+import { Login } from "./pages/login";
 import injectContext from "./store/appContext";
 
 import { ContactMeNavbar } from "./component/contactMeNavbar";
@@ -36,7 +37,8 @@ const Layout = () => {
             <Route element={<ChooseCourses />} path="/chooseCourses" />
             <Route element={<AllCourses />} path="/allCourses" />
             <Route element={<SkillsHome />} path="/skills" />
-            <Route element={<Single />} path="/single/:theid" />
+            <Route element={<Signup />} path="/signup" />
+            <Route element={<Login />} path="/login" />
             <Route element={<h1>Not found!</h1>} />
           </Routes>
           <Footer />

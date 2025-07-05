@@ -1,9 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import "../../styles/skillsHome.css";
-import student2 from "../../img/student2.png";
-import student1 from "../../img/student1.jpg";
-import student3 from "../../img/student3.jpg";
+import "../../../styles/skillsHome.css";
+import student2 from "../../../img/student2.png";
+import student1 from "../../../img/student1.jpg";
+import student3 from "../../../img/student3.jpg";
 
 export const SkillsHome = () => {
   return (

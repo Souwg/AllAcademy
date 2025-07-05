@@ -1,7 +1,10 @@
 /* Estilos generales del contenedor */
 .skills-home-container {
-  background-color: #f8f8f8;
+  background-color: #f7f7f7;
   text-align: center;
+  margin-bottom: 2rem;
+  border-end-end-radius: 4rem;
+  border-end-start-radius: 4rem;
 }
 
 /* Estilos de la fila principal */

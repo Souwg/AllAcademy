@@ -1,0 +1,102 @@
+/*social media icon contactMeNavbar*/
+.socialMediaIcon {
+  width: 35px;
+  height: 35px;
+  font-size: 20px;
+  color: #fff;
+}
+
+.icon {
+  font-size: 25px;
+  color: #fff;
+}
+
+.contactNavbar {
+  font-size: 16px;
+  font-family: unset;
+  font-weight: 400;
+  color: #fff;
+}
+
+/* Efecto base para todos los iconos */
+.hover-effect {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+/* WhatsApp - Verde */
+.whatsapp-hover:hover {
+  background-color: #25d366;
+  border-color: #25d366 !important;
+}
+
+/* Instagram - Degradado rojo/morado */
+
+.instagram-hover:hover {
+  background: radial-gradient(
+    circle at center,
+    #f09433 0%,
+    #e6683c 30%,
+    #dc2743 60%,
+    #cc2366 90%,
+    #bc1888 100%
+  );
+  border-color: transparent !important;
+}
+
+/* Facebook - Azul */
+.facebook-hover:hover {
+  background-color: #1877f2;
+  border-color: #1877f2 !important;
+}
+
+/* Twitter - Azul claro */
+.twitter-hover:hover {
+  background-color: #1da1f2;
+  border-color: #1da1f2 !important;
+}
+
+/*navbar menu*/
+
+.navbar-nav .nav-link.links:hover {
+  opacity: 0.8;
+}
+
+.ticker-container {
+  overflow: hidden;
+  white-space: nowrap;
+  width: 100%;
+  background: linear-gradient(90deg, #d85353, #c23b3b);
+  color: white;
+  padding: 10px 0;
+  font-weight: bold;
+  position: relative;
+}
+
+.ticker-wrapper {
+  display: flex;
+  width: max-content;
+  animation: ticker 70s linear infinite;
+}
+
+.ticker-content {
+  display: inline-block;
+  white-space: nowrap;
+  padding: 0;
+  margin: 0;
+}
+
+/* Animación continua sin saltos */
+@keyframes ticker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* No pausa al hover */
+.ticker-container:hover .ticker-wrapper {
+  animation-play-state: running; /* Asegura que no se pause */
+}

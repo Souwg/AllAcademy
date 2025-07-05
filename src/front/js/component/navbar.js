@@ -1,9 +1,14 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import "../../styles/navbar.css";
 import image from "../../img/Logo.png";
 
 export const Navbar = () => {
+  const navigate = useNavigate();
+  const handleLogin = () => {
+    navigate("/login");
+  };
   return (
     <nav className="navbar navbar-expand-lg bg-body-tertiary mt-2 mx-0 mb-4">
       <div className="container">
@@ -147,6 +152,7 @@ export const Navbar = () => {
                   fontSize: "18px",
                   whiteSpace: "nowrap",
                 }}
+                onClick={handleLogin}
                 type="button"
               >
                 My Account

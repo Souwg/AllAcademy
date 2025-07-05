@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import "../../styles/navbar.css";
+import "../../styles/contactMeNavbar.css";
 
 export const ContactMeNavbar = () => {
   return (
@@ -19,7 +19,7 @@ export const ContactMeNavbar = () => {
             </div>
             <div className="col d-flex mt-3">
               <div className="icon me-1">
-                <i class="fa-solid fa-envelope"></i>
+                <i className="fa-solid fa-envelope"></i>
               </div>
               <p className="contactNavbar ms-2 mt-1">info@allacademy.com</p>
             </div>
@@ -60,6 +60,24 @@ export const ContactMeNavbar = () => {
                 </div>
               </Link>
             </div>
+          </div>
+        </div>
+      </div>
+      <div
+        className="ticker-container"
+        onClick={() => (window.location.href = "/ofertas")}
+        style={{ cursor: "pointer" }}
+      >
+        <div className="ticker-wrapper">
+          <div className="ticker-content">
+            {"LIMITED-TIME OFFER! 20% OFF ALL COURSES • USE CODE: LEARN20 • ENROLL NOW\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0".repeat(
+              5
+            )}
+          </div>
+          <div className="ticker-content">
+            {"LIMITED-TIME OFFER! 20% OFF ALL COURSES • USE CODE: LEARN20 • ENROLL NOW\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0".repeat(
+              5
+            )}
           </div>
         </div>
       </div>

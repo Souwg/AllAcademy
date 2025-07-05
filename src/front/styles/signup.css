@@ -1,0 +1,136 @@
+body {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.signup-card {
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  max-width: 500px;
+}
+
+.signup-card h2 {
+  color: #3f3d56;
+  font-size: 2rem;
+}
+
+.signup-card a {
+  color: #6c63ff;
+}
+
+.signup-card .form-control {
+  min-height: 50px;
+}
+
+.signup-card .form-control:focus {
+  border-color: #6c63ff;
+  box-shadow: 0 0 0 0.25rem rgba(108, 99, 255, 0.25);
+}
+
+.signup-card .btn-primary {
+  background-color: #6c63ff;
+  border: none;
+}
+
+.btn-social {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.btn-social i {
+  font-size: 0.9rem;
+}
+
+.btn-google {
+  color: #db4437;
+}
+.btn-facebook {
+  color: #1877f2;
+}
+.btn-apple {
+  color: #000000;
+}
+
+.btn-google:hover {
+  background-color: #db4437;
+  color: white;
+  transform: translateY(-2px);
+}
+.btn-facebook:hover {
+  background-color: #1877f2;
+  color: white;
+  transform: translateY(-2px);
+}
+.btn-apple:hover {
+  background-color: #000000;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.btn-social:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.divider:after,
+.divider:before {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #eee;
+}
+
+.signup-card .form-check-input:checked {
+  background-color: #6c63ff;
+  border-color: #6c63ff;
+}
+
+@media (max-width: 767.98px) {
+  .signup-card {
+    margin: 1rem;
+    border-radius: 15px;
+  }
+  .signup-card .card-body {
+    padding: 1.5rem;
+  }
+  .signup-card h2 {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .signup-card {
+    margin: 0.5rem;
+    border-radius: 12px;
+  }
+  .signup-card .card-body {
+    padding: 1.25rem;
+  }
+  .signup-card h2 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 1400px) {
+  .col-xxl-2 {
+    display: flex !important;
+  }
+  .col-xxl-8 {
+    max-width: 66.666667%;
+    flex: 0 0 66.666667%;
+  }
+}
+
+@media (max-width: 1399.98px) {
+  .col-xxl-2 {
+    display: none !important;
+  }
+}

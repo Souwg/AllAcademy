@@ -1,18 +1,20 @@
 import React from "react";
-import "../../styles/chooseCourses.css";
+import "../../../styles/chooseCourses.css";
 import { Link } from "react-router-dom";
-import image from "../../img/noImage.jpg";
+import image from "../../../img/noImage.jpg";
 
 export const ChooseCourses = () => {
   return (
     <div
       className="container-fluid"
       style={{
-        background: "#F8F8F8",
+        background: "#F7F7F7",
         maxWidth: "100vw",
         height: "auto",
         overflowX: "hidden",
         padding: "0 1rem 6rem 1rem",
+        borderTopLeftRadius: "4rem",
+        borderTopRightRadius: "4rem",
       }}
     >
       {/* Encabezado */}

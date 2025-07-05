@@ -1,5 +1,5 @@
 import React from "react";
-import "../../styles/aboutSearch.css";
+import "../../../styles/aboutSearch.css";
 import { Link } from "react-router-dom";
 
 export const AboutSearch = () => {
@@ -16,7 +16,7 @@ export const AboutSearch = () => {
         <div
           className="container-fluid"
           style={{
-            background: "#f4f4f4",
+            background: "#f7f7f7",
             paddingTop: "12rem",
             paddingBottom: "6rem",
             borderRadius: "4rem",
@@ -160,7 +160,7 @@ export const AboutSearch = () => {
       <div
         className="container-fluid"
         style={{
-          background: "#f9f9f9",
+          background: "#f7f7f7",
           maxWidth: "100vw",
           height: "auto",
 
@@ -171,7 +171,7 @@ export const AboutSearch = () => {
         <div
           className="container"
           style={{
-            background: "#F8F8F8",
+            background: "#F7F7F7",
             width: "auto",
             height: "auto",
             padding: "0 1rem 6rem 1rem",
