@@ -1,7 +1,6 @@
 body {
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: 100vh;
-  overflow-x: hidden;
 }
 
 .login-card {
@@ -92,7 +91,6 @@ body {
   .login-card {
     margin: 1rem;
     border-radius: 15px;
-    width: calc(100% - 2rem); /* Añade esta línea */
   }
   .login-card .card-body {
     padding: 1.5rem;
@@ -103,24 +101,10 @@ body {
 }
 
 @media (max-width: 575.98px) {
-  .login-card {
-    margin: 0.5rem;
-    border-radius: 12px;
-  }
   .login-card .card-body {
     padding: 1.25rem;
   }
   .login-card h2 {
     font-size: 1.5rem;
-  }
-}
-
-@media (min-width: 1400px) {
-  .col-xxl-2 {
-    display: flex !important;
-  }
-  .col-xxl-8 {
-    max-width: 66.666667%;
-    flex: 0 0 66.666667%;
   }
 }

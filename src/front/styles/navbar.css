@@ -1,0 +1,50 @@
+/* Efectos hover y animaciones */
+.nav-link.dropdown-toggle:hover {
+  background: rgba(0, 25, 51, 0.05);
+}
+
+.dropdown-menu {
+  opacity: 0;
+  transform: scale(0.95);
+  display: block;
+  pointer-events: none;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 25, 51, 0.15);
+  padding: 8px 0;
+  margin-top: 8px;
+  min-width: 220px;
+}
+
+.show.dropdown-menu {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.dropdown-item {
+  border-radius: 6px;
+  margin: 0 8px;
+  width: calc(100% - 16px);
+  transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background: #f8f9fa;
+  color: #0066ff !important;
+  transform: translateX(5px);
+}
+
+.dropdown-toggle::after {
+  display: none;
+}
+
+.dropdown-arrow {
+  transform: rotate(0deg);
+  font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+.show .dropdown-arrow {
+  transform: rotate(180deg);
+}

@@ -104,18 +104,8 @@ export const Login = () => {
               bottom: "0",
               objectFit: "contain",
               objectPosition: "right bottom",
-              maxHeight: "100vh",
             }}
           />
-          {/*<img
-            src={man}
-            alt="Man"
-            style={{
-              height: "clamp(1000px, 80vh, 800px)", // Mínimo 500px, ideal 80vh, máximo 800px
-              width: "auto",
-              objectFit: "contain",
-            }}
-          />*/}
         </div>
       </div>
     </div>

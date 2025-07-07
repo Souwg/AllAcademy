@@ -13,7 +13,6 @@ export const Navbar = () => {
     <nav className="navbar navbar-expand-lg bg-body-tertiary mt-2 mx-0 mb-4">
       <div className="container">
         <div className="d-flex flex-wrap align-items-center justify-content-between w-100">
-          {/* Logo y botón toggler */}
           <div className="d-flex align-items-center">
             <div className="col-auto">
               <Link to="/">
@@ -25,7 +24,6 @@ export const Navbar = () => {
                     height: "4rem",
                     maxHeight: "60px",
                     width: "auto",
-                    transition: "all 0.3s ease",
                   }}
                 />
               </Link>
@@ -43,7 +41,6 @@ export const Navbar = () => {
             </button>
           </div>
 
-          {/* Menú de navegación - Modificado */}
           <div className="col-12 col-lg-auto order-lg-2 mx-lg-auto">
             <div className="collapse navbar-collapse" id="navbarNavDropdown">
               <ul className="navbar-nav pt-4" style={{ gap: "2rem" }}>
@@ -90,32 +87,75 @@ export const Navbar = () => {
                 <li className="nav-item dropdown">
                   <Link
                     to="/"
-                    className="nav-link dropdown-toggle links"
+                    className="nav-link dropdown-toggle"
                     style={{
                       color: "#001933",
                       fontWeight: "600",
                       fontSize: "18px",
+                      padding: "8px 16px",
+                      borderRadius: "8px",
                     }}
                     role="button"
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
                   >
                     Dropdown link
+                    <span
+                      className="dropdown-arrow"
+                      style={{
+                        display: "inline-block",
+                        marginLeft: "8px",
+                      }}
+                    >
+                      ▼
+                    </span>
                   </Link>
                   <ul className="dropdown-menu">
                     <li>
-                      <a className="dropdown-item" href="#">
-                        Action
+                      <a
+                        className="dropdown-item"
+                        style={{
+                          padding: "10px 20px",
+                          color: "#001933",
+                          fontWeight: "500",
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                        href="#"
+                      >
+                        <span style={{ marginRight: "10px" }}>→</span> Action
                       </a>
                     </li>
                     <li>
-                      <a className="dropdown-item" href="#">
-                        Another action
+                      <a
+                        className="dropdown-item"
+                        style={{
+                          padding: "10px 20px",
+                          color: "#001933",
+                          fontWeight: "500",
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                        href="#"
+                      >
+                        <span style={{ marginRight: "10px" }}>→</span> Another
+                        action
                       </a>
                     </li>
                     <li>
-                      <a className="dropdown-item" href="#">
-                        Something else here
+                      <a
+                        className="dropdown-item"
+                        style={{
+                          padding: "10px 20px",
+                          color: "#001933",
+                          fontWeight: "500",
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                        href="#"
+                      >
+                        <span style={{ marginRight: "10px" }}>→</span> Something
+                        else here
                       </a>
                     </li>
                   </ul>
@@ -124,7 +164,6 @@ export const Navbar = () => {
             </div>
           </div>
 
-          {/* Botones */}
           <div className="col-12 col-lg-auto order-lg-3 mt-3 mt-lg-0 pt-3">
             <div className="d-grid gap-2 d-md-flex justify-content-md-end">
               <button

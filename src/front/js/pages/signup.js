@@ -132,28 +132,15 @@ export const Signup = () => {
           <img
             src={man}
             alt="Man"
-            className="position-absolute h-auto"
+            className="position-absolute h-100 w-auto"
             style={{
               right: "0",
               bottom: "0",
-              maxHeight: "100vh",
-              maxWidth: "100%",
               objectFit: "contain",
               objectPosition: "right bottom",
-              transform: "scale(calc(1 / var(--zoom-factor, 1)))", // Esto compensaría el zoom
-              transformOrigin: "right bottom",
             }}
           />
         </div>
-        {/*<img
-            src={man}
-            alt="Man"
-            style={{
-              height: "clamp(1000px, 80vh, 800px)", // Mínimo 500px, ideal 80vh, máximo 800px
-              width: "auto",
-              objectFit: "contain",
-            }}
-          />*/}
       </div>
     </div>
   );
