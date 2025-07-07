@@ -1,9 +1,75 @@
-import React from "react";
+import React, { useState } from "react";
 import man from "../../img/man.png";
 import "../../styles/signup.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export const Signup = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    acceptTerms: false,
+  });
+  const [error, setError] = useState("");
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    // Validaciones básicas
+    if (formData.password !== formData.confirmPassword) {
+      setError("Las contraseñas no coinciden");
+      return;
+    }
+
+    if (!formData.acceptTerms) {
+      setError("Debes aceptar los términos y condiciones");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:3001/api/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          confirm_password: formData.confirmPassword,
+          accept_terms: formData.acceptTerms,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.msg || "Error en el registro");
+        return;
+      }
+
+      // Registro exitoso
+      console.log("Usuario registrado:", data.user);
+      navigate("/login"); // Redirige al login después del registro
+    } catch (err) {
+      setError("Error de conexión con el servidor");
+      console.error("Error:", err);
+    }
+  };
+
   return (
     <div className="container-fluid min-vh-100 d-flex flex-column">
       <div className="row flex-grow-1">
@@ -17,25 +83,13 @@ export const Signup = () => {
                 <p className="text-muted">Start your learning journey today</p>
               </div>
 
-              <div className="d-flex justify-content-center gap-2 mb-4">
-                <button className="btn btn-social btn-google">
-                  <i className="fab fa-google"></i>
-                </button>
-                <button className="btn btn-social btn-facebook">
-                  <i className="fab fa-facebook-f"></i>
-                </button>
-                <button className="btn btn-social btn-apple">
-                  <i className="fab fa-apple"></i>
-                </button>
-              </div>
+              {error && (
+                <div className="alert alert-danger" role="alert">
+                  {error}
+                </div>
+              )}
 
-              <div className="divider d-flex align-items-center my-4">
-                <p className="text-center text-muted mx-3 mb-0">
-                  or sign up with email
-                </p>
-              </div>
-
-              <form>
+              <form onSubmit={handleSubmit}>
                 <div className="row">
                   <div className="col-md-6">
                     <div className="form-floating mb-3">
@@ -43,7 +97,11 @@ export const Signup = () => {
                         type="text"
                         className="form-control"
                         id="firstName"
+                        name="firstName"
                         placeholder="John"
+                        value={formData.firstName}
+                        onChange={handleChange}
+                        required
                       />
                       <label htmlFor="firstName">First Name</label>
                     </div>
@@ -54,7 +112,11 @@ export const Signup = () => {
                         type="text"
                         className="form-control"
                         id="lastName"
+                        name="lastName"
                         placeholder="Doe"
+                        value={formData.lastName}
+                        onChange={handleChange}
+                        required
                       />
                       <label htmlFor="lastName">Last Name</label>
                     </div>
@@ -66,7 +128,11 @@ export const Signup = () => {
                     type="email"
                     className="form-control"
                     id="email"
+                    name="email"
                     placeholder="name@example.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
                   />
                   <label htmlFor="email">Email address</label>
                 </div>
@@ -76,7 +142,12 @@ export const Signup = () => {
                     type="password"
                     className="form-control"
                     id="password"
+                    name="password"
                     placeholder="Password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    minLength="6"
                   />
                   <label htmlFor="password">Password</label>
                 </div>
@@ -86,7 +157,11 @@ export const Signup = () => {
                     type="password"
                     className="form-control"
                     id="confirmPassword"
+                    name="confirmPassword"
                     placeholder="Confirm Password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    required
                   />
                   <label htmlFor="confirmPassword">Confirm Password</label>
                 </div>
@@ -96,6 +171,9 @@ export const Signup = () => {
                     className="form-check-input"
                     type="checkbox"
                     id="terms"
+                    name="acceptTerms"
+                    checked={formData.acceptTerms}
+                    onChange={handleChange}
                     required
                   />
                   <label className="form-check-label small" htmlFor="terms">
