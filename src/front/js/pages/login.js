@@ -1,9 +1,32 @@
-import React from "react";
+import React, { useState } from "react";
 import man from "../../img/man.png";
 import "../../styles/Login.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export const Login = () => {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    rememberMe: false,
+  });
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Aquí iría la lógica de autenticación
+    console.log("Login data:", formData);
+    navigate("/dashboard"); // Ejemplo de redirección
+  };
+
   return (
     <div className="container-fluid min-vh-100 d-flex flex-column">
       <div className="row flex-grow-1">
@@ -18,6 +41,12 @@ export const Login = () => {
                   Sign in to your account to continue
                 </p>
               </div>
+
+              {error && (
+                <div className="alert alert-danger" role="alert">
+                  {error}
+                </div>
+              )}
 
               <div className="d-flex justify-content-center gap-2 mb-4">
                 <button className="btn btn-social btn-google">
@@ -37,13 +66,17 @@ export const Login = () => {
                 </p>
               </div>
 
-              <form>
+              <form onSubmit={handleSubmit}>
                 <div className="form-floating mb-3">
                   <input
                     type="email"
                     className="form-control"
                     id="email"
+                    name="email"
                     placeholder="name@example.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
                   />
                   <label htmlFor="email">Email address</label>
                 </div>
@@ -53,7 +86,11 @@ export const Login = () => {
                     type="password"
                     className="form-control"
                     id="password"
+                    name="password"
                     placeholder="Password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
                   />
                   <label htmlFor="password">Password</label>
                 </div>
@@ -64,6 +101,9 @@ export const Login = () => {
                       className="form-check-input"
                       type="checkbox"
                       id="rememberMe"
+                      name="rememberMe"
+                      checked={formData.rememberMe}
+                      onChange={handleChange}
                     />
                     <label
                       className="form-check-label small"
@@ -72,10 +112,14 @@ export const Login = () => {
                       Remember me
                     </label>
                   </div>
-                  <a href="#!" className="small text-nowrap">
+                  <Link
+                    to="/forgot-password"
+                    className="small text-nowrap text-decoration-none"
+                  >
                     Forgot password?
-                  </a>
+                  </Link>
                 </div>
+
                 <button
                   className="btn btn-primary w-100 py-2 mb-3 rounded-pill fw-bold"
                   type="submit"
@@ -100,7 +144,7 @@ export const Login = () => {
             alt="Man"
             className="position-absolute h-100 w-auto"
             style={{
-              right: "0",
+              right: "80px",
               bottom: "0",
               objectFit: "contain",
               objectPosition: "right bottom",

@@ -1,3 +1,4 @@
+/* Mantenemos los mismos estilos base que Signup.css */
 body {
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: 100vh;
@@ -33,60 +34,12 @@ body {
   border: none;
 }
 
-.btn-social {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #e0e0e0;
-  transition: all 0.3s ease;
-  padding: 0;
+.login-card .form-check-input:checked {
+  background-color: #6c63ff;
+  border-color: #6c63ff;
 }
 
-.btn-social i {
-  font-size: 0.9rem;
-}
-
-.btn-google {
-  color: #db4437;
-}
-.btn-facebook {
-  color: #1877f2;
-}
-.btn-apple {
-  color: #000000;
-}
-
-.btn-google:hover {
-  background-color: #db4437;
-  color: white;
-  transform: translateY(-2px);
-}
-.btn-facebook:hover {
-  background-color: #1877f2;
-  color: white;
-  transform: translateY(-2px);
-}
-.btn-apple:hover {
-  background-color: #000000;
-  color: white;
-  transform: translateY(-2px);
-}
-
-.btn-social:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.divider:after,
-.divider:before {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: #eee;
-}
-
+/* Media Queries consistentes con Signup */
 @media (max-width: 767.98px) {
   .login-card {
     margin: 1rem;
