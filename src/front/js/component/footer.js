@@ -134,7 +134,7 @@ export const Footer = () => {
                 className="text-light text-decoration-none text-center text-md-start mb-2 mb-md-0"
               >
                 <p style={{ fontSize: "16px", fontWeight: "600" }}>
-                  Terms of use
+                  Terms and Conditions
                 </p>
               </Link>
               <Link

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import man from "../../img/man.png";
 import "../../styles/signup.css";
+import Swal from "sweetalert2";
 import { Link, useNavigate } from "react-router-dom";
 
 export const Signup = () => {
@@ -29,12 +30,22 @@ export const Signup = () => {
 
     // Validaciones básicas
     if (formData.password !== formData.confirmPassword) {
-      setError("Las contraseñas no coinciden");
+      Swal.fire({
+        icon: "error",
+        title: "Password Mismatch",
+        text: "The passwords you entered do not match",
+        confirmButtonColor: "#3085d6",
+      });
       return;
     }
 
     if (!formData.acceptTerms) {
-      setError("Debes aceptar los términos y condiciones");
+      Swal.fire({
+        icon: "error",
+        title: "Terms Not Accepted",
+        text: "You must accept the terms and conditions to continue",
+        confirmButtonColor: "#3085d6",
+      });
       return;
     }
 
@@ -63,9 +74,22 @@ export const Signup = () => {
 
       // Registro exitoso
       console.log("Usuario registrado:", data.user);
+      Swal.fire({
+        position: "top-center",
+        icon: "success",
+        title: "Registration successful",
+        showConfirmButton: false,
+        timer: 1500,
+        backdrop: true,
+      });
       navigate("/login"); // Redirige al login después del registro
     } catch (err) {
-      setError("Error de conexión con el servidor");
+      Swal.fire({
+        icon: "error",
+        title: "Connection Error",
+        text: "There was a problem connecting to the server. Please try again later.",
+        confirmButtonColor: "#3085d6",
+      });
       console.error("Error:", err);
     }
   };
@@ -174,15 +198,46 @@ export const Signup = () => {
                     name="acceptTerms"
                     checked={formData.acceptTerms}
                     onChange={handleChange}
-                    required
                   />
                   <label className="form-check-label small" htmlFor="terms">
                     I agree to the{" "}
-                    <a href="#!" className="text-decoration-none">
-                      Terms of Service
+                    <a
+                      href="#!"
+                      className="text-decoration-none"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        Swal.fire({
+                          title: "Terms and Conditions",
+                          html: `<div style="text-align: left; max-height: 400px; overflow-y: auto;">
+        <p>...</p>
+        <!-- Más contenido -->
+      </div>`,
+                          showCloseButton: true,
+                          confirmButtonText: "I Understand",
+                          width: "800px",
+                        });
+                      }}
+                    >
+                      Terms and conditions
                     </a>{" "}
                     and{" "}
-                    <a href="#!" className="text-decoration-none">
+                    <a
+                      href="#!"
+                      className="text-decoration-none"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        Swal.fire({
+                          title: "Privacy Policy",
+                          html: `<div style="text-align: left; max-height: 400px; overflow-y: auto;">
+        <p>Here goes your privacy policy...</p>
+        <!-- Más contenido -->
+      </div>`,
+                          showCloseButton: true,
+                          confirmButtonText: "I Understand",
+                          width: "800px",
+                        });
+                      }}
+                    >
                       Privacy Policy
                     </a>
                   </label>
@@ -212,7 +267,7 @@ export const Signup = () => {
             alt="Man"
             className="position-absolute h-100 w-auto"
             style={{
-              right: "0",
+              right: "80px",
               bottom: "0",
               objectFit: "contain",
               objectPosition: "right bottom",
