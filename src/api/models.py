@@ -12,6 +12,8 @@ class User(db.Model):
     country = db.Column(db.String(2), nullable=False)
     id_number = db.Column(db.String(20), nullable=False)
     is_active = db.Column(db.Boolean(), default=True, nullable=False)
+    is_admin = db.Column(db.Boolean(), default=False)
+    role= db.Column(db.String(20), default='student', nullable=False) 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     def __repr__(self):
         return f'<User {self.email}>'
@@ -24,6 +26,8 @@ class User(db.Model):
             "last_name": self.last_name,
             "country": self.country,
             "id_number": self.id_number,
+            "is_admin": self.is_admin,
+            "role": self.role,
             "created_at": self.created_at.isoformat(),
         }
 

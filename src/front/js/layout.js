@@ -10,6 +10,7 @@ import { AllCourses } from "./pages/allCourses";
 import { SkillsHome } from "./pages/home/skillsHome";
 import { Signup } from "./pages/signup";
 import { Login } from "./pages/login";
+import { UserInfo } from "./pages/home/userinfo";
 import injectContext from "./store/appContext";
 
 import { ContactMeNavbar } from "./component/contactMeNavbar";
@@ -39,6 +40,7 @@ const Layout = () => {
             <Route element={<SkillsHome />} path="/skills" />
             <Route element={<Signup />} path="/signup" />
             <Route element={<Login />} path="/login" />
+            <Route element={<UserInfo />} path="/userinfo" />
             <Route element={<h1>Not found!</h1>} />
           </Routes>
           <Footer />

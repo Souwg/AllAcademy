@@ -181,7 +181,7 @@ export const Signup = () => {
       // Registro exitoso
       console.log("Usuario registrado:", data.user);
       Swal.fire({
-        position: "top-center",
+        position: "center",
         icon: "success",
         title: "Registration successful",
         showConfirmButton: false,

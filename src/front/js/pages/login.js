@@ -10,6 +10,7 @@ export const Login = () => {
     rememberMe: false,
   });
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -20,11 +21,54 @@ export const Login = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Aquí iría la lógica de autenticación
-    console.log("Login data:", formData);
-    navigate("/dashboard"); // Ejemplo de redirección
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("http://localhost:3001/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.msg || "Error al iniciar sesión");
+      }
+
+      // Guardar el token en localStorage
+      localStorage.setItem("token", data.token);
+
+      // Guardar datos del usuario si es necesario
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      // Guardar el rememberMe si está marcado
+      if (formData.rememberMe) {
+        localStorage.setItem("rememberMe", "true");
+      } else {
+        localStorage.removeItem("rememberMe");
+      }
+
+      // Redirigir según el rol del usuario
+      if (data.user.is_admin) {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/userinfo");
+      }
+    } catch (error) {
+      setError(error.message);
+      console.error("Login error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -123,8 +167,20 @@ export const Login = () => {
                 <button
                   className="btn btn-primary w-100 py-2 mb-3 rounded-pill fw-bold"
                   type="submit"
+                  disabled={isLoading}
                 >
-                  Sign In
+                  {isLoading ? (
+                    <>
+                      <span
+                        className="spinner-border spinner-border-sm me-2"
+                        role="status"
+                        aria-hidden="true"
+                      ></span>
+                      Signing in...
+                    </>
+                  ) : (
+                    "Sign In"
+                  )}
                 </button>
 
                 <p className="text-center text-muted mb-0">

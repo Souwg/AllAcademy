@@ -6,7 +6,7 @@ from api.models import db, User, BlockedTokenList
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import create_access_token, get_jwt_identity, get_jwt
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, get_jwt
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
@@ -65,6 +65,7 @@ def register_user():
         last_name=body['last_name'],
         country=body['country'],
         id_number=body['id_number'],
+        is_admin=False,
         is_active=True
     )
     
@@ -80,3 +81,30 @@ def register_user():
             "last_name": new_user.last_name
         }
     }), 201
+    
+@api.route('/login', methods=['POST'])
+def user_login():
+        body = request.get_json()
+        if body["email"] is None:
+            return jsonify({"msg":"Debe especificar un correo electrónico"}), 400
+        # Se busca el usuario en la base de datos y se verifica que exista
+        user = User.query.filter_by(email=body["email"]).first()
+        if user is None:
+            return jsonify({"msg":"Email not found"}), 401
+        # Se comparar la contraseña proporcionada por el usuario con un hash de contraseña almacenado previamente
+        valid_password = bcrypt.check_password_hash(user.password, body["password"])
+        if not valid_password:
+            return jsonify({"msg": "Incorrect password"}), 401
+        # Se crea y se retorna el token de la sesión
+        token = create_access_token(identity=str(user.id), additional_claims={"is_admin": user.is_admin})
+        return jsonify({"msg": "Login exitoso", "token": token, "Id": user.id, "user": user.serialize(), "is_admin": user.is_admin })
+
+
+@api.route('/logout', methods=["POST"])
+@jwt_required()
+def user_logout():
+    token_data = get_jwt()
+    token_blocked = BlockedTokenList(jti=token_data["jti"])
+    db.session.add(token_blocked)
+    db.session.commit()
+    return jsonify({"msg":"Sesión cerrada"}), 200
