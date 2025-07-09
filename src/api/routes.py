@@ -36,7 +36,7 @@ def register_user():
     body = request.get_json()
     
     # Validación de campos obligatorios
-    required_fields = ['email', 'password', 'confirm_password', 'first_name', 'last_name']
+    required_fields = ['email', 'password', 'confirm_password', 'first_name', 'last_name', 'country', 'id_number']
     for field in required_fields:
         if not body.get(field):
             return jsonify({'msg': f'El campo {field} es requerido'}), 400
@@ -52,6 +52,9 @@ def register_user():
     # Verificar si el usuario ya existe
     if User.query.filter_by(email=body['email']).first():
         return jsonify({"msg": "El email ya está registrado"}), 409
+    
+    if User.query.filter_by(country=body['country'], id_number=body['id_number']).first():
+        return jsonify({"msg": "Esta identificación ya está registrada para el país seleccionado"}), 409
 
     # Crear usuario
     hashed_password = bcrypt.generate_password_hash(body['password']).decode('utf-8')
@@ -60,6 +63,8 @@ def register_user():
         password=hashed_password,
         first_name=body['first_name'],
         last_name=body['last_name'],
+        country=body['country'],
+        id_number=body['id_number'],
         is_active=True
     )
     
