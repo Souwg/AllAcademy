@@ -84,20 +84,32 @@ def register_user():
     
 @api.route('/login', methods=['POST'])
 def user_login():
-        body = request.get_json()
-        if body["email"] is None:
-            return jsonify({"msg":"Debe especificar un correo electrónico"}), 400
-        # Se busca el usuario en la base de datos y se verifica que exista
-        user = User.query.filter_by(email=body["email"]).first()
-        if user is None:
-            return jsonify({"msg":"Email not found"}), 401
-        # Se comparar la contraseña proporcionada por el usuario con un hash de contraseña almacenado previamente
-        valid_password = bcrypt.check_password_hash(user.password, body["password"])
-        if not valid_password:
-            return jsonify({"msg": "Incorrect password"}), 401
-        # Se crea y se retorna el token de la sesión
-        token = create_access_token(identity=str(user.id), additional_claims={"is_admin": user.is_admin})
-        return jsonify({"msg": "Login exitoso", "token": token, "Id": user.id, "user": user.serialize(), "is_admin": user.is_admin })
+    body = request.get_json()
+    if body["email"] is None:
+        return jsonify({"msg":"Debe especificar un correo electrónico"}), 400
+    
+    user = User.query.filter_by(email=body["email"]).first()
+    if user is None:
+        return jsonify({"msg":"Email not found"}), 401
+    
+    valid_password = bcrypt.check_password_hash(user.password, body["password"])
+    if not valid_password:
+        return jsonify({"msg": "Incorrect password"}), 401
+    
+    token = create_access_token(
+        identity=str(user.id), 
+        additional_claims={
+            "is_admin": user.is_admin,
+            "role": user.role
+        }
+    )
+    
+    return jsonify({
+        "msg": "Login exitoso", 
+        "token": token, 
+        "user": user.serialize(),
+        "role": user.role
+    })
 
 
 @api.route('/logout', methods=["POST"])

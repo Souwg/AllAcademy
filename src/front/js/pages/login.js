@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import man from "../../img/man.png";
 import "../../styles/Login.css";
 import { Link, useNavigate } from "react-router-dom";
@@ -12,6 +12,20 @@ export const Login = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Cargar credenciales guardadas al montar el componente
+  useEffect(() => {
+    const savedCredentials = localStorage.getItem("rememberMeCredentials");
+    if (savedCredentials) {
+      const { email, password } = JSON.parse(savedCredentials);
+      setFormData((prev) => ({
+        ...prev,
+        email,
+        password,
+        rememberMe: true,
+      }));
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -44,24 +58,37 @@ export const Login = () => {
         throw new Error(data.msg || "Error al iniciar sesión");
       }
 
-      // Guardar el token en localStorage
+      // Guardar el token y datos del usuario
       localStorage.setItem("token", data.token);
-
-      // Guardar datos del usuario si es necesario
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      // Guardar el rememberMe si está marcado
+      // Guardar credenciales si Remember Me está activado
       if (formData.rememberMe) {
-        localStorage.setItem("rememberMe", "true");
+        localStorage.setItem(
+          "rememberMeCredentials",
+          JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          })
+        );
       } else {
-        localStorage.removeItem("rememberMe");
+        // Eliminar credenciales guardadas si Remember Me está desactivado
+        localStorage.removeItem("rememberMeCredentials");
       }
 
       // Redirigir según el rol del usuario
-      if (data.user.is_admin) {
-        navigate("/admin/dashboard");
-      } else {
-        navigate("/userinfo");
+      switch (data.user.role) {
+        case "admin":
+          navigate("/admin/dashboard");
+          break;
+        case "teacher":
+          navigate("/teacher/dashboard");
+          break;
+        case "student":
+          navigate("/student/dashboard");
+          break;
+        default:
+          navigate("/");
       }
     } catch (error) {
       setError(error.message);
@@ -71,6 +98,7 @@ export const Login = () => {
     }
   };
 
+  // El resto del componente permanece igual
   return (
     <div className="container-fluid min-vh-100 d-flex flex-column">
       <div className="row flex-grow-1">

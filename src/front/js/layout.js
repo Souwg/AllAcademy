@@ -10,6 +10,10 @@ import { AllCourses } from "./pages/allCourses";
 import { SkillsHome } from "./pages/home/skillsHome";
 import { Signup } from "./pages/signup";
 import { Login } from "./pages/login";
+import { DashboardAdmin } from "./pages/dashboardAdmin";
+import { DashboardTeacher } from "./pages/dashboardTeacher";
+import { DashboardStudent } from "./pages/dashboardStudent";
+import { NotFound } from "./pages/notFound";
 import { UserInfo } from "./pages/home/userinfo";
 import injectContext from "./store/appContext";
 
@@ -40,8 +44,11 @@ const Layout = () => {
             <Route element={<SkillsHome />} path="/skills" />
             <Route element={<Signup />} path="/signup" />
             <Route element={<Login />} path="/login" />
+            <Route element={<DashboardAdmin />} path="/admin/dashboard" />
+            <Route element={<DashboardTeacher />} path="/teacher/dashboard" />
+            <Route element={<DashboardStudent />} path="/student/dashboard" />
             <Route element={<UserInfo />} path="/userinfo" />
-            <Route element={<h1>Not found!</h1>} />
+            <Route element={<NotFound />} path="iji" />
           </Routes>
           <Footer />
         </ScrollToTop>
