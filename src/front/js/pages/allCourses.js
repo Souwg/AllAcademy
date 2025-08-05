@@ -9,16 +9,18 @@ import "../../styles/allCourses.css";
 export const AllCourses = () => {
   const featuredCourses = [...courses];
 
-  // En el componente, actualiza la configuración del Slider:
   const sliderSettings = {
     dots: true,
     infinite: true,
     speed: 500,
     slidesToShow: 4,
     slidesToScroll: 1,
+    autoplay: true, // Activar autoplay
+    autoplaySpeed: 3000, // Velocidad en milisegundos (3 segundos)
     cssEase: "ease-in-out",
     draggable: true,
     swipeToSlide: true,
+    arrows: false, // Ocultar flechas
     responsive: [
       {
         breakpoint: 1400,

@@ -1,6 +1,12 @@
 /* Estilos generales de la página */
 .courses-page {
   background-color: #f7f9fc;
+  overflow-x: hidden;
+}
+
+.container {
+  padding-right: 15px;
+  padding-left: 15px;
 }
 
 /* Hero Banner */
@@ -325,26 +331,191 @@
   margin: 0 -10px;
   padding: 20px 0;
 }
-/* Efecto hover */
-.slick-prev:hover:before,
-.slick-next:hover:before {
-  color: #e4263c;
-}
-/* Añade esto a tu archivo CSS */
-.slick-slide > div {
-  margin: 0 10px; /* Espacio horizontal entre tarjetas */
-}
-/* Añade esto al final de tu CSS existente */
-.courses-page {
-  overflow-x: hidden; /* Elimina el espacio fantasma del borde derecho */
+
+/* Media Queries para pantallas medianas (tablets) */
+@media (max-width: 992px) {
+  .hero-banner {
+    padding: 4rem 0 3rem;
+  }
+
+  .hero-banner h1 {
+    font-size: 2.5rem;
+  }
+
+  .hero-banner p {
+    font-size: 1.1rem;
+  }
+
+  .featured-courses-title {
+    font-size: 1.8rem;
+  }
+
+  .grid-course-title {
+    font-size: 1rem;
+    min-height: auto;
+  }
+
+  .grid-course-description {
+    font-size: 0.85rem;
+    min-height: 3.5rem;
+  }
+
+  .cta-container {
+    padding: 2rem;
+  }
+
+  .cta-title {
+    font-size: 1.8rem;
+  }
+
+  .cta-description {
+    font-size: 1rem;
+  }
+
+  .btn-cta-primary,
+  .btn-cta-outline {
+    min-width: 150px;
+    padding: 0.5rem 1rem;
+  }
 }
 
-.container {
-  padding-right: 15px; /* Asegura padding consistente */
-  padding-left: 15px;
+/* Media Queries para pantallas pequeñas (móviles grandes) */
+@media (max-width: 768px) {
+  .hero-banner {
+    padding: 3rem 0 2rem;
+    text-align: center;
+  }
+
+  .hero-banner h1 {
+    font-size: 2rem;
+  }
+
+  .hero-banner p {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-banner .d-flex.flex-wrap.gap-3 {
+    justify-content: center;
+  }
+
+  .hero-banner .d-flex.flex-wrap.gap-4 {
+    justify-content: center;
+  }
+
+  .featured-courses-title {
+    font-size: 1.6rem;
+    text-align: center;
+  }
+
+  .all-courses-title {
+    text-align: center;
+    width: 100%;
+  }
+
+  .d-flex.flex-column.flex-md-row.justify-content-between {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .d-flex.flex-wrap.gap-2 {
+    justify-content: center;
+  }
+
+  .grid-course-card {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .cta-container {
+    padding: 1.5rem;
+  }
+
+  .cta-title {
+    font-size: 1.6rem;
+  }
+
+  .d-flex.gap-3.justify-content-center {
+    flex-direction: column;
+    gap: 1rem !important;
+    align-items: center;
+  }
+
+  .btn-cta-primary,
+  .btn-cta-outline {
+    width: 100%;
+    max-width: 250px;
+  }
+
+  .slick-prev:before,
+  .slick-next:before {
+    font-size: 16px;
+  }
+
+  .slick-prev {
+    left: -15px;
+  }
+
+  .slick-next {
+    right: -5px;
+  }
 }
 
-/* Opcional: Si persiste el espacio en el carrusel */
-.slick-list {
-  margin-right: 0 !important; /* Anula cualquier margen derecho excesivo */
+/* Media Queries para móviles pequeños */
+@media (max-width: 576px) {
+  .hero-banner {
+    padding: 2.5rem 0 1.5rem;
+  }
+
+  .hero-banner h1 {
+    font-size: 1.8rem;
+  }
+
+  .hero-banner p {
+    font-size: 1rem;
+  }
+
+  .btn-outline-light.btn-lg {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+  }
+
+  .featured-courses-title {
+    font-size: 1.4rem;
+  }
+
+  .grid-course-content {
+    padding: 0.75rem;
+  }
+
+  .grid-course-title {
+    font-size: 0.95rem;
+  }
+
+  .grid-course-description {
+    font-size: 0.8rem;
+    min-height: 3rem;
+  }
+
+  .course-meta-info {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .cta-title {
+    font-size: 1.4rem;
+  }
+
+  .cta-description {
+    font-size: 0.9rem;
+  }
+
+  .row-cols-lg-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .col {
+    max-width: 100%;
+  }
 }
