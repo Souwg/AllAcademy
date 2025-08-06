@@ -8,13 +8,11 @@ export const ChooseCourses = () => {
     <div
       className="container-fluid"
       style={{
-        background: "#F7F7F7",
+        background: "linear-gradient(to right, #E7ECF5 0%, #C8D3E3 100%)",
         maxWidth: "100vw",
         height: "auto",
         overflowX: "hidden",
         padding: "0 1rem 6rem 1rem",
-        borderTopLeftRadius: "4rem",
-        borderTopRightRadius: "4rem",
       }}
     >
       {/* Encabezado */}
@@ -38,11 +36,6 @@ export const ChooseCourses = () => {
           {courses.slice(0, 6).map((course) => (
             <div key={course.id} className="col-12 col-md-6 col-lg-4">
               <div className="modern-course-card">
-                {/* Badge de categoría */}
-                <div className="course-category-badge">
-                  {course.category || "Design"}
-                </div>
-
                 {/* Imagen del curso */}
                 <div className="course-image-container">
                   <img

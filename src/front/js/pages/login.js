@@ -11,21 +11,44 @@ export const Login = () => {
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
-  // Cargar credenciales guardadas al montar el componente
+  // Verificar si hay una sesión activa al montar el componente
   useEffect(() => {
-    const savedCredentials = localStorage.getItem("rememberMeCredentials");
-    if (savedCredentials) {
-      const { email, password } = JSON.parse(savedCredentials);
-      setFormData((prev) => ({
-        ...prev,
-        email,
-        password,
-        rememberMe: true,
-      }));
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (token && user) {
+      setIsLoggedIn(true);
+      // Redirigir según el rol del usuario
+      switch (user.role) {
+        case "admin":
+          navigate("/admin/dashboard");
+          break;
+        case "teacher":
+          navigate("/teacher/dashboard");
+          break;
+        case "student":
+          navigate("/student/dashboard");
+          break;
+        default:
+          navigate("/");
+      }
+    } else {
+      // Cargar credenciales guardadas si no hay sesión activa
+      const savedCredentials = localStorage.getItem("rememberMeCredentials");
+      if (savedCredentials) {
+        const { email, password } = JSON.parse(savedCredentials);
+        setFormData((prev) => ({
+          ...prev,
+          email,
+          password,
+          rememberMe: true,
+        }));
+      }
     }
-  }, []);
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -98,7 +121,44 @@ export const Login = () => {
     }
   };
 
-  // El resto del componente permanece igual
+  // Si ya hay una sesión activa, mostrar mensaje en lugar del formulario
+  if (isLoggedIn) {
+    return (
+      <div className="container-fluid min-vh-100 d-flex flex-column">
+        <div className="row flex-grow-1">
+          <div className="col-xxl-2 d-none d-xxl-block"></div>
+          <div className="col-xxl-8 col-12 d-flex align-items-center justify-content-center py-4">
+            <div className="card login-card shadow-lg border-0 w-100 my-4">
+              <div className="card-body px-3 px-md-5 py-4 text-center">
+                <h2 className="fw-bold mb-3">Ya hay una sesión activa</h2>
+                <p className="text-muted">
+                  Serás redirigido automáticamente a tu dashboard
+                </p>
+                <div className="spinner-border text-primary mt-3" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="col-xxl-2 d-none d-xxl-flex align-items-center position-relative">
+            <img
+              src={man}
+              alt="Man"
+              className="position-absolute h-100 w-auto"
+              style={{
+                right: "80px",
+                bottom: "0",
+                objectFit: "contain",
+                objectPosition: "right bottom",
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar el formulario de login si no hay sesión activa
   return (
     <div className="container-fluid min-vh-100 d-flex flex-column">
       <div className="row flex-grow-1">

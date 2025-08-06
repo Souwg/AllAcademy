@@ -134,7 +134,12 @@ export const Navbar = () => {
                     <span className="nav-link-underline"></span>
                   </Link>
                 </li>
-                <li className="nav-item dropdown" ref={dropdownRef}>
+                <li
+                  className="nav-item dropdown"
+                  ref={dropdownRef}
+                  onMouseEnter={() => setDropdownOpen(true)}
+                  onMouseLeave={() => setDropdownOpen(false)}
+                >
                   <Link
                     to="/"
                     className="nav-link dropdown-toggle"
@@ -156,12 +161,23 @@ export const Navbar = () => {
                         display: "inline-block",
                         marginLeft: "8px",
                         transition: "transform 0.2s ease",
+                        transform: dropdownOpen
+                          ? "rotate(180deg)"
+                          : "rotate(0deg)",
                       }}
                     >
                       ▼
                     </span>
                   </Link>
-                  <ul className={`dropdown-menu ${dropdownOpen ? "show" : ""}`}>
+                  <ul
+                    className={`dropdown-menu ${dropdownOpen ? "show" : ""}`}
+                    style={{
+                      marginTop: "0",
+                      position: "absolute",
+                      left: "0",
+                      top: "100%",
+                    }}
+                  >
                     <li>
                       <a
                         className="dropdown-item"
