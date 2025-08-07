@@ -16,29 +16,18 @@ export const Login = () => {
 
   // Verificar si hay una sesión activa al montar el componente
   useEffect(() => {
+    let isMounted = true;
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user"));
 
-    if (token && user) {
-      setIsLoggedIn(true);
-      // Redirigir según el rol del usuario
-      switch (user.role) {
-        case "admin":
-          navigate("/admin/dashboard");
-          break;
-        case "teacher":
-          navigate("/teacher/dashboard");
-          break;
-        case "student":
-          navigate("/student/dashboard");
-          break;
-        default:
-          navigate("/");
-      }
-    } else {
-      // Cargar credenciales guardadas si no hay sesión activa
-      const savedCredentials = localStorage.getItem("rememberMeCredentials");
-      if (savedCredentials) {
+    if (token && user && isMounted) {
+      navigate(`/${user.role}/dashboard`);
+      return;
+    }
+
+    const savedCredentials = localStorage.getItem("rememberMeCredentials");
+    if (savedCredentials && isMounted) {
+      try {
         const { email, password } = JSON.parse(savedCredentials);
         setFormData((prev) => ({
           ...prev,
@@ -46,8 +35,14 @@ export const Login = () => {
           password,
           rememberMe: true,
         }));
+      } catch (e) {
+        console.error("Error parsing credentials", e);
       }
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [navigate]);
 
   const handleChange = (e) => {
@@ -60,10 +55,16 @@ export const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("[Login] Inicio del proceso de login");
     setError("");
     setIsLoading(true);
 
     try {
+      console.log("[Login] Enviando credenciales al servidor...", {
+        email: formData.email,
+        rememberMe: formData.rememberMe,
+      });
+
       const response = await fetch("http://localhost:3001/api/login", {
         method: "POST",
         headers: {
@@ -75,18 +76,25 @@ export const Login = () => {
         }),
       });
 
+      console.log("[Login] Respuesta recibida del servidor", {
+        status: response.status,
+        ok: response.ok,
+      });
+
       const data = await response.json();
+      console.log("[Login] Datos de respuesta:", data);
 
       if (!response.ok) {
+        console.error("[Login] Error en la respuesta del servidor:", data.msg);
         throw new Error(data.msg || "Error al iniciar sesión");
       }
 
-      // Guardar el token y datos del usuario
+      console.log("[Login] Guardando token y datos de usuario en localStorage");
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      // Guardar credenciales si Remember Me está activado
       if (formData.rememberMe) {
+        console.log("[Login] Guardando credenciales por 'Remember Me'");
         localStorage.setItem(
           "rememberMeCredentials",
           JSON.stringify({
@@ -95,30 +103,25 @@ export const Login = () => {
           })
         );
       } else {
-        // Eliminar credenciales guardadas si Remember Me está desactivado
+        console.log("[Login] Eliminando credenciales de 'Remember Me'");
         localStorage.removeItem("rememberMeCredentials");
       }
 
-      // Redirigir según el rol del usuario
-      switch (data.user.role) {
-        case "admin":
-          navigate("/admin/dashboard");
-          break;
-        case "teacher":
-          navigate("/teacher/dashboard");
-          break;
-        case "student":
-          navigate("/student/dashboard");
-          break;
-        default:
-          navigate("/");
-      }
+      console.log(`[Login] Redirigiendo a dashboard de ${data.user.role}`);
+      navigate(`/${data.user.role}/dashboard`);
+      console.log("[Login] Redirección completada, finalizando función");
+      return;
     } catch (error) {
+      console.error("[Login] Error durante el proceso:", {
+        message: error.message,
+        error: error,
+      });
       setError(error.message);
-      console.error("Login error:", error);
-    } finally {
-      setIsLoading(false);
     }
+
+    console.log("[Login] Finalizando estado de carga");
+    setIsLoading(false);
+    console.log("[Login] Proceso de login completado");
   };
 
   // Si ya hay una sesión activa, mostrar mensaje en lugar del formulario

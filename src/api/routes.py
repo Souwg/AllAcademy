@@ -120,3 +120,49 @@ def user_logout():
     db.session.add(token_blocked)
     db.session.commit()
     return jsonify({"msg":"Sesión cerrada"}), 200
+
+
+@api.route('/admin/users', methods=['GET'])
+@jwt_required()
+def get_all_users():
+    # Obtener información del token
+    claims = get_jwt()
+    current_user_id = get_jwt_identity()
+    
+    print(f"Usuario haciendo la solicitud: {current_user_id}")  # Debug
+    print(f"Claims del token: {claims}")  # Debug
+    
+    current_user = User.query.get(current_user_id)
+    
+    if not current_user:
+        return jsonify({"msg": "Usuario no encontrado"}), 404
+    
+    if not current_user.is_admin:
+        return jsonify({"msg": "Acceso no autorizado: Se requieren privilegios de administrador"}), 403
+    
+    # Obtener todos los usuarios (excepto contraseñas)
+    users = User.query.with_entities(
+        User.id,
+        User.email,
+        User.first_name,
+        User.last_name,
+        User.country,
+        User.id_number,
+        User.is_admin,
+        User.role,
+        User.created_at
+    ).all()
+    
+    users_serialized = [{
+        "id": user.id,
+        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "country": user.country,
+        "id_number": user.id_number,
+        "is_admin": user.is_admin,
+        "role": user.role,
+        "created_at": user.created_at.isoformat() if user.created_at else None
+    } for user in users]
+    
+    return jsonify(users_serialized), 200

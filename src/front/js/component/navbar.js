@@ -15,25 +15,49 @@ export const Navbar = () => {
   };
 
   const handleLogout = async () => {
+    console.log("Iniciando proceso de logout...");
+
+    // 1. Primero obtenemos el token ANTES de eliminarlo
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
+
+    console.log("Datos actuales:", { token, user });
+
     try {
-      const token = localStorage.getItem("token");
+      console.log("Enviando petición de logout al backend...");
+      // 2. Hacemos la petición de logout CON el token aún disponible
       const response = await fetch("http://localhost:3001/api/logout", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: token
+          ? {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            }
+          : {},
       });
 
-      if (response.ok) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        console.log("Sesión cerrada correctamente");
-        navigate("/login");
+      console.log("Respuesta del backend:", {
+        status: response.status,
+        ok: response.ok,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Logout falló con status: ${response.status}`);
       }
     } catch (error) {
-      console.error("Error al cerrar sesión:", error);
+      console.error("Error en petición de logout:", error.message);
+      // Continuamos aunque falle el logout en el backend
+    } finally {
+      // 3. LIMPIEZA FINAL (siempre se ejecuta)
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      console.log("Datos limpiados del localStorage");
+
+      console.log("Redirigiendo a /login...");
+      navigate("/login");
     }
+
+    console.log("Proceso de logout completado");
   };
 
   // Efecto para manejar el hover del dropdown
