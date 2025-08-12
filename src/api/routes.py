@@ -163,3 +163,29 @@ def update_user_role(user_id):
     db.session.commit()
     
     return jsonify({"msg": "Rol actualizado exitosamente", "user": user.serialize()}), 200
+
+@api.route('/admin/users/<int:user_id>', methods=['DELETE'])
+@jwt_required()
+def delete_user(user_id):
+    claims = get_jwt()
+    
+    if claims.get('role') != "admin":
+        return jsonify({"msg": "Acceso no autorizado: Se requieren privilegios de administrador"}), 403
+    
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"msg": "Usuario no encontrado"}), 404
+    
+    # No permitir eliminar otros administradores
+    if user.role == 'admin':
+        return jsonify({"msg": "No puedes eliminar a otro administrador"}), 400
+    
+    # No permitir auto-eliminación
+    current_user_id = get_jwt_identity()
+    if str(user.id) == current_user_id:
+        return jsonify({"msg": "No puedes eliminarte a ti mismo"}), 400
+    
+    db.session.delete(user)
+    db.session.commit()
+    
+    return jsonify({"msg": "Usuario eliminado exitosamente"}), 200

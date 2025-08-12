@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
-import { courses } from "./coursesData"; // Importamos los cursos desde el archivo separado
+import { courses } from "./coursesData";
 import {
   FaClock,
   FaCalendarAlt,
