@@ -976,3 +976,45 @@ body {
     }
   }
 }
+/* Estilos para los badges de estado */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.active-badge {
+  background-color: #e6f7e6;
+  color: #2e7d32;
+}
+
+.blocked-badge {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.block-reason {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+/* Estilos para los botones de bloqueo/desbloqueo */
+.action-btn.block-btn {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.action-btn.block-btn:hover {
+  background-color: #ffe0b2;
+}
+
+.action-btn.unblock-btn {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.action-btn.unblock-btn:hover {
+  background-color: #c8e6c9;
+}

@@ -15,6 +15,12 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean(), default=False)
     role= db.Column(db.String(20), default='student', nullable=False) 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    is_blocked = db.Column(db.Boolean(), default=False)
+    block_reason = db.Column(db.String(255))
+    block_count = db.Column(db.Integer, default=0)
+    last_blocked_at = db.Column(db.DateTime)
+    blocked_until = db.Column(db.DateTime)
+    
     def __repr__(self):
         return f'<User {self.email}>'
 
@@ -29,6 +35,11 @@ class User(db.Model):
             "is_active": self.is_active,  
             "is_admin": self.is_admin,
             "role": self.role,
+            "is_blocked": self.is_blocked,
+            "block_reason": self.block_reason,
+            "block_count": self.block_count,
+            "last_blocked_at": self.last_blocked_at.isoformat() if self.last_blocked_at else None,
+            "blocked_until": self.blocked_until.isoformat() if self.blocked_until else None,
             "created_at": self.created_at.isoformat(),
         }
 

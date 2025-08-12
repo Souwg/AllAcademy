@@ -18,6 +18,8 @@ export const AdminContent = ({
   setShowModal,
   setUserToDelete,
   setShowDeleteModal,
+  handleBlockUser,
+  handleUnblockUser,
 }) => {
   // Función para renderizar la tabla de usuarios
   const renderUserTable = (usersToRender) => {
@@ -40,6 +42,7 @@ export const AdminContent = ({
               <th>Email</th>
               <th>País</th>
               <th>Rol</th>
+              <th>Estado</th>
               <th>Fecha</th>
               <th>Acciones</th>
             </tr>
@@ -47,7 +50,6 @@ export const AdminContent = ({
           <tbody>
             {usersToRender.map((user) => (
               <tr key={user.id}>
-                {/* Contenido de cada fila */}
                 <td>{user.id}</td>
                 <td>
                   <div className="user-cell">
@@ -69,6 +71,23 @@ export const AdminContent = ({
                     {getRoleName(user.role)}
                   </span>
                 </td>
+                <td>
+                  <div className="status-badge">
+                    {user.is_blocked ? (
+                      <span className="blocked-badge">
+                        Bloqueado
+                        {user.block_reason && (
+                          <span className="block-reason">
+                            {" "}
+                            ({user.block_reason})
+                          </span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="active-badge">Activo</span>
+                    )}
+                  </div>
+                </td>
                 <td>{new Date(user.created_at).toLocaleDateString()}</td>
                 <td>
                   <div className="action-buttons">
@@ -82,15 +101,32 @@ export const AdminContent = ({
                       Editar
                     </button>
                     {user.role !== "admin" && (
-                      <button
-                        className="action-btn delete-btn"
-                        onClick={() => {
-                          setUserToDelete(user);
-                          setShowDeleteModal(true);
-                        }}
-                      >
-                        Eliminar
-                      </button>
+                      <>
+                        {!user.is_blocked ? (
+                          <button
+                            className="action-btn block-btn"
+                            onClick={() => handleBlockUser(user.id)}
+                          >
+                            Bloquear
+                          </button>
+                        ) : (
+                          <button
+                            className="action-btn unblock-btn"
+                            onClick={() => handleUnblockUser(user.id)}
+                          >
+                            Desbloquear
+                          </button>
+                        )}
+                        <button
+                          className="action-btn delete-btn"
+                          onClick={() => {
+                            setUserToDelete(user);
+                            setShowDeleteModal(true);
+                          }}
+                        >
+                          Eliminar
+                        </button>
+                      </>
                     )}
                   </div>
                 </td>
@@ -217,7 +253,6 @@ export const AdminContent = ({
 
     const descriptions = {
       dashboard: "Bienvenido al panel de control principal",
-      users: `Total usuarios: ${getUserStats().total}`,
       courses: "Administra los cursos disponibles",
       settings: "Configura los parámetros del sistema",
     };

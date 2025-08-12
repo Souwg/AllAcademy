@@ -14,7 +14,13 @@ bcrypt = Bcrypt(app)
 api = Blueprint('api', __name__)
 
 # Allow CORS requests to this API
-CORS(api)
+CORS(api, resources={
+    r"/api/*": {
+        "origins": ["http://localhost:3000"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 
 
 @api.route('/hello', methods=['POST', 'GET'])
@@ -189,3 +195,70 @@ def delete_user(user_id):
     db.session.commit()
     
     return jsonify({"msg": "Usuario eliminado exitosamente"}), 200
+
+@api.route('/admin/users/<int:user_id>/block', methods=['POST'])
+@jwt_required()
+def block_user(user_id):
+    try:
+        # Verificar autenticación y permisos
+        claims = get_jwt()
+        if claims.get('role') != "admin":
+            return jsonify({"msg": "No autorizado"}), 403
+
+        # Obtener datos
+        data = request.get_json()
+        if not data or 'reason' not in data:
+            return jsonify({"msg": "Razón de bloqueo requerida"}), 400
+
+        # Buscar usuario
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"msg": "Usuario no encontrado"}), 404
+
+        # Aplicar bloqueo
+        user.is_blocked = True
+        user.block_reason = data['reason']
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Usuario bloqueado con éxito",
+            "user": user.serialize()
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": "Error al bloquear usuario", "error": str(e)}), 500
+
+@api.route('/admin/users/<int:user_id>/unblock', methods=['POST'])
+@jwt_required()
+def unblock_user(user_id):
+    claims = get_jwt()
+    
+    if claims.get('role') != "admin":
+        return jsonify({"msg": "Acceso no autorizado: Se requieren privilegios de administrador"}), 403
+    
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"msg": "Usuario no encontrado"}), 404
+    
+    user.is_blocked = False
+    user.block_reason = None
+    user.blocked_until = None
+    
+    db.session.commit()
+    
+    return jsonify({
+        "msg": "Usuario desbloqueado exitosamente",
+        "user": user.serialize()
+    }), 200
+
+@api.route('/admin/blocked-users', methods=['GET'])
+@jwt_required()
+def get_blocked_users():
+    claims = get_jwt()
+    
+    if claims.get('role') != "admin":
+        return jsonify({"msg": "Acceso no autorizado: Se requieren privilegios de administrador"}), 403
+    
+    blocked_users = User.query.filter(User.is_blocked == True).all()
+    return jsonify([user.serialize() for user in blocked_users]), 200

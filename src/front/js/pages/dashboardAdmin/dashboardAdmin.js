@@ -52,7 +52,15 @@ export const DashboardAdmin = () => {
         if (!response.ok)
           throw new Error(data.msg || "Error al obtener usuarios");
 
-        setUsers(data);
+        // Asegúrate de que cada usuario tenga los campos de bloqueo
+        const usersWithBlockStatus = data.map((user) => ({
+          ...user,
+          is_blocked: user.is_blocked || false,
+          block_reason: user.block_reason || null,
+          blocked_until: user.blocked_until || null,
+        }));
+
+        setUsers(usersWithBlockStatus);
       } catch (err) {
         console.error("Error al cargar usuarios:", err);
         setError(err.message);
@@ -115,6 +123,106 @@ export const DashboardAdmin = () => {
       });
     } finally {
       setDeleteStatus({ loading: false, error: null, success: false });
+    }
+  };
+  // Función para bloquear usuario
+  const handleBlockUser = async (userId) => {
+    try {
+      const reason = prompt("Ingrese la razón del bloqueo:");
+      if (!reason) return;
+
+      const days = prompt("Duración del bloqueo (días):", "7");
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(
+        `http://localhost:3001/api/admin/users/${userId}/block`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ reason, days: parseInt(days) }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.msg || "Error al bloquear usuario");
+      }
+
+      // Actualizar la lista de usuarios
+      const updatedUsers = users.map((user) =>
+        user.id === userId
+          ? { ...user, is_blocked: true, block_reason: reason }
+          : user
+      );
+      setUsers(updatedUsers);
+
+      setNotification({
+        show: true,
+        type: "success",
+        message: "Usuario bloqueado correctamente",
+      });
+
+      setTimeout(
+        () => setNotification({ show: false, type: "", message: "" }),
+        3000
+      );
+    } catch (err) {
+      console.error("Error al bloquear usuario:", err);
+      setNotification({
+        show: true,
+        type: "error",
+        message: err.message || "Error al bloquear usuario",
+      });
+    }
+  };
+
+  // Función para desbloquear usuario
+  const handleUnblockUser = async (userId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `http://localhost:3001/api/admin/users/${userId}/unblock`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.msg || "Error al desbloquear usuario");
+      }
+
+      // Actualizar la lista de usuarios
+      const updatedUsers = users.map((user) =>
+        user.id === userId
+          ? { ...user, is_blocked: false, block_reason: null }
+          : user
+      );
+      setUsers(updatedUsers);
+
+      setNotification({
+        show: true,
+        type: "success",
+        message: "Usuario desbloqueado correctamente",
+      });
+
+      setTimeout(
+        () => setNotification({ show: false, type: "", message: "" }),
+        3000
+      );
+    } catch (err) {
+      console.error("Error al desbloquear usuario:", err);
+      setNotification({
+        show: true,
+        type: "error",
+        message: err.message || "Error al desbloquear usuario",
+      });
     }
   };
 
@@ -221,6 +329,8 @@ export const DashboardAdmin = () => {
         setShowModal={setShowModal}
         setUserToDelete={setUserToDelete}
         setShowDeleteModal={setShowDeleteModal}
+        handleBlockUser={handleBlockUser}
+        handleUnblockUser={handleUnblockUser}
       />
 
       <AdminModals
@@ -235,6 +345,8 @@ export const DashboardAdmin = () => {
         handleRoleChange={handleRoleChange}
         notification={notification} // <-- Asegúrate de pasar esta prop
         setNotification={setNotification} // <-- Y esta si la usas
+        handleBlockUser={handleBlockUser}
+        handleUnblockUser={handleUnblockUser}
       />
     </div>
   );

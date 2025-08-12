@@ -11,13 +11,15 @@ from api.models import db
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
-
-# from models import Person
+from datetime import datetime
+from flask_jwt_extended import get_jwt, jwt_required
+from api.models import db, User, BlockedTokenList
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../public/')
 app = Flask(__name__)
+
 app.url_map.strict_slashes = False
 
 app.config["JWT_SECRET_KEY"] = os.getenv('JWT_SECRET_KEY')
@@ -34,6 +36,43 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db, compare_type=True)
 db.init_app(app)
+
+@jwt.token_in_blocklist_loader
+def check_if_token_revoked(jwt_header, jwt_payload):
+    jti = jwt_payload["jti"]
+    token = BlockedTokenList.query.filter_by(jti=jti).first()
+    return token is not None
+
+@app.before_request
+def check_user_blocked():
+    # Excluir rutas de autenticación y estáticas
+    if request.path.startswith('/api/auth') or request.path == '/':
+        return
+    
+    try:
+        # Solo verificar para rutas que requieren autenticación
+        if request.path.startswith('/api/'):
+            jwt_data = get_jwt()
+            user_id = jwt_data.get('sub')
+            if user_id:
+                user = User.query.get(user_id)
+                if user and user.is_blocked:
+                    if user.blocked_until and user.blocked_until > datetime.utcnow():
+                        return jsonify({
+                            "msg": f"Usuario bloqueado. Razón: {user.block_reason}",
+                            "blocked_until": user.blocked_until.isoformat()
+                        }), 403
+                    elif user.is_blocked and (not user.blocked_until or user.blocked_until <= datetime.utcnow()):
+                        # Desbloquear automáticamente si el tiempo de bloqueo expiró
+                        user.is_blocked = False
+                        user.block_reason = None
+                        user.blocked_until = None
+                        db.session.commit()
+    except Exception as e:
+        # No hay JWT válido o otro error, continuar con la solicitud
+        app.logger.debug(f"Error en check_user_blocked: {str(e)}")
+        pass
+
 
 # add the admin
 setup_admin(app)
