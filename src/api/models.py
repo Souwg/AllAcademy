@@ -26,6 +26,7 @@ class User(db.Model):
             "last_name": self.last_name,
             "country": self.country,
             "id_number": self.id_number,
+            "is_active": self.is_active,  
             "is_admin": self.is_admin,
             "role": self.role,
             "created_at": self.created_at.isoformat(),

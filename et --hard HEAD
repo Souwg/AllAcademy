@@ -1,0 +1,19 @@
+[33m4c26fa1[m[33m ([m[1;36mHEAD -> [m[1;32mFrontend/HomePage[m[33m, [m[1;31morigin/Frontend/HomePage[m[33m)[m mejoras del login, logout y api/GET de los registrados en el dashboard del admin
+[33mab6fe0e[m mejoras del home
+[33m7917288[m top courses/homepage
+[33mb917297[m all courses, migracion de estilos lineales a hoja de estilo, nuevo archivo coursesData
+[33mdea6975[m courseDetails
+[33m993fd45[m not found page
+[33m33142a5[m mejoras del login, logout y pagina de not found
+[33me6e69d7[m login, logout
+[33mc6677d1[m concluded merge
+[33md90297a[m signup countries
+[33md422370[m Merge pull request #2 from Souwg/develop
+[33m29393b1[m[33m ([m[1;31morigin/develop[m[33m, [m[1;32mdevelop[m[33m)[m sweet alerts in Signup
+[33m1070b51[m modificacion en el models
+[33mc8b512c[m signup endpoint, model signup, logic component signup
+[33m685ada6[m optimizacion del codigo login-signup-navbar
+[33m76c8d3a[m login and signup
+[33me291c22[m avances del landing
+[33m94c030a[m contactNavbar-navbar-aboutSearch-cards-footer
+[33m642b171[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m Initial commit
