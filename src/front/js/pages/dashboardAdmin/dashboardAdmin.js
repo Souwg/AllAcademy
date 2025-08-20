@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Swal from "sweetalert2";
 import { AdminSidebar } from "./adminSidebar";
 import { AdminContent } from "./adminContent";
 import { AdminModals } from "./adminModals";
@@ -128,10 +129,28 @@ export const DashboardAdmin = () => {
   // Función para bloquear usuario
   const handleBlockUser = async (userId) => {
     try {
-      const reason = prompt("Ingrese la razón del bloqueo:");
+      const { value: reason } = await Swal.fire({
+        title: "Bloquear Usuario",
+        input: "textarea",
+        inputLabel: "Razón del bloqueo",
+        inputPlaceholder: "Ingrese la razón del bloqueo...",
+        inputAttributes: {
+          "aria-label": "Ingrese la razón del bloqueo",
+        },
+        showCancelButton: true,
+        confirmButtonText: "Bloquear",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        inputValidator: (value) => {
+          if (!value) {
+            return "Debe ingresar una razón para bloquear al usuario";
+          }
+        },
+      });
+
       if (!reason) return;
 
-      const days = prompt("Duración del bloqueo (días):", "7");
       const token = localStorage.getItem("token");
 
       const response = await fetch(
@@ -142,7 +161,7 @@ export const DashboardAdmin = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ reason, days: parseInt(days) }),
+          body: JSON.stringify({ reason }),
         }
       );
 
@@ -159,26 +178,27 @@ export const DashboardAdmin = () => {
       );
       setUsers(updatedUsers);
 
-      setNotification({
-        show: true,
-        type: "success",
-        message: "Usuario bloqueado correctamente",
+      // Notificación de éxito con SweetAlert
+      Swal.fire({
+        icon: "success",
+        title: "Usuario bloqueado",
+        text: "El usuario ha sido bloqueado correctamente",
+        timer: 3000,
+        showConfirmButton: false,
+        timerProgressBar: true,
       });
-
-      setTimeout(
-        () => setNotification({ show: false, type: "", message: "" }),
-        3000
-      );
     } catch (err) {
       console.error("Error al bloquear usuario:", err);
-      setNotification({
-        show: true,
-        type: "error",
-        message: err.message || "Error al bloquear usuario",
+
+      // Notificación de error con SweetAlert
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: err.message || "Error al bloquear usuario",
+        confirmButtonText: "Entendido",
       });
     }
   };
-
   // Función para desbloquear usuario
   const handleUnblockUser = async (userId) => {
     try {

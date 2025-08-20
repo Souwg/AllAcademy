@@ -110,6 +110,7 @@ body {
 
 /* Contenido principal */
 .admin-content {
+  overflow: hidden;
   flex: 1;
   padding: 2.5rem;
   background-color: var(--light);

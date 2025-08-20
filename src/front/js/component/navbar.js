@@ -14,6 +14,12 @@ export const Navbar = () => {
     navigate("/login");
   };
 
+  const handleDashboard = () => {
+    if (user && user.role) {
+      navigate(`/${user.role}/dashboard`);
+    }
+  };
+
   const handleLogout = async () => {
     console.log("Iniciando proceso de logout...");
 
@@ -299,6 +305,34 @@ export const Navbar = () => {
                       {user.first_name}
                     </span>
                   </div>
+                  <button
+                    className="btn me-2 dashboard-btn"
+                    style={{
+                      borderRadius: "20px",
+                      backgroundColor: "#001933",
+                      color: "#fff",
+                      fontWeight: "600",
+                      fontSize: "18px",
+                      whiteSpace: "nowrap",
+                      transition: "all 0.2s ease",
+                      padding: "8px 20px",
+                    }}
+                    onClick={handleDashboard}
+                    type="button"
+                    onMouseOver={(e) => {
+                      e.target.style.backgroundColor = "#003366";
+                      e.target.style.transform = "translateY(-2px)";
+                      e.target.style.boxShadow =
+                        "0 4px 8px rgba(0, 25, 51, 0.2)";
+                    }}
+                    onMouseOut={(e) => {
+                      e.target.style.backgroundColor = "#001933";
+                      e.target.style.transform = "translateY(0)";
+                      e.target.style.boxShadow = "none";
+                    }}
+                  >
+                    Dashboard
+                  </button>
                   <button
                     className="btn logout-btn"
                     style={{

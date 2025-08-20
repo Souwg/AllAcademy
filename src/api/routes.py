@@ -7,6 +7,7 @@ from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, get_jwt
+from datetime import datetime
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
@@ -101,6 +102,11 @@ def user_login():
     valid_password = bcrypt.check_password_hash(user.password, body["password"])
     if not valid_password:
         return jsonify({"msg": "Incorrect password"}), 401
+    
+        # Actualizar el último inicio de sesión
+    user.last_login = datetime.utcnow()
+    db.session.commit()
+    
     
     token = create_access_token(
         identity=str(user.id), 
@@ -218,6 +224,7 @@ def block_user(user_id):
         # Aplicar bloqueo
         user.is_blocked = True
         user.block_reason = data['reason']
+        user.block_count += 1
         db.session.commit()
 
         return jsonify({

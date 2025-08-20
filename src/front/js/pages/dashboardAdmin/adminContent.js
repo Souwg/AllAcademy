@@ -43,7 +43,8 @@ export const AdminContent = ({
               <th>País</th>
               <th>Rol</th>
               <th>Estado</th>
-              <th>Fecha</th>
+              <th>Bloqueos</th>
+              <th>Registro</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -87,6 +88,16 @@ export const AdminContent = ({
                       <span className="active-badge">Activo</span>
                     )}
                   </div>
+                </td>
+                <td>
+                  {/* Contador de bloqueos */}
+                  <span
+                    className={`block-count ${
+                      user.block_count > 0 ? "has-blocks" : ""
+                    }`}
+                  >
+                    {user.block_count || 0}
+                  </span>
                 </td>
                 <td>{new Date(user.created_at).toLocaleDateString()}</td>
                 <td>
