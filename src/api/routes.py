@@ -99,6 +99,9 @@ def user_login():
     if user is None:
         return jsonify({"msg":"Email not found"}), 401
     
+    if user.is_blocked:
+        return jsonify({"msg": "Your account has been blocked. Please contact administrator"}), 403
+
     valid_password = bcrypt.check_password_hash(user.password, body["password"])
     if not valid_password:
         return jsonify({"msg": "Incorrect password"}), 401

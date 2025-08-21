@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import man from "../../img/man.png";
 import "../../styles/Login.css";
 import { Link, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 export const Login = () => {
   const [formData, setFormData] = useState({
@@ -53,6 +54,21 @@ export const Login = () => {
     }));
   };
 
+  const showBlockedAlert = (message) => {
+    Swal.fire({
+      icon: "error",
+      title: "Cuenta Bloqueada",
+      text: message,
+      confirmButtonText: "Entendido",
+      confirmButtonColor: "#dc3545",
+      background: "#fff",
+      customClass: {
+        popup: "border-radius-20",
+        confirmButton: "btn-sweet-alert",
+      },
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("[Login] Inicio del proceso de login");
@@ -85,6 +101,15 @@ export const Login = () => {
       console.log("[Login] Datos de respuesta:", data);
 
       if (!response.ok) {
+        // Manejar específicamente el error de usuario bloqueado
+        if (response.status === 403) {
+          const errorMessage = console.log(
+            "[Login] Usuario bloqueado:",
+            data.msg
+          );
+          showBlockedAlert(errorMessage);
+          throw new Error(errorMessage);
+        }
         console.error("[Login] Error en la respuesta del servidor:", data.msg);
         throw new Error(data.msg || "Error al iniciar sesión");
       }
@@ -109,19 +134,20 @@ export const Login = () => {
 
       console.log(`[Login] Redirigiendo a dashboard de ${data.user.role}`);
       navigate(`/${data.user.role}/dashboard`);
-      console.log("[Login] Redirección completada, finalizando función");
-      return;
     } catch (error) {
       console.error("[Login] Error durante el proceso:", {
         message: error.message,
         error: error,
       });
-      setError(error.message);
+      // Solo mostrar error en el formulario si no es un error de bloqueo
+      if (!error.message.includes("bloqueada")) {
+        setError(error.message);
+      }
+    } finally {
+      console.log("[Login] Finalizando estado de carga");
+      setIsLoading(false);
+      console.log("[Login] Proceso de login completado");
     }
-
-    console.log("[Login] Finalizando estado de carga");
-    setIsLoading(false);
-    console.log("[Login] Proceso de login completado");
   };
 
   // Si ya hay una sesión activa, mostrar mensaje en lugar del formulario
