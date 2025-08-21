@@ -39,7 +39,12 @@ export const DashboardAdmin = () => {
     const fetchUsers = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) throw new Error("No hay token de autenticación");
+        if (!token) {
+          redirectToLogin(
+            "Sesión expirada. Por favor inicia sesión nuevamente."
+          );
+          return;
+        }
 
         const response = await fetch("http://localhost:3001/api/admin/users", {
           method: "GET",
@@ -49,11 +54,20 @@ export const DashboardAdmin = () => {
           },
         });
 
-        const data = await response.json();
-        if (!response.ok)
-          throw new Error(data.msg || "Error al obtener usuarios");
+        // Si es error 401, token expirado o inválido
+        if (response.status === 401) {
+          redirectToLogin(
+            "Sesión expirada. Por favor inicia sesión nuevamente."
+          );
+          return;
+        }
 
-        // Asegúrate de que cada usuario tenga los campos de bloqueo
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.msg || "Error al obtener usuarios");
+        }
+
+        // Procesar usuarios
         const usersWithBlockStatus = data.map((user) => ({
           ...user,
           is_blocked: user.is_blocked || false,
@@ -65,16 +79,38 @@ export const DashboardAdmin = () => {
       } catch (err) {
         console.error("Error al cargar usuarios:", err);
         setError(err.message);
+
+        // Redirigir si es error de autenticación
         if (
           err.message.includes("401") ||
-          err.message.includes("No autorizado")
+          err.message.includes("No autorizado") ||
+          err.message.includes("Token has expired")
         ) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
+          redirectToLogin(
+            "Sesión expirada. Por favor inicia sesión nuevamente."
+          );
         }
       } finally {
         setLoading(false);
       }
+    };
+
+    // Función para redirigir al login con mensaje
+    const redirectToLogin = (message) => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      // Mostrar mensaje con SweetAlert antes de redirigir
+      Swal.fire({
+        icon: "warning",
+        title: "Sesión expirada",
+        text: message,
+        confirmButtonText: "Ir al login",
+        timer: 3000,
+        timerProgressBar: true,
+      }).then(() => {
+        window.location.href = "/login";
+      });
     };
 
     fetchUsers();

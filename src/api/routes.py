@@ -258,14 +258,3 @@ def unblock_user(user_id):
         "msg": "Usuario desbloqueado exitosamente",
         "user": user.serialize()
     }), 200
-
-@api.route('/admin/blocked-users', methods=['GET'])
-@jwt_required()
-def get_blocked_users():
-    claims = get_jwt()
-    
-    if claims.get('role') != "admin":
-        return jsonify({"msg": "Acceso no autorizado: Se requieren privilegios de administrador"}), 403
-    
-    blocked_users = User.query.filter(User.is_blocked == True).all()
-    return jsonify([user.serialize() for user in blocked_users]), 200

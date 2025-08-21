@@ -6,9 +6,9 @@ db = SQLAlchemy()
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(250), nullable=False)  # Longitud para hash bcrypt
-    first_name = db.Column(db.String(50), nullable=False)  # Nombre del formulario
-    last_name = db.Column(db.String(50), nullable=False)   # Apellido del formulario
+    password = db.Column(db.String(250), nullable=False)  
+    first_name = db.Column(db.String(50), nullable=False)  
+    last_name = db.Column(db.String(50), nullable=False) 
     country = db.Column(db.String(2), nullable=False)
     id_number = db.Column(db.String(20), nullable=False)
     is_active = db.Column(db.Boolean(), default=True, nullable=False)
@@ -38,7 +38,7 @@ class User(db.Model):
             "block_reason": self.block_reason,
             "block_count": self.block_count,
             "created_at": self.created_at.isoformat(),
-            "lasts_login": self.last_login.isoformat() if self.last_login else None
+            "last_login": self.last_login.isoformat() if self.last_login else None
         }
 
 class BlockedTokenList(db.Model):

@@ -45,6 +45,7 @@ export const AdminContent = ({
               <th>Estado</th>
               <th>Bloqueos</th>
               <th>Registro</th>
+              <th>Última Conexión</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -100,6 +101,17 @@ export const AdminContent = ({
                   </span>
                 </td>
                 <td>{new Date(user.created_at).toLocaleDateString()}</td>
+                <td>
+                  {user.last_login ? (
+                    <div className="last-login-info">
+                      <div className="last-login-date">
+                        {new Date(user.last_login).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="never-logged">Nunca</span>
+                  )}
+                </td>
                 <td>
                   <div className="action-buttons">
                     <button
