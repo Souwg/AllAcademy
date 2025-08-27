@@ -2,12 +2,14 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, BlockedTokenList
+from psycopg2 import IntegrityError
+from api.models import db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, get_jwt
 from datetime import datetime
+from slugify import slugify
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
@@ -15,23 +17,13 @@ bcrypt = Bcrypt(app)
 api = Blueprint('api', __name__)
 
 # Allow CORS requests to this API
-CORS(api, resources={
-    r"/api/*": {
-        "origins": ["http://localhost:3000"],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"]
-    }
-})
-
-
-@api.route('/hello', methods=['POST', 'GET'])
-def handle_hello():
-
-    response_body = {
-        "message": "Hello! I'm a message that came from the backend, check the network tab on the google inspector and you will see the GET request"
-    }
-
-    return jsonify(response_body), 200
+#CORS(api, resources={
+#    r"/api/*": {
+#        "origins": ["http://localhost:3000"],
+#        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+#        "allow_headers": ["Content-Type", "Authorization"]
+#    }
+#})
 
 {
     "email": "random1@gmail.com",
@@ -261,3 +253,245 @@ def unblock_user(user_id):
         "msg": "Usuario desbloqueado exitosamente",
         "user": user.serialize()
     }), 200
+
+@api.route('/courses', methods=['POST'])
+@jwt_required()
+def create_course():
+    try:
+        print("=== INICIANDO CREACIÓN DE CURSO ===")
+        
+        # Verificar que el usuario es un profesor o admin
+        claims = get_jwt()
+        user_id = get_jwt_identity()
+        print(f"User ID from JWT: {user_id}")
+        print(f"JWT Claims: {claims}")
+        
+        user = User.query.get(user_id)
+        if not user:
+            print("ERROR: Usuario no encontrado")
+            return jsonify({"msg": "Usuario no encontrado"}), 404
+            
+        if user.role not in ['admin', 'teacher']:
+            print(f"ERROR: Usuario no tiene permisos. Rol: {user.role}")
+            return jsonify({"msg": "Solo administradores y profesores pueden crear cursos"}), 403
+        
+        # Obtener datos del curso
+        data = request.get_json()
+        print(f"Datos recibidos: {data}")
+        
+        if not data:
+            print("ERROR: No se recibieron datos JSON")
+            return jsonify({"msg": "Datos JSON requeridos"}), 400
+        
+        # Validaciones básicas
+        required_fields = ['title', 'description', 'price']
+        for field in required_fields:
+            if not data.get(field):
+                print(f"ERROR: Campo requerido faltante: {field}")
+                return jsonify({"msg": f"El campo {field} es requerido"}), 400
+        
+        print("✅ Campos requeridos validados")
+        
+        # Crear slug a partir del título
+        from slugify import slugify
+        slug = slugify(data['title'])
+        print(f"Slug generado: {slug}")
+        
+        # Verificar si el slug ya existe
+        existing_course = Course.query.filter_by(slug=slug).first()
+        if existing_course:
+            print(f"Slug ya existe, agregando timestamp: {slug}")
+            # Agregar timestamp al slug si ya existe
+            import time
+            slug = f"{slug}-{int(time.time())}"
+            print(f"Nuevo slug: {slug}")
+        
+        # Crear el curso
+        print("Creando objeto Course...")
+        new_course = Course(
+            title=data['title'],
+            slug=slug,
+            description=data['description'],
+            short_description=data.get('short_description', ''),
+            alt_text=data.get('alt_text', ''),
+            price=float(data['price']),
+            discount_price=float(data.get('discount_price', 0)) if data.get('discount_price') else None,
+            level=data.get('level', 'BEGINNER'),
+            language=data.get('language', 'Spanish'),
+            certificate_available=data.get('certificate_available', True),
+            teacher_id=user_id if user.role == 'teacher' else data.get('teacher_id', user_id),
+            is_published=data.get('is_published', False)
+        )
+        
+        print(f"Objeto Course creado: {new_course}")
+        print(f"Level value: {new_course.level}")
+        print(f"Level type: {type(new_course.level)}")
+        
+        db.session.add(new_course)
+        print("Objeto añadido a la sesión")
+        
+        db.session.commit()
+        print("✅ Commit exitoso del curso principal")
+        
+        # Agregar objetivos de aprendizaje si se proporcionan
+        if 'what_you_learn' in data and isinstance(data['what_you_learn'], list):
+            print(f"Procesando objetivos de aprendizaje: {data['what_you_learn']}")
+            for i, objective in enumerate(data['what_you_learn']):
+                if objective and objective.strip():
+                    learning_obj = LearningObjective(
+                        objective=objective.strip(),
+                        course_id=new_course.id
+                    )
+                    db.session.add(learning_obj)
+                    print(f"Añadido objetivo {i}: {objective.strip()}")
+        
+        # Agregar requisitos si se proporcionan
+        if 'requirements' in data and isinstance(data['requirements'], list):
+            print(f"Procesando requisitos: {data['requirements']}")
+            for i, requirement in enumerate(data['requirements']):
+                if requirement and requirement.strip():
+                    req = Requirement(
+                        requirement=requirement.strip(),
+                        course_id=new_course.id
+                    )
+                    db.session.add(req)
+                    print(f"Añadido requisito {i}: {requirement.strip()}")
+        
+        db.session.commit()
+        print("✅ Commit final exitoso")
+        
+        return jsonify({
+            "msg": "Curso creado exitosamente",
+            "course": new_course.serialize()
+        }), 201
+        
+    except ValueError as e:
+        db.session.rollback()
+        print(f"❌ ValueError: {str(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        return jsonify({"msg": "Error en formato de datos", "error": str(e)}), 400
+        
+    except IntegrityError as e:
+        db.session.rollback()
+        print(f"❌ IntegrityError: {str(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        return jsonify({"msg": "Error de integridad de datos", "error": str(e)}), 400
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Exception general: {str(e)}")
+        import traceback
+        print(f"Traceback completo: {traceback.format_exc()}")
+        return jsonify({"msg": "Error al crear el curso", "error": str(e)}), 500
+
+# Obtener todos los cursos (incluyendo no publicados) - Solo para admin    
+@api.route('/admin/courses', methods=['GET'])
+@jwt_required()
+def get_all_courses():
+    try:
+        # Verificar que es admin
+        claims = get_jwt()
+        user_id = get_jwt_identity()
+        
+        user = User.query.get(user_id)
+        if not user or user.role != 'admin':
+            return jsonify({"msg": "No autorizado"}), 403
+        
+        courses = Course.query.all()  # ← Todos los cursos
+        return jsonify([course.serialize() for course in courses]), 200
+    except Exception as e:
+        return jsonify({"msg": "Error al obtener cursos", "error": str(e)}), 500
+    
+    # Obtener todos los cursos
+@api.route('/courses', methods=['GET'])
+def get_courses():
+    try:
+        courses = Course.query.filter_by(is_published=True).all()
+        return jsonify([course.serialize() for course in courses]), 200
+    except Exception as e:
+        return jsonify({"msg": "Error al obtener cursos", "error": str(e)}), 500
+
+# Obtener un curso específico
+@api.route('/courses/<int:course_id>', methods=['GET'])
+def get_course(course_id):
+    try:
+        course = Course.query.get(course_id)
+        if not course:
+            return jsonify({"msg": "Curso no encontrado"}), 404
+        
+        return jsonify(course.serialize()), 200
+    except Exception as e:
+        return jsonify({"msg": "Error al obtener el curso", "error": str(e)}), 500
+
+# Actualizar un curso
+@api.route('/courses/<int:course_id>', methods=['PUT'])
+@jwt_required()
+def update_course(course_id):
+    try:
+        claims = get_jwt()
+        user_id = get_jwt_identity()
+        
+        course = Course.query.get(course_id)
+        if not course:
+            return jsonify({"msg": "Curso no encontrado"}), 404
+        
+        # Verificar permisos (solo el profesor dueño o admin puede editar)
+        if claims.get('role') != 'admin' and str(course.teacher_id) != user_id:
+            return jsonify({"msg": "No tienes permisos para editar este curso"}), 403
+        
+        data = request.get_json()
+        
+        # Actualizar campos permitidos
+        updatable_fields = [
+            'title', 'description', 'short_description', 'image_url', 
+            'alt_text', 'price', 'discount_price', 'level', 'language',
+            'certificate_available', 'is_published'
+        ]
+        
+        for field in updatable_fields:
+            if field in data:
+                setattr(course, field, data[field])
+        
+        # Actualizar slug si cambió el título
+        if 'title' in data:
+            from slugify import slugify
+            course.slug = slugify(data['title'])
+        
+        course.last_updated = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            "msg": "Curso actualizado exitosamente",
+            "course": course.serialize()
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": "Error al actualizar el curso", "error": str(e)}), 500
+
+# Eliminar un curso
+@api.route('/courses/<int:course_id>', methods=['DELETE'])
+@jwt_required()
+def delete_course(course_id):
+    try:
+        claims = get_jwt()
+        user_id = get_jwt_identity()
+        
+        course = Course.query.get(course_id)
+        if not course:
+            return jsonify({"msg": "Curso no encontrado"}), 404
+        
+        # Verificar permisos (solo el profesor dueño o admin puede eliminar)
+        if claims.get('role') != 'admin' and str(course.teacher_id) != user_id:
+            return jsonify({"msg": "No tienes permisos para eliminar este curso"}), 403
+        
+        db.session.delete(course)
+        db.session.commit()
+        
+        return jsonify({"msg": "Curso eliminado exitosamente"}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": "Error al eliminar el curso", "error": str(e)}), 500

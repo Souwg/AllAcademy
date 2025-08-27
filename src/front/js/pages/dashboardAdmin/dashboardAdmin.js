@@ -11,6 +11,32 @@ export const DashboardAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeView, setActiveView] = useState("dashboard");
+  const [courses, setCourses] = useState([]);
+  const [coursesLoading, setCoursesLoading] = useState(false);
+  const [coursesError, setCoursesError] = useState(null);
+  const [courseFormData, setCourseFormData] = useState({
+    title: "",
+    description: "",
+    short_description: "",
+    price: 0,
+    discount_price: 0,
+    level: "BEGINNER",
+    language: "Spanish",
+    certificate_available: true,
+    is_published: false,
+    image_url: "",
+    alt_text: "",
+    what_you_learn: [""],
+    requirements: [""],
+  });
+
+  const [learningObjectives, setLearningObjectives] = useState([""]);
+  const [requirements, setRequirements] = useState([""]);
+  const [courseCreationStatus, setCourseCreationStatus] = useState({
+    loading: false,
+    error: null,
+    success: false,
+  });
 
   // Estados para modales
   const [showModal, setShowModal] = useState(false);
@@ -33,6 +59,24 @@ export const DashboardAdmin = () => {
   const [searchAdmins, setSearchAdmins] = useState("");
   const [searchTeachers, setSearchTeachers] = useState("");
   const [searchStudents, setSearchStudents] = useState("");
+
+  // Función para redirigir al login con mensaje
+  const redirectToLogin = (message) => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    // Mostrar mensaje con SweetAlert antes de redirigir
+    Swal.fire({
+      icon: "warning",
+      title: "Sesión expirada",
+      text: message,
+      confirmButtonText: "Ir al login",
+      timer: 3000,
+      timerProgressBar: true,
+    }).then(() => {
+      window.location.href = "/login";
+    });
+  };
 
   // 1. Lógica para cargar usuarios
   useEffect(() => {
@@ -95,24 +139,6 @@ export const DashboardAdmin = () => {
       }
     };
 
-    // Función para redirigir al login con mensaje
-    const redirectToLogin = (message) => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-
-      // Mostrar mensaje con SweetAlert antes de redirigir
-      Swal.fire({
-        icon: "warning",
-        title: "Sesión expirada",
-        text: message,
-        confirmButtonText: "Ir al login",
-        timer: 3000,
-        timerProgressBar: true,
-      }).then(() => {
-        window.location.href = "/login";
-      });
-    };
-
     fetchUsers();
   }, []);
 
@@ -162,6 +188,7 @@ export const DashboardAdmin = () => {
       setDeleteStatus({ loading: false, error: null, success: false });
     }
   };
+
   // Función para bloquear usuario
   const handleBlockUser = async (userId) => {
     try {
@@ -206,27 +233,35 @@ export const DashboardAdmin = () => {
         throw new Error(errorData.msg || "Error al bloquear usuario");
       }
 
-      // Actualizar la lista de usuarios
+      // Obtener la respuesta completa que incluye el contador actualizado
+      const responseData = await response.json();
+      const updatedUser = responseData.user; // Asegúrate de que el backend devuelve el usuario actualizado
+
+      // Actualizar la lista de usuarios con TODOS los datos actualizados
       const updatedUsers = users.map((user) =>
         user.id === userId
-          ? { ...user, is_blocked: true, block_reason: reason }
+          ? {
+              ...user,
+              is_blocked: true,
+              block_reason: reason,
+              block_count: updatedUser.block_count, // Asegúrate de actualizar el contador
+            }
           : user
       );
       setUsers(updatedUsers);
 
-      // Notificación de éxito con SweetAlert
-      Swal.fire({
-        icon: "success",
-        title: "Usuario bloqueado",
-        text: "El usuario ha sido bloqueado correctamente",
-        timer: 3000,
-        showConfirmButton: false,
-        timerProgressBar: true,
+      setNotification({
+        show: true,
+        type: "success",
+        message: "Usuario bloqueado correctamente",
       });
+
+      setTimeout(
+        () => setNotification({ show: false, type: "", message: "" }),
+        3000
+      );
     } catch (err) {
       console.error("Error al bloquear usuario:", err);
-
-      // Notificación de error con SweetAlert
       Swal.fire({
         icon: "error",
         title: "Error",
@@ -235,6 +270,182 @@ export const DashboardAdmin = () => {
       });
     }
   };
+  const handleCourseInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setCourseFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const addLearningObjective = () => {
+    setLearningObjectives((prev) => [...prev, ""]);
+  };
+
+  const removeLearningObjective = (index) => {
+    if (learningObjectives.length > 1) {
+      const updated = learningObjectives.filter((_, i) => i !== index);
+      setLearningObjectives(updated);
+      setCourseFormData((prev) => ({
+        ...prev,
+        what_you_learn: updated.filter((obj) => obj.trim() !== ""),
+      }));
+    }
+  };
+
+  const handleLearningObjectiveChange = (index, value) => {
+    const updated = [...learningObjectives];
+    updated[index] = value;
+    setLearningObjectives(updated);
+    setCourseFormData((prev) => ({
+      ...prev,
+      what_you_learn: updated.filter((obj) => obj.trim() !== ""),
+    }));
+  };
+
+  const addRequirement = () => {
+    setRequirements((prev) => [...prev, ""]);
+  };
+
+  const removeRequirement = (index) => {
+    if (requirements.length > 1) {
+      const updated = requirements.filter((_, i) => i !== index);
+      setRequirements(updated);
+      setCourseFormData((prev) => ({
+        ...prev,
+        requirements: updated.filter((req) => req.trim() !== ""),
+      }));
+    }
+  };
+
+  const handleRequirementChange = (index, value) => {
+    const updated = [...requirements];
+    updated[index] = value;
+    setRequirements(updated);
+    setCourseFormData((prev) => ({
+      ...prev,
+      requirements: updated.filter((req) => req.trim() !== ""),
+    }));
+  };
+
+  const handleCreateCourse = async (isDraft = false) => {
+    setCourseCreationStatus({ loading: true, error: null, success: false });
+
+    try {
+      const token = localStorage.getItem("token");
+
+      // Preparar datos finales
+      const finalData = {
+        ...courseFormData,
+        is_published: isDraft ? false : courseFormData.is_published,
+        what_you_learn: learningObjectives.filter((obj) => obj.trim() !== ""),
+        requirements: requirements.filter((req) => req.trim() !== ""),
+        price: parseFloat(courseFormData.price),
+        discount_price: courseFormData.discount_price
+          ? parseFloat(courseFormData.discount_price)
+          : 0,
+      };
+
+      const response = await fetch("http://localhost:3001/api/courses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(finalData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.msg || "Error al crear el curso");
+      }
+
+      setCourseCreationStatus({
+        loading: false,
+        error: null,
+        success: true,
+      });
+
+      // Mostrar notificación de éxito
+      setNotification({
+        show: true,
+        type: "success",
+        message: isDraft
+          ? "Curso guardado como borrador correctamente"
+          : "Curso creado exitosamente",
+      });
+
+      // Resetear formulario después de éxito
+      if (!isDraft) {
+        setCourseFormData({
+          title: "",
+          description: "",
+          short_description: "",
+          price: 0,
+          discount_price: 0,
+          level: "BEGINNER",
+          language: "Spanish",
+          certificate_available: true,
+          is_published: false,
+          image_url: "",
+          alt_text: "",
+          what_you_learn: [""],
+          requirements: [""],
+        });
+        setLearningObjectives([""]);
+        setRequirements([""]);
+      }
+    } catch (err) {
+      console.error("Error al crear curso:", err);
+      setCourseCreationStatus({
+        loading: false,
+        error: err.message,
+        success: false,
+      });
+
+      setNotification({
+        show: true,
+        type: "error",
+        message: err.message || "Error al crear el curso",
+      });
+    }
+  };
+  // Función para cargar cursos
+  const fetchCourses = async () => {
+    setCoursesLoading(true);
+    setCoursesError(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:3001/api/admin/courses", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al obtener cursos");
+      }
+
+      const data = await response.json();
+      setCourses(data);
+    } catch (err) {
+      console.error("Error fetching courses:", err);
+      setCoursesError(err.message);
+    } finally {
+      setCoursesLoading(false);
+    }
+  };
+
+  // Efecto para cargar cursos cuando se active la vista
+  useEffect(() => {
+    if (activeView === "courses") {
+      fetchCourses();
+    }
+  }, [activeView]);
   // Función para desbloquear usuario
   const handleUnblockUser = async (userId) => {
     try {
@@ -347,7 +558,6 @@ export const DashboardAdmin = () => {
     admins: users.filter((u) => u.role === "admin").length,
     teachers: users.filter((u) => u.role === "teacher").length,
     students: users.filter((u) => u.role === "student").length,
-    regular: users.filter((u) => u.role === "user" || !u.role).length,
   });
 
   // 5. Filtrado de usuarios
@@ -387,6 +597,22 @@ export const DashboardAdmin = () => {
         setShowDeleteModal={setShowDeleteModal}
         handleBlockUser={handleBlockUser}
         handleUnblockUser={handleUnblockUser}
+        courseFormData={courseFormData}
+        learningObjectives={learningObjectives}
+        requirements={requirements}
+        courseCreationStatus={courseCreationStatus}
+        handleCourseInputChange={handleCourseInputChange}
+        handleLearningObjectiveChange={handleLearningObjectiveChange}
+        handleRequirementChange={handleRequirementChange}
+        addLearningObjective={addLearningObjective}
+        removeLearningObjective={removeLearningObjective}
+        addRequirement={addRequirement}
+        removeRequirement={removeRequirement}
+        handleCreateCourse={handleCreateCourse}
+        courses={courses}
+        coursesLoading={coursesLoading}
+        coursesError={coursesError}
+        onRefreshCourses={fetchCourses} // Para poder recargar
       />
 
       <AdminModals
@@ -399,10 +625,8 @@ export const DashboardAdmin = () => {
         deleteStatus={deleteStatus}
         handleDeleteUser={handleDeleteUser}
         handleRoleChange={handleRoleChange}
-        notification={notification} // <-- Asegúrate de pasar esta prop
-        setNotification={setNotification} // <-- Y esta si la usas
-        handleBlockUser={handleBlockUser}
-        handleUnblockUser={handleUnblockUser}
+        notification={notification}
+        setNotification={setNotification}
       />
     </div>
   );

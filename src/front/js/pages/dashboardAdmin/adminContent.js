@@ -20,6 +20,22 @@ export const AdminContent = ({
   setShowDeleteModal,
   handleBlockUser,
   handleUnblockUser,
+  courseFormData,
+  learningObjectives,
+  requirements,
+  courseCreationStatus,
+  handleCourseInputChange,
+  handleLearningObjectiveChange,
+  handleRequirementChange,
+  addLearningObjective,
+  removeLearningObjective,
+  addRequirement,
+  removeRequirement,
+  handleCreateCourse,
+  courses,
+  coursesLoading,
+  coursesError,
+  onRefreshCourses,
 }) => {
   // Función para renderizar la tabla de usuarios
   const renderUserTable = (usersToRender) => {
@@ -265,6 +281,381 @@ export const AdminContent = ({
     );
   };
 
+  // Función para renderizar la creación de cursos
+  const renderCourseCreation = () => {
+    return (
+      <div className="course-creation-container">
+        <div className="creation-header">
+          <h2>Crear Nuevo Curso</h2>
+          <p>
+            Completa la información para crear un nuevo curso en la plataforma
+          </p>
+        </div>
+
+        <form
+          className="course-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleCreateCourse(false);
+          }}
+        >
+          {/* Sección de información básica */}
+          <div className="form-section">
+            <h3>Información Básica</h3>
+            <div className="form-grid">
+              <div className="form-group full-width">
+                <label htmlFor="title">Título del Curso *</label>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={courseFormData.title}
+                  onChange={handleCourseInputChange}
+                  placeholder="Ej: Introducción a React JS"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="price">Precio ($) *</label>
+                <input
+                  type="number"
+                  id="price"
+                  name="price"
+                  value={courseFormData.price}
+                  onChange={handleCourseInputChange}
+                  min="0"
+                  step="0.01"
+                  placeholder="29.99"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="discount_price">Precio con Descuento ($)</label>
+                <input
+                  type="number"
+                  id="discount_price"
+                  name="discount_price"
+                  value={courseFormData.discount_price}
+                  onChange={handleCourseInputChange}
+                  min="0"
+                  step="0.01"
+                  placeholder="19.99"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="level">Nivel *</label>
+                <select
+                  id="level"
+                  name="level"
+                  value={courseFormData.level}
+                  onChange={handleCourseInputChange}
+                  required
+                >
+                  <option value="BEGINNER">Principiante</option>
+                  <option value="INTERMEDIATE">Intermedio</option>
+                  <option value="ADVANCED">Avanzado</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="language">Idioma *</label>
+                <select
+                  id="language"
+                  name="language"
+                  value={courseFormData.language}
+                  onChange={handleCourseInputChange}
+                  required
+                >
+                  <option value="Spanish">Español</option>
+                  <option value="English">Inglés</option>
+                  <option value="Portuguese">Portugués</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Sección de descripción */}
+          <div className="form-section">
+            <h3>Descripción del Curso</h3>
+            <div className="form-grid">
+              <div className="form-group full-width">
+                <label htmlFor="short_description">Descripción Corta *</label>
+                <textarea
+                  id="short_description"
+                  name="short_description"
+                  value={courseFormData.short_description}
+                  onChange={handleCourseInputChange}
+                  rows="3"
+                  placeholder="Breve descripción que aparecerá en la lista de cursos"
+                  required
+                ></textarea>
+              </div>
+
+              <div className="form-group full-width">
+                <label htmlFor="description">Descripción Completa *</label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={courseFormData.description}
+                  onChange={handleCourseInputChange}
+                  rows="6"
+                  placeholder="Describe en detalle el contenido y objetivos del curso"
+                  required
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          {/* Sección de imagen */}
+          <div className="form-section">
+            <h3>Imagen del Curso</h3>
+            <div className="form-grid">
+              <div className="form-group full-width">
+                <label htmlFor="image_url">URL de la Imagen</label>
+                <input
+                  type="url"
+                  id="image_url"
+                  name="image_url"
+                  value={courseFormData.image_url}
+                  onChange={handleCourseInputChange}
+                  placeholder="https://ejemplo.com/imagen-curso.jpg"
+                />
+              </div>
+
+              <div className="form-group full-width">
+                <label htmlFor="alt_text">
+                  Texto Alternativo para la Imagen
+                </label>
+                <input
+                  type="text"
+                  id="alt_text"
+                  name="alt_text"
+                  value={courseFormData.alt_text}
+                  onChange={handleCourseInputChange}
+                  placeholder="Descripción de la imagen para accesibilidad"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Sección de objetivos de aprendizaje */}
+          <div className="form-section">
+            <h3>¿Qué aprenderán los estudiantes?</h3>
+            <div className="form-group full-width">
+              <div className="dynamic-list">
+                <div className="list-items">
+                  {learningObjectives.map((objective, index) => (
+                    <div key={index} className="list-item">
+                      <input
+                        type="text"
+                        value={objective}
+                        onChange={(e) =>
+                          handleLearningObjectiveChange(index, e.target.value)
+                        }
+                        placeholder="Ej: Crear componentes reutilizables en React"
+                      />
+                      {learningObjectives.length > 1 && (
+                        <button
+                          type="button"
+                          className="remove-item-btn"
+                          onClick={() => removeLearningObjective(index)}
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className="add-item-btn"
+                  onClick={addLearningObjective}
+                >
+                  + Agregar objetivo de aprendizaje
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Sección de requisitos */}
+          <div className="form-section">
+            <h3>Requisitos del Curso</h3>
+            <div className="form-group full-width">
+              <div className="dynamic-list">
+                <div className="list-items">
+                  {requirements.map((requirement, index) => (
+                    <div key={index} className="list-item">
+                      <input
+                        type="text"
+                        value={requirement}
+                        onChange={(e) =>
+                          handleRequirementChange(index, e.target.value)
+                        }
+                        placeholder="Ej: Conocimientos básicos de JavaScript"
+                      />
+                      {requirements.length > 1 && (
+                        <button
+                          type="button"
+                          className="remove-item-btn"
+                          onClick={() => removeRequirement(index)}
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className="add-item-btn"
+                  onClick={addRequirement}
+                >
+                  + Agregar requisito
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Sección de opciones adicionales */}
+          <div className="form-section">
+            <h3>Opciones Adicionales</h3>
+            <div className="form-grid">
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    id="certificate_available"
+                    name="certificate_available"
+                    checked={courseFormData.certificate_available}
+                    onChange={handleCourseInputChange}
+                  />
+                  <span>Incluir certificado de finalización</span>
+                </label>
+              </div>
+
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    id="is_published"
+                    name="is_published"
+                    checked={courseFormData.is_published}
+                    onChange={handleCourseInputChange}
+                  />
+                  <span>Publicar curso inmediatamente</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Botones de acción */}
+          <div className="form-actions">
+            <button
+              type="button"
+              className="btn-cancel"
+              onClick={() => setActiveView("courses")}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => handleCreateCourse(true)}
+              disabled={courseCreationStatus.loading}
+            >
+              {courseCreationStatus.loading
+                ? "Guardando..."
+                : "Guardar como borrador"}
+            </button>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={courseCreationStatus.loading}
+            >
+              {courseCreationStatus.loading ? "Creando..." : "Crear Curso"}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  };
+  // Función para renderizar la lista de cursos existentes
+  const renderCoursesList = () => {
+    if (coursesLoading) {
+      return <div className="loading">Cargando cursos...</div>;
+    }
+
+    if (coursesError) {
+      return (
+        <div className="error">
+          Error: {coursesError}
+          <button onClick={onRefreshCourses}>Reintentar</button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="courses-management">
+        <div className="section-header">
+          <h3>Cursos Existentes</h3>
+          <button onClick={onRefreshCourses} className="refresh-btn">
+            Actualizar
+          </button>
+        </div>
+
+        <div className="courses-grid">
+          {courses.map((course) => (
+            <div key={course.id} className="course-card">
+              <div className="course-image">
+                {course.image_url ? (
+                  <img
+                    src={course.image_url}
+                    alt={course.alt_text || course.title}
+                  />
+                ) : (
+                  <div className="course-image-placeholder">📚</div>
+                )}
+              </div>
+
+              <div className="course-info">
+                <h4>{course.title}</h4>
+                <p className="course-description">{course.short_description}</p>
+
+                <div className="course-meta">
+                  <span
+                    className={`status ${
+                      course.is_published ? "published" : "draft"
+                    }`}
+                  >
+                    {course.is_published ? "📢 Publicado" : "📝 Borrador"}
+                  </span>
+                  <span className="price">${course.price}</span>
+                  {course.discount_price > 0 && (
+                    <span className="discount">${course.discount_price}</span>
+                  )}
+                </div>
+
+                <div className="course-actions">
+                  <button className="btn-edit">Editar</button>
+                  <button className="btn-view">Ver detalles</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {courses.length === 0 && (
+          <div className="empty-state">
+            <p>No hay cursos creados todavía</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Renderizado del header
   const renderHeader = () => {
     const titles = {
@@ -296,6 +687,11 @@ export const AdminContent = ({
           renderDashboard()
         ) : activeView === "users" ? (
           renderUsersView()
+        ) : activeView === "courses" ? (
+          <div className="courses-container">
+            {renderCourseCreation()} {/* Formulario de creación */}
+            {renderCoursesList()} {/* Lista de cursos existentes */}
+          </div>
         ) : (
           <div>Vista en desarrollo</div>
         )}

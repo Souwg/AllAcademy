@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import man from "../../img/man.png";
 import "../../styles/Login.css";
 import { Link, useNavigate } from "react-router-dom";
@@ -14,6 +14,7 @@ export const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
+  const isMounted = useRef(true);
 
   // Verificar si hay una sesión activa al montar el componente
   useEffect(() => {
