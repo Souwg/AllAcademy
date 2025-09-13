@@ -13,6 +13,7 @@ from api.admin import setup_admin
 from api.commands import setup_commands
 from datetime import datetime
 from flask_jwt_extended import get_jwt, jwt_required
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from api.models import db, User, BlockedTokenList
 from flask_cors import CORS
 
@@ -59,34 +60,38 @@ def check_if_token_revoked(jwt_header, jwt_payload):
 
 @app.before_request
 def check_user_blocked():
-    # Excluir rutas de autenticación y estáticas
-    if request.path.startswith('/api/auth') or request.path == '/':
-        return
-    
-    try:
-        # Solo verificar para rutas que requieren autenticación
-        if request.path.startswith('/api/'):
-            jwt_data = get_jwt()
-            user_id = jwt_data.get('sub')
-            if user_id:
-                user = User.query.get(user_id)
-                if user and user.is_blocked:
-                    if user.blocked_until and user.blocked_until > datetime.utcnow():
-                        return jsonify({
-                            "msg": f"Usuario bloqueado. Razón: {user.block_reason}",
-                            "blocked_until": user.blocked_until.isoformat()
-                        }), 403
-                    elif user.is_blocked and (not user.blocked_until or user.blocked_until <= datetime.utcnow()):
-                        # Desbloquear automáticamente si el tiempo de bloqueo expiró
-                        user.is_blocked = False
-                        user.block_reason = None
-                        user.blocked_until = None
-                        db.session.commit()
-    except Exception as e:
-        # No hay JWT válido o otro error, continuar con la solicitud
-        app.logger.debug(f"Error en check_user_blocked: {str(e)}")
-        pass
+    public_paths = [
+        "/api/signup",
+        "/api/login",
+        "/api/courses",
+        "/"
+    ]
 
+    if (
+        request.path in public_paths
+        or request.path.startswith("/static")
+        or request.method == "OPTIONS"
+    ):
+        return
+
+    try:
+        verify_jwt_in_request(optional=True)
+        user_id = get_jwt_identity()
+
+        if user_id:
+            user = User.query.get(user_id)
+            if user and user.is_blocked:
+                return (
+                    jsonify(
+                        {
+                            "msg": "Tu cuenta está bloqueada",
+                            "reason": user.block_reason,
+                        }
+                    ),
+                    403,
+                )
+    except Exception:
+        pass
 
 # add the admin
 setup_admin(app)

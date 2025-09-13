@@ -36,6 +36,7 @@ export const AdminContent = ({
   coursesLoading,
   coursesError,
   onRefreshCourses,
+  onDeleteCourse,
 }) => {
   // Función para renderizar la tabla de usuarios
   const renderUserTable = (usersToRender) => {
@@ -638,9 +639,60 @@ export const AdminContent = ({
                   )}
                 </div>
 
+                <div className="course-details">
+                  <p>
+                    <strong>Nivel:</strong> {course.level}
+                  </p>
+                  <p>
+                    <strong>Idioma:</strong> {course.language}
+                  </p>
+                  <p>
+                    <strong>Certificado:</strong>{" "}
+                    {course.certificate_available ? "Sí" : "No"}
+                  </p>
+
+                  {course.what_you_learn && course.what_you_learn.length > 0 && (
+                    <div className="learning-objectives">
+                      <strong>Lo que aprenderán:</strong>
+                      <ul>
+                        {course.what_you_learn.map((objective, index) => (
+                          <li key={index}>{objective}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {/* AQUÍ ESTÁ LA SECCIÓN NUEVA - Learning Objectives */}
+                  {course.whatYouLearn && course.whatYouLearn.length > 0 && (
+                    <div className="learning-objectives">
+                      <strong>Lo que aprenderán:</strong>
+                      <ul>
+                        {course.whatYouLearn.map((objective, index) => (
+                          <li key={index}>{objective}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {course.requirements && course.requirements.length > 0 && (
+                    <div className="requirements">
+                      <strong>Requisitos:</strong>
+                      <ul>
+                        {course.requirements.map((requirement, index) => (
+                          <li key={index}>{requirement}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
                 <div className="course-actions">
-                  <button className="btn-edit">Editar</button>
-                  <button className="btn-view">Ver detalles</button>
+                  <button
+                    className="btn-delete"
+                    onClick={() => onDeleteCourse(course.id)}
+                    title="Eliminar curso"
+                  >
+                    Eliminar
+                  </button>
                 </div>
               </div>
             </div>
@@ -689,8 +741,8 @@ export const AdminContent = ({
           renderUsersView()
         ) : activeView === "courses" ? (
           <div className="courses-container">
-            {renderCourseCreation()} {/* Formulario de creación */}
-            {renderCoursesList()} {/* Lista de cursos existentes */}
+            {renderCourseCreation()}
+            {renderCoursesList()}
           </div>
         ) : (
           <div>Vista en desarrollo</div>

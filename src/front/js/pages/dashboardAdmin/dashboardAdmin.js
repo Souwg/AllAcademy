@@ -272,14 +272,16 @@ export const DashboardAdmin = () => {
   };
   const handleCourseInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+
+    // DEBUG: Verifica específicamente el campo 'level'
+    if (name === "level") {
+      console.log("Nivel seleccionado:", value, "Tipo:", typeof value);
+    }
+
     setCourseFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
-  };
-
-  const addLearningObjective = () => {
-    setLearningObjectives((prev) => [...prev, ""]);
   };
 
   const removeLearningObjective = (index) => {
@@ -291,6 +293,10 @@ export const DashboardAdmin = () => {
         what_you_learn: updated.filter((obj) => obj.trim() !== ""),
       }));
     }
+  };
+
+  const addLearningObjective = () => {
+    setLearningObjectives((prev) => [...prev, ""]);
   };
 
   const handleLearningObjectiveChange = (index, value) => {
@@ -408,6 +414,56 @@ export const DashboardAdmin = () => {
         show: true,
         type: "error",
         message: err.message || "Error al crear el curso",
+      });
+    }
+  };
+
+  //función para eliminar cursos//
+  const handleDeleteCourse = async (courseId) => {
+    try {
+      const result = await Swal.fire({
+        title: "¿Estás seguro?",
+        text: "Esta acción no se puede deshacer. El curso será eliminado permanentemente.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar",
+      });
+
+      if (result.isConfirmed) {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          `http://localhost:3001/api/courses/${courseId}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.msg || "Error al eliminar el curso");
+        }
+
+        // Eliminar el curso del estado local
+        setCourses(courses.filter((course) => course.id !== courseId));
+
+        Swal.fire(
+          "¡Eliminado!",
+          "El curso ha sido eliminado correctamente.",
+          "success"
+        );
+      }
+    } catch (err) {
+      console.error("Error al eliminar curso:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: err.message || "Error al eliminar el curso",
       });
     }
   };
@@ -612,7 +668,8 @@ export const DashboardAdmin = () => {
         courses={courses}
         coursesLoading={coursesLoading}
         coursesError={coursesError}
-        onRefreshCourses={fetchCourses} // Para poder recargar
+        onRefreshCourses={fetchCourses}
+        onDeleteCourse={handleDeleteCourse}
       />
 
       <AdminModals
