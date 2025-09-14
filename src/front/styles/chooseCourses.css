@@ -1,14 +1,4 @@
-@media (max-width: 768px) {
-  .course-title {
-    font-size: 1.1rem; /* Reducir tamaño de título en móviles */
-  }
-
-  .card-body {
-    padding: 1rem !important; /* Reducir padding en móviles */
-  }
-}
-
-/*title Popular courses*/
+/* Estilos del encabezado */
 .popular-courses-header {
   text-align: start;
   margin-bottom: 10px;
@@ -17,35 +7,243 @@
 
 .title-with-line {
   display: flex;
-  align-items: center; /* Alinea verticalmente el título y la línea */
-  gap: 15px; /* Espacio entre el título y la línea */
+  align-items: center;
+  gap: 15px;
 }
 
 .popular-courses-header h2 {
   font-size: 16px;
   font-weight: 700;
   text-transform: uppercase;
-  margin-bottom: 0; /* Eliminamos el margen inferior para mejor alineación */
+  margin-bottom: 0;
   color: #001933;
 }
 
 .title-line {
-  width: 120px; /* Ancho de la línea */
-  height: 2px; /* Grosor de la línea */
-  background-color: #001933; /* Color de la línea */
-  /* Si la línea tiene un color diferente (ej. rojo, azul), cámbialo aquí */
+  width: 120px;
+  height: 2px;
+  background-color: #001933;
 }
 
 .popular-courses-header p {
   font-size: 45px;
   color: #001933;
   font-weight: 700;
-  margin-top: 10px; /* Espacio entre el título y el subtítulo */
+  margin-top: 10px;
 }
+
 .underline {
   text-decoration: underline;
-  /* Opcional: Personalizar el subrayado */
-  text-decoration-thickness: 3px; /* Grosor del subrayado */
-  text-underline-offset: 3px; /* Espacio entre texto y subrayado */
+  text-decoration-thickness: 3px;
+  text-underline-offset: 3px;
   color: #2d3078;
+}
+
+/* Estilos para las tarjetas modernas */
+.modern-course-card {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.modern-course-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+}
+
+.course-image-container {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.course-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.course-hover-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(45, 48, 120, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modern-course-card:hover .course-hover-overlay {
+  opacity: 1;
+}
+
+.preview-button {
+  color: white;
+  background: transparent;
+  border: 2px solid white;
+  padding: 10px 25px;
+  border-radius: 30px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.preview-button:hover {
+  background: white;
+  color: #2d3078;
+}
+
+.course-card-content {
+  padding: 20px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.course-category-badge {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: #2d3078;
+  color: white;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 2;
+}
+
+.course-meta {
+  margin-bottom: 15px;
+}
+
+.course-level {
+  background: #f0f2f5;
+  color: #2d3078;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.course-title-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.course-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #001933;
+  transition: color 0.3s ease;
+}
+
+.course-title:hover {
+  color: #2d3078;
+}
+
+.course-description {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+  flex-grow: 1;
+}
+
+.course-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.course-stats {
+  display: flex;
+  gap: 15px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.stat-item i {
+  margin-right: 5px;
+  color: #2d3078;
+}
+
+.course-price-container {
+  text-align: right;
+}
+
+.price {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #2d3078;
+}
+
+/* Efecto hover para la imagen */
+.modern-course-card:hover .course-image {
+  transform: scale(1.05);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .course-title {
+    font-size: 1.1rem;
+  }
+
+  .course-description {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .modern-course-card {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .course-image-container {
+    height: 180px;
+  }
+
+  .popular-courses-header p {
+    font-size: 36px;
+  }
+
+  .title-line {
+    width: 80px;
+  }
+}
+
+@media (max-width: 576px) {
+  .course-image-container {
+    height: 160px;
+  }
+
+  .course-card-content {
+    padding: 15px;
+  }
+
+  .popular-courses-header p {
+    font-size: 28px;
+  }
+
+  .popular-courses-header h2 {
+    font-size: 14px;
+  }
 }

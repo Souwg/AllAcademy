@@ -11,13 +11,30 @@ from api.models import db
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
-
-# from models import Person
+from datetime import datetime
+from flask_jwt_extended import get_jwt, jwt_required
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+from api.models import db, User, BlockedTokenList
+from flask_cors import CORS
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../public/')
 app = Flask(__name__)
+
+CORS(app, resources={
+    r"/api/*": {
+        "origins": ["http://localhost:3000"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
+        "supports_credentials": True
+    }
+})
+
+app.url_map.strict_slashes = False
+app.config["JWT_SECRET_KEY"] = os.getenv('JWT_SECRET_KEY')
+jwt = JWTManager(app)
+
 app.url_map.strict_slashes = False
 
 app.config["JWT_SECRET_KEY"] = os.getenv('JWT_SECRET_KEY')
@@ -34,6 +51,47 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db, compare_type=True)
 db.init_app(app)
+
+@jwt.token_in_blocklist_loader
+def check_if_token_revoked(jwt_header, jwt_payload):
+    jti = jwt_payload["jti"]
+    token = BlockedTokenList.query.filter_by(jti=jti).first()
+    return token is not None
+
+@app.before_request
+def check_user_blocked():
+    public_paths = [
+        "/api/signup",
+        "/api/login",
+        "/api/courses",
+        "/"
+    ]
+
+    if (
+        request.path in public_paths
+        or request.path.startswith("/static")
+        or request.method == "OPTIONS"
+    ):
+        return
+
+    try:
+        verify_jwt_in_request(optional=True)
+        user_id = get_jwt_identity()
+
+        if user_id:
+            user = User.query.get(user_id)
+            if user and user.is_blocked:
+                return (
+                    jsonify(
+                        {
+                            "msg": "Tu cuenta está bloqueada",
+                            "reason": user.block_reason,
+                        }
+                    ),
+                    403,
+                )
+    except Exception:
+        pass
 
 # add the admin
 setup_admin(app)

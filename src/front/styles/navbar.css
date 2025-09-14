@@ -48,3 +48,68 @@
 .show .dropdown-arrow {
   transform: rotate(180deg);
 }
+
+/* Efectos hover para los enlaces */
+.nav-link {
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.nav-link:hover {
+  color: #e4263c !important;
+}
+
+.nav-link-underline {
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: #e4263c;
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover .nav-link-underline {
+  width: 100%;
+}
+
+/* Efectos para el dropdown */
+.dropdown-toggle:hover .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa !important;
+  transform: translateX(5px);
+}
+
+/* Botones con efectos */
+.contact-btn:hover {
+  background-color: #c11e32 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(228, 38, 60, 0.2);
+}
+
+.login-btn:hover,
+.logout-btn:hover {
+  border-color: #e4263c !important;
+  color: #e4263c !important;
+  transform: translateY(-2px);
+}
+
+/* Sección de usuario */
+.user-section {
+  position: relative;
+  padding-left: 15px;
+}
+
+.user-section::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 60%;
+  width: 2px;
+  background-color: #eee;
+}

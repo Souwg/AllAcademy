@@ -1,35 +1,114 @@
+/* styles/skillsHome.css */
+
 /* Estilos generales del contenedor */
 .skills-home-container {
-  background-color: #f7f7f7;
-  text-align: center;
-  margin-bottom: 2rem;
-  border-end-end-radius: 4rem;
-  border-end-start-radius: 4rem;
+  background: linear-gradient(to right, #e7ecf5 0%, #c8d3e3 100%) !important;
+  padding: 3rem 0;
+  border-radius: 0 0 20px 20px;
+  width: 100vw;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* Estilos de la fila principal */
 .skills-home-row {
-  padding-top: 8rem;
   align-items: center;
+  padding-top: 8rem;
 }
 
 /* Estilos para la columna de imagen principal */
 .skills-home-main-img-col {
+  position: relative;
+  margin-left: -15px;
   display: flex;
   justify-content: center;
   margin-bottom: 5rem;
 }
 
-@media (min-width: 768px) {
-  .skills-home-main-img-col {
-    margin-bottom: 0;
-  }
+.skills-home-main-img-wrapper {
+  position: relative;
+  margin-left: -15px;
 }
 
 .skills-home-main-img {
+  margin-left: 15px;
   max-height: 700px;
   width: auto;
   object-fit: contain;
+}
+
+/* Tarjeta horizontal mejorada */
+.skills-home-card {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 95%;
+  max-width: 420px;
+  height: 90px;
+  background: white;
+  border-radius: 12px;
+  padding: 0 25px;
+  box-shadow: 0 8px 25px rgba(45, 48, 120, 0.12);
+  z-index: 2;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.skills-home-card-content {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.skills-home-card-icon {
+  width: 45px;
+  height: 45px;
+  background: linear-gradient(135deg, #2d3078 0%, #6a1b9a 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+.skills-home-card-text h5 {
+  font-weight: 600;
+  color: #2d3078;
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+
+.skills-home-card-status {
+  display: flex;
+  align-items: center;
+}
+
+.skills-home-card-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #00c9ff;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.skills-home-card-status-text {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.skills-home-card-progress {
+  width: 55px;
+  height: 55px;
+  margin-left: 15px;
+}
+
+.skills-home-card-progress svg {
+  width: 100%;
+  height: 100%;
 }
 
 /* Estilos para la columna de texto */
@@ -37,11 +116,14 @@
   margin-bottom: 5rem;
 }
 
-@media (min-width: 992px) {
-  .skills-home-text-col {
-    margin-bottom: 0;
-  }
+.skills-home-subtitle {
+  font-weight: 700;
+  color: #001933;
+  font-size: 16px;
 }
+
+/*.title-line {
+  /* Agrega aquí los estilos para la línea del título si es necesario */
 
 .skills-home-title {
   text-align: start;
@@ -53,41 +135,29 @@
 }
 
 .skills-home-description {
+  color: #333;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
   text-align: start;
-  font-size: clamp(1rem, 1.5vw, 1.5rem);
-  line-height: 1.5;
-  margin-bottom: clamp(2rem, 5vw, 6rem);
 }
 
 /* Estilos para los botones y texto adicional */
 .skills-home-button-col {
+  position: relative;
   padding-top: 2rem;
   padding-right: 2rem;
   margin-bottom: 1rem;
-  position: relative;
-}
-
-@media (min-width: 992px) {
-  .skills-home-button-col {
-    margin-bottom: 0;
-  }
 }
 
 .skills-home-divider {
   display: none;
   position: absolute;
-  right: 0;
+  right: 20px;
   top: 0;
   height: 100%;
   width: 1px;
-  background-color: #dee2e6;
-  right: -15px;
-}
-
-@media (min-width: 992px) {
-  .skills-home-divider {
-    display: block;
-  }
+  background-color: #545454;
 }
 
 .skills-home-additional-text {
@@ -97,24 +167,12 @@
   padding-left: 1rem;
 }
 
-@media (min-width: 992px) {
-  .skills-home-additional-text {
-    padding-left: 1.5rem;
-  }
-}
-
 /* Estilos para la columna de imágenes secundarias */
 .skills-home-secondary-col {
   display: none;
   justify-content: center;
   position: relative;
   height: 550px;
-}
-
-@media (min-width: 992px) {
-  .skills-home-secondary-col {
-    display: flex;
-  }
 }
 
 .skills-home-secondary-img-container {
@@ -154,9 +212,9 @@
   border: 0 solid;
   box-sizing: border-box;
 }
+
 .btn-18 {
   -webkit-tap-highlight-color: transparent;
-
   background-color: #000;
   background-image: none;
   color: #fff;
@@ -164,55 +222,61 @@
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif,
     Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
-  font-size: 1.1rem; /* Tamaño de fuente aumentado */
+  font-size: 1.1rem;
   font-weight: 900;
   line-height: 1.5;
   margin: 0;
-
-  padding: 1rem 3.5rem; /* Padding aumentado */
+  padding: 1rem 3.5rem;
   text-transform: uppercase;
   border-radius: 99rem;
   border-width: 2px;
   z-index: 0;
 }
+
 .btn-18:disabled {
   cursor: default;
 }
+
 .btn-18:-moz-focusring {
   outline: auto;
 }
+
 .btn-18 svg {
   display: block;
 }
+
 .btn-18 [hidden] {
   display: none;
 }
+
 .btn-18 {
   border-radius: 99rem;
   border-width: 2px;
   padding: 0.8rem 3rem;
   z-index: 0;
 }
+
 .btn-18,
 .btn-18 .text-container {
   overflow: hidden;
   position: relative;
 }
+
 .btn-18 .text-container {
   display: block;
 }
+
 .btn-18 .text {
   display: block;
-  /* Remueve la siguiente línea que causa el efecto amarillento */
-  /* mix-blend-mode: difference; */
   position: relative;
-  color: #fff; /* Asegura que el texto siempre sea blanco */
+  color: #fff;
 }
 
 .btn-18:hover .text {
   -webkit-animation: move-up-alternate 0.3s forwards;
   animation: move-up-alternate 0.3s forwards;
 }
+
 @-webkit-keyframes move-up-alternate {
   0% {
     transform: translateY(0);
@@ -227,6 +291,7 @@
     transform: translateY(0);
   }
 }
+
 @keyframes move-up-alternate {
   0% {
     transform: translateY(0);
@@ -241,6 +306,7 @@
     transform: translateY(0);
   }
 }
+
 .btn-18:after,
 .btn-18:before {
   --tilt: 20px;
@@ -267,6 +333,7 @@
   transition: transform 0.6s;
   width: 100%;
 }
+
 .btn-18:after {
   -webkit-clip-path: polygon(
     var(--tilt) 0,
@@ -279,9 +346,36 @@
   left: 100%;
   z-index: -1;
 }
+
 .btn-18:hover:before {
   transform: translateX(100%);
 }
+
 .btn-18:hover:after {
   transform: translateX(-100%);
+}
+
+/* Media queries */
+@media (min-width: 768px) {
+  .skills-home-main-img-col {
+    margin-bottom: 0;
+  }
+}
+
+@media (min-width: 992px) {
+  .skills-home-text-col {
+    margin-bottom: 0;
+  }
+
+  .skills-home-divider {
+    display: block;
+  }
+
+  .skills-home-secondary-col {
+    display: flex;
+  }
+
+  .skills-home-additional-text {
+    padding-left: 1.5rem;
+  }
 }

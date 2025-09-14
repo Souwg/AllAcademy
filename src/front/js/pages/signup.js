@@ -4,6 +4,89 @@ import "../../styles/signup.css";
 import Swal from "sweetalert2";
 import { Link, useNavigate } from "react-router-dom";
 
+const countries = [
+  { code: "AL", name: "Albania" },
+  { code: "AD", name: "Andorra" },
+  { code: "AG", name: "Antigua and Barbuda" },
+  { code: "AR", name: "Argentina" },
+  { code: "AM", name: "Armenia" },
+  { code: "AT", name: "Austria" },
+  { code: "AZ", name: "Azerbaijan" },
+  { code: "BS", name: "Bahamas" },
+  { code: "BB", name: "Barbados" },
+  { code: "BY", name: "Belarus" },
+  { code: "BE", name: "Belgium" },
+  { code: "BZ", name: "Belize" },
+  { code: "BA", name: "Bosnia and Herzegovina" },
+  { code: "BR", name: "Brazil" },
+  { code: "BG", name: "Bulgaria" },
+  { code: "CA", name: "Canada" },
+  { code: "CL", name: "Chile" },
+  { code: "CO", name: "Colombia" },
+  { code: "CR", name: "Costa Rica" },
+  { code: "HR", name: "Croatia" },
+  { code: "CU", name: "Cuba" },
+  { code: "CY", name: "Cyprus" },
+  { code: "CZ", name: "Czech Republic" },
+  { code: "DK", name: "Denmark" },
+  { code: "DM", name: "Dominica" },
+  { code: "DO", name: "Dominican Republic" },
+  { code: "EC", name: "Ecuador" },
+  { code: "SV", name: "El Salvador" },
+  { code: "EE", name: "Estonia" },
+  { code: "FI", name: "Finland" },
+  { code: "FR", name: "France" },
+  { code: "GE", name: "Georgia" },
+  { code: "DE", name: "Germany" },
+  { code: "GR", name: "Greece" },
+  { code: "GD", name: "Grenada" },
+  { code: "GT", name: "Guatemala" },
+  { code: "HT", name: "Haiti" },
+  { code: "VA", name: "Holy See" },
+  { code: "HN", name: "Honduras" },
+  { code: "HU", name: "Hungary" },
+  { code: "IS", name: "Iceland" },
+  { code: "IE", name: "Ireland" },
+  { code: "IT", name: "Italy" },
+  { code: "JM", name: "Jamaica" },
+  { code: "KZ", name: "Kazakhstan" },
+  { code: "LV", name: "Latvia" },
+  { code: "LI", name: "Liechtenstein" },
+  { code: "LT", name: "Lithuania" },
+  { code: "LU", name: "Luxembourg" },
+  { code: "MT", name: "Malta" },
+  { code: "MD", name: "Moldova" },
+  { code: "MC", name: "Monaco" },
+  { code: "ME", name: "Montenegro" },
+  { code: "NL", name: "Netherlands" },
+  { code: "NI", name: "Nicaragua" },
+  { code: "MK", name: "North Macedonia" },
+  { code: "NO", name: "Norway" },
+  { code: "PA", name: "Panama" },
+  { code: "PY", name: "Paraguay" },
+  { code: "PE", name: "Peru" },
+  { code: "PL", name: "Poland" },
+  { code: "PT", name: "Portugal" },
+  { code: "RO", name: "Romania" },
+  { code: "RU", name: "Russia" },
+  { code: "KN", name: "Saint Kitts and Nevis" },
+  { code: "LC", name: "Saint Lucia" },
+  { code: "VC", name: "Saint Vincent and the Grenadines" },
+  { code: "SM", name: "San Marino" },
+  { code: "RS", name: "Serbia" },
+  { code: "SK", name: "Slovakia" },
+  { code: "SI", name: "Slovenia" },
+  { code: "ES", name: "Spain" },
+  { code: "SE", name: "Sweden" },
+  { code: "CH", name: "Switzerland" },
+  { code: "TT", name: "Trinidad and Tobago" },
+  { code: "UA", name: "Ukraine" },
+  { code: "GB", name: "United Kingdom" },
+  { code: "US", name: "United States" },
+  { code: "UY", name: "Uruguay" },
+  { code: "VE", name: "Venezuela" },
+];
+
 export const Signup = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -12,6 +95,8 @@ export const Signup = () => {
     email: "",
     password: "",
     confirmPassword: "",
+    country: "",
+    idNumber: "",
     acceptTerms: false,
   });
   const [error, setError] = useState("");
@@ -48,6 +133,25 @@ export const Signup = () => {
       });
       return;
     }
+    if (!formData.country) {
+      Swal.fire({
+        icon: "error",
+        title: "Country required",
+        text: "Please select your country",
+        confirmButtonColor: "#3085d6",
+      });
+      return;
+    }
+
+    if (!formData.idNumber) {
+      Swal.fire({
+        icon: "error",
+        title: "ID Number required",
+        text: "Please enter your identification number",
+        confirmButtonColor: "#3085d6",
+      });
+      return;
+    }
 
     try {
       const response = await fetch("http://localhost:3001/api/signup", {
@@ -61,6 +165,8 @@ export const Signup = () => {
           email: formData.email,
           password: formData.password,
           confirm_password: formData.confirmPassword,
+          country: formData.country,
+          id_number: formData.idNumber,
           accept_terms: formData.acceptTerms,
         }),
       });
@@ -75,7 +181,7 @@ export const Signup = () => {
       // Registro exitoso
       console.log("Usuario registrado:", data.user);
       Swal.fire({
-        position: "top-center",
+        position: "center",
         icon: "success",
         title: "Registration successful",
         showConfirmButton: false,
@@ -159,6 +265,42 @@ export const Signup = () => {
                     required
                   />
                   <label htmlFor="email">Email address</label>
+                </div>
+
+                <div className="row">
+                  <div className="col-md-6">
+                    <div className="form-floating mb-3">
+                      <select
+                        className="form-select"
+                        id="country"
+                        name="country"
+                        value={formData.country}
+                        onChange={handleChange}
+                      >
+                        <option value="">Select a country</option>
+                        {countries.map((country) => (
+                          <option key={country.code} value={country.code}>
+                            {country.name}
+                          </option>
+                        ))}
+                      </select>
+                      <label htmlFor="country">Country</label>
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="form-floating mb-3">
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="idNumber"
+                        name="idNumber"
+                        placeholder="1234567890"
+                        value={formData.idNumber}
+                        onChange={handleChange}
+                      />
+                      <label htmlFor="idNumber">ID Number</label>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="form-floating mb-3">

@@ -1,289 +1,316 @@
 import React from "react";
-import "../../../styles/aboutSearch.css";
 import { Link } from "react-router-dom";
+import "../../../styles/aboutSearch.css";
+import chica from "../../../img/chicaPensativa.png";
 
 export const AboutSearch = () => {
   return (
     <>
-      <div
-        className="container-fluid mx-0 bg-body-tertiary"
-        style={{
-          maxWidth: "100vw",
-          height: "auto",
-          overflowX: "hidden",
-        }}
-      >
-        <div
-          className="container-fluid"
-          style={{
-            background: "#f7f7f7",
-            paddingTop: "12rem",
-            paddingBottom: "6rem",
-            borderRadius: "4rem",
-            marginBottom: "2rem",
-            position: "relative", // Añade esto
-            zIndex: 1, // Menor que el z-index de las cartas (3)
-          }}
-        >
-          <div className="row">
-            <div className="col-12">
-              <p
-                className="text-dark text-center position-relative"
-                style={{
-                  fontSize: "clamp(2.5rem, 8vw, 80px)",
-                  fontWeight: "700",
-                  lineHeight: "1.2",
-                  padding: "0 1rem",
-                  wordWrap: "break-word",
-                }}
-              >
-                Get smart{" "}
-                <span className="position-relative d-inline-block">
-                  <span
-                    className="d-none d-md-inline highlight-oval"
-                    style={{
-                      fontSize: "80px",
-                      color: "#2D3078",
-                      fontWeight: "700",
-                      position: "relative",
-                      zIndex: 1,
-                    }}
-                  >
-                    opportunity
-                  </span>
-                </span>{" "}
-                for your best future
-              </p>
-              <p
-                className="text-center"
-                style={{
-                  fontSize: "20px",
-                  fontWeight: "500",
-                  fontFamily: "unset",
-                  color: "#888",
-                }}
-              >
-                It is a long established fact that reader will be distracted
-                readable content of a page when.
-              </p>
-              <div className="search-container mb-5">
-                <input
-                  type="text"
-                  placeholder="Search for courses"
-                  className="search-input"
-                />
-                <button className="search-button">
-                  <svg className="search-icon" viewBox="0 0 24 24">
-                    <path
-                      fill="currentColor"
-                      d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                    />
-                  </svg>
-                </button>
-              </div>
-              <div
-                className="text-center mt-4 d-flex flex-wrap justify-content-center align-items-center gap-1 gap-md-2"
-                style={{
-                  marginBottom: "9rem",
-                  padding: "0 1rem",
-                }}
-              >
-                <p
-                  className="mb-1 mb-md-0 me-2"
-                  style={{
-                    color: "#666",
-                    fontFamily: "unset",
-                    fontSize: "clamp(14px, 3vw, 16px)", // Texto responsive
-                  }}
-                >
-                  Popular Topic:
+      <div className="container-fluid px-0 me-0 about-search-container">
+        {/* Hero Section */}
+        <div className="hero-section">
+          {/* Floating abstract shapes */}
+          <div className="floating-shape floating-shape-1"></div>
+          <div className="floating-shape floating-shape-2"></div>
+
+          <div className="container position-relative">
+            <div className="row align-items-center">
+              {/* Text Content */}
+              <div className="col-lg-6 mb-5 mb-lg-0 pe-lg-5 hero-text-col">
+                <h1 className="main-heading">
+                  <span className="highlight-text">
+                    Upgrade
+                    <span className="highlight-underline"></span>
+                  </span>{" "}
+                  your skills with{" "}
+                  <span className="highlight-purple">interactive</span> learning
+                </h1>
+
+                <p className="hero-subtitle">
+                  Join our community of learners and get access to cutting-edge
+                  courses taught by industry experts.
                 </p>
 
-                {/* Enlaces individuales con estilos responsive */}
-                <Link
-                  to="/Design"
-                  className="links-courses"
-                  style={{
-                    fontSize: "clamp(12px, 2.5vw, 15px)",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  Design.
-                </Link>
-                <Link
-                  to="/Development"
-                  className="links-courses"
-                  style={{
-                    fontSize: "clamp(12px, 2.5vw, 15px)",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  Development.
-                </Link>
-                <Link
-                  to="/Graphics"
-                  className="links-courses"
-                  style={{
-                    fontSize: "clamp(12px, 2.5vw, 15px)",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  Graphics.
-                </Link>
-                <Link
-                  to="/Marketing"
-                  className="links-courses"
-                  style={{
-                    fontSize: "clamp(12px, 2.5vw, 15px)",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  Marketing.
-                </Link>
-                <Link
-                  to="/Business"
-                  className="links-courses"
-                  style={{
-                    fontSize: "clamp(12px, 2.5vw, 15px)",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  Business.
-                </Link>
+                {/* Animated Search Bar */}
+                <div className="search-container-modern mb-4">
+                  <div className="search-icon-modern">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                      <path
+                        fill="#6c757d"
+                        d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Find your perfect course..."
+                    className="search-input-modern"
+                  />
+                  <button className="search-button-modern">
+                    Explore
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className="ms-2"
+                    >
+                      <path
+                        d="M5 12H19M19 12L12 5M19 12L12 19"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="trending-topics-container">
+                  <span className="trending-text">Trending now:</span>
+                  <div className="topics-wrapper">
+                    {[
+                      "AI Fundamentals",
+                      "Web Development",
+                      "Data Analytics",
+                    ].map((topic, i) => (
+                      <a key={i} href="#" className="topic-badge">
+                        {topic}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Student Image */}
+              <div className="col-lg-6 position-relative hero-image-col">
+                <div className="student-image-container">
+                  <img
+                    src={chica}
+                    alt="Student enjoying online learning"
+                    className="img-fluid student-image"
+                  />
+                  <div className="decorative-badge">
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                        fill="white"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                <div className="floating-card">
+                  <div className="floating-card-header">
+                    <div className="floating-card-icon">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M12 2L3 7L12 12L21 7L12 2Z"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M3 17L12 22L21 17"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M3 12L12 17L21 12"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <span className="floating-card-title">New Course</span>
+                  </div>
+                  <p className="floating-card-text">UX Design Fundamentals</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/*cards*/}
-      <div
-        className="container-fluid"
-        style={{
-          background: "#f7f7f7",
-          maxWidth: "100vw",
-          height: "auto",
-
-          paddingTop: "4rem",
-          borderRadius: "4rem 4rem 0 0",
-        }}
-      >
-        <div
-          className="container"
-          style={{
-            background: "#F7F7F7",
-            width: "auto",
-            height: "auto",
-            padding: "0 1rem 6rem 1rem",
-            position: "relative",
-            paddingTop: "1rem",
-            zIndex: "2",
-          }}
-        >
-          <div
-            className="row"
-            style={{ position: "relative", marginTop: "-250px", zIndex: "3" }}
-          >
-            <div className="col-sm-6 col-lg-4 mb-3 px-0">
-              <div
-                className="card h-100"
-                style={{
-                  borderLeft: "none",
-                  boxShadow: `
-        0 -12px 18px -6px rgba(0, 0, 0, 0.08),
-        0 12px 18px -6px rgba(0, 0, 0, 0.08)
-      `,
-                  borderRadius: "1rem 1rem 2rem 2rem",
-                }}
-              >
-                <div className="card-body">
-                  <div className="row">
-                    <h5 className="card-title">Special title treatment</h5>
-                  </div>
-                  <div className="row">
-                    <p className="card-text">
-                      With supporting text below as a natural lead-in to
-                      additional content.
-                    </p>
-                  </div>
-                  <button className="btn-79 d-inline">
-                    <span>
-                      Explore
-                      <i
-                        className="fa-solid fa-arrow-right ms-2"
-                        style={{ fontSize: "13px", color: "#fff" }}
-                      ></i>
-                    </span>
+      {/* Cards Section */}
+      <div className="container-fluid px-0 cards-section-container">
+        <div className="container">
+          <div className="row g-4 cards-row">
+            {/* Card 1 - Interactive Courses */}
+            <div className="col-md-6 col-lg-4">
+              <div className="modern-card h-100">
+                <div className="card-icon card-icon-1">
+                  <svg
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12 2L3 7L12 12L21 7L12 2Z"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M3 17L12 22L21 17"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M3 12L12 17L21 12"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <div className="card-body p-4">
+                  <h5 className="card-title">Interactive Courses</h5>
+                  <p className="card-text">
+                    Engage with hands-on projects and real-world scenarios to
+                    master new skills effectively.
+                  </p>
+                  <button className="modern-card-btn btn-1">
+                    Explore Courses
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className="ms-2"
+                    >
+                      <path
+                        d="M5 12H19M19 12L12 5M19 12L12 19"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </button>
                 </div>
               </div>
             </div>
 
-            <div className="col-sm-6 col-lg-4 mb-3 px-0">
-              <div
-                className="card h-100 "
-                style={{
-                  borderLeft: "none",
-                  boxShadow: `
-        0 -12px 18px -6px rgba(0, 0, 0, 0.08),
-        0 12px 18px -6px rgba(0, 0, 0, 0.08)
-      `,
-                  borderRadius: "1rem 1rem 2rem 2rem",
-                }}
-              >
-                <div className="card-body">
-                  <div className="row">
-                    <h5 className="card-title">Special title treatment</h5>
-                  </div>
-                  <div className="row">
-                    <p className="card-text">
-                      With supporting text below as a natural lead-in to
-                      additional content.
-                    </p>
-                  </div>
-                  <button className="btn-79 d-inline">
-                    <span>
-                      Explore
-                      <i
-                        className="fa-solid fa-arrow-right ms-2"
-                        style={{ fontSize: "13px", color: "#fff" }}
-                      ></i>
-                    </span>
+            {/* Card 2 - Expert Instructors */}
+            <div className="col-md-6 col-lg-4">
+              <div className="modern-card h-100">
+                <div className="card-icon card-icon-2">
+                  <svg
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                      fill="white"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <div className="card-body p-4">
+                  <h5 className="card-title">Expert Instructors</h5>
+                  <p className="card-text">
+                    Learn from industry professionals with years of practical
+                    experience in their fields.
+                  </p>
+                  <button className="modern-card-btn btn-2">
+                    Meet Instructors
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className="ms-2"
+                    >
+                      <path
+                        d="M5 12H19M19 12L12 5M19 12L12 19"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </button>
                 </div>
               </div>
             </div>
-            <div className="col-sm-6 col-lg-4 mb-3 px-0">
-              <div
-                className="card h-100 "
-                style={{
-                  borderRight: "none",
-                  boxShadow: `
-        0 -12px 18px -6px rgba(0, 0, 0, 0.08),
-        0 12px 18px -6px rgba(0, 0, 0, 0.08)
-      `,
-                  borderRadius: "1rem 1rem 2rem 2rem",
-                }}
-              >
-                <div className="card-body">
-                  <div className="row">
-                    <h5 className="card-title">Special title treatment</h5>
-                  </div>
-                  <div className="row">
-                    <p className="card-text">
-                      With supporting text below as a natural lead-in to
-                      additional content.
-                    </p>
-                  </div>
 
-                  <button className="btn-79 d-inline">
-                    <span>
-                      Explore
-                      <i
-                        className="fa-solid fa-arrow-right ms-2"
-                        style={{ fontSize: "13px", color: "#fff" }}
-                      ></i>
-                    </span>
+            {/* Card 3 - Flexible Learning */}
+            <div className="col-md-6 col-lg-4">
+              <div className="modern-card h-100">
+                <div className="card-icon card-icon-3">
+                  <svg
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M22 12H18L15 21L9 3L6 12H2"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <div className="card-body p-4">
+                  <h5 className="card-title">Flexible Learning</h5>
+                  <p className="card-text">
+                    Study at your own pace with 24/7 access to all course
+                    materials and resources.
+                  </p>
+                  <button className="modern-card-btn btn-3">
+                    Start Learning
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className="ms-2"
+                    >
+                      <path
+                        d="M5 12H19M19 12L12 5M19 12L12 19"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </button>
                 </div>
               </div>

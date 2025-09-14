@@ -4,12 +4,14 @@ import ScrollToTop from "./component/scrollToTop";
 import { BackendURL } from "./component/backendURL";
 
 import { Home } from "./pages/home/home";
-import { AboutSearch } from "./pages/home/aboutSearchHome";
-import { ChooseCourses } from "./pages/home/chooseCoursesHome";
 import { AllCourses } from "./pages/allCourses";
-import { SkillsHome } from "./pages/home/skillsHome";
+import { CourseDetails } from "./pages/courseDetails";
 import { Signup } from "./pages/signup";
 import { Login } from "./pages/login";
+import { DashboardAdmin } from "./pages/dashboardAdmin/dashboardAdmin";
+import { DashboardTeacher } from "./pages/dashboardTeacher";
+import { DashboardStudent } from "./pages/dashboardStudent";
+import { NotFound } from "./pages/notFound";
 import injectContext from "./store/appContext";
 
 import { ContactMeNavbar } from "./component/contactMeNavbar";
@@ -33,13 +35,14 @@ const Layout = () => {
           <Navbar />
           <Routes>
             <Route element={<Home />} path="/" />
-            <Route element={<AboutSearch />} path="/aboutSearch" />
-            <Route element={<ChooseCourses />} path="/chooseCourses" />
             <Route element={<AllCourses />} path="/allCourses" />
-            <Route element={<SkillsHome />} path="/skills" />
+            <Route element={<CourseDetails />} path="/courses/:slug" />
             <Route element={<Signup />} path="/signup" />
             <Route element={<Login />} path="/login" />
-            <Route element={<h1>Not found!</h1>} />
+            <Route element={<DashboardAdmin />} path="/admin/dashboard" />
+            <Route element={<DashboardTeacher />} path="/teacher/dashboard" />
+            <Route element={<DashboardStudent />} path="/student/dashboard" />
+            <Route element={<NotFound />} path="iji" />
           </Routes>
           <Footer />
         </ScrollToTop>
