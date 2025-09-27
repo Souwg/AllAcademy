@@ -35,28 +35,28 @@ export const ContactMeNavbar = () => {
               {/* WhatsApp */}
               <Link to="/whatsapp" className="text-decoration-none">
                 <div className="socialMediaIcon d-flex align-items-center justify-content-center rounded-circle border p-2 whatsapp-hover">
-                  <ion-icon name="logo-whatsapp"></ion-icon>
+                  <i className="fa-brands fa-whatsapp"></i>
                 </div>
               </Link>
 
               {/* Instagram */}
               <Link to="/instagram" className="text-decoration-none">
                 <div className="socialMediaIcon d-flex align-items-center justify-content-center rounded-circle border p-2 instagram-hover">
-                  <ion-icon name="logo-instagram" className="icon"></ion-icon>
+                  <i className="fa-brands fa-instagram"></i>
                 </div>
               </Link>
 
               {/* Facebook */}
               <Link to="/facebook" className="text-decoration-none">
                 <div className="socialMediaIcon d-flex align-items-center justify-content-center rounded-circle border p-2 facebook-hover">
-                  <ion-icon name="logo-facebook" className="icon"></ion-icon>
+                  <i className="fa-brands fa-facebook"></i>
                 </div>
               </Link>
 
               {/* Twitter */}
               <Link to="/twitter" className="text-decoration-none">
                 <div className="socialMediaIcon d-flex align-items-center justify-content-center rounded-circle border p-2  twitter-hover">
-                  <ion-icon name="logo-twitter" className="icon"></ion-icon>
+                  <i className="fa-brands fa-twitter"></i>
                 </div>
               </Link>
             </div>

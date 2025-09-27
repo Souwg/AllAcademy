@@ -167,7 +167,10 @@ class Course(db.Model):
             "live_class_days": class_days,
             "live_class_start_time": self.live_class_start_time.strftime("%H:%M") if self.live_class_start_time else None,
             "live_class_end_time": self.live_class_end_time.strftime("%H:%M") if self.live_class_end_time else None,
-            "live_class_timezone": self.live_class_timezone
+            "live_class_timezone": self.live_class_timezone,
+            "is_published": self.is_published,
+            "published_at": self.published_at.isoformat() if self.published_at else None
+        
         }
 
 class Module(db.Model):

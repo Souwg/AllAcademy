@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import man from "../../img/man.png";
-import "../../styles/Login.css";
+import "../../styles/login.css";
 import { Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 

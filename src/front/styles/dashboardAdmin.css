@@ -1588,7 +1588,41 @@ body {
 
 .course-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.5rem; /* espacio uniforme entre botones */
+  flex-wrap: wrap; /* permite que bajen en pantallas pequeñas */
+}
+
+/* 🔹 Ajustes para uniformar botones de las cards de cursos */
+.course-actions .btn {
+  flex: 1; /* todos ocupan el mismo ancho dentro del contenedor */
+  min-width: 90px; /* ancho mínimo para no encoger demasiado */
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  height: 38px; /* altura uniforme */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  white-space: nowrap; /* evita saltos de línea dentro del texto */
+}
+.course-actions .btn-enroll {
+  background: var(--primary);
+  color: #fff;
+}
+
+.course-actions .btn-enroll:hover {
+  background: var(--primary-light);
+}
+
+.course-actions .btn-danger {
+  background: var(--secondary);
+  color: #fff;
+}
+
+.course-actions .btn-danger:hover {
+  background: #c11e32;
 }
 
 .btn-enroll {
