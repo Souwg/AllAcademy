@@ -21,18 +21,10 @@ export const Navbar = () => {
   };
 
   const handleLogout = async () => {
-    console.log("Iniciando proceso de logout...");
-
-    // 1. Primero obtenemos el token ANTES de eliminarlo
     const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user");
-
-    console.log("Datos actuales:", { token, user });
 
     try {
-      console.log("Enviando petición de logout al backend...");
-      // 2. Hacemos la petición de logout CON el token aún disponible
-      const response = await fetch("http://localhost:3001/api/logout", {
+      await fetch("http://localhost:3001/api/logout", {
         method: "POST",
         headers: token
           ? {
@@ -41,29 +33,13 @@ export const Navbar = () => {
             }
           : {},
       });
-
-      console.log("Respuesta del backend:", {
-        status: response.status,
-        ok: response.ok,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Logout falló con status: ${response.status}`);
-      }
     } catch (error) {
-      console.error("Error en petición de logout:", error.message);
       // Continuamos aunque falle el logout en el backend
     } finally {
-      // 3. LIMPIEZA FINAL (siempre se ejecuta)
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      console.log("Datos limpiados del localStorage");
-
-      console.log("Redirigiendo a /login...");
       navigate("/login");
     }
-
-    console.log("Proceso de logout completado");
   };
 
   // Efecto para manejar el hover del dropdown
@@ -84,7 +60,14 @@ export const Navbar = () => {
   }, []);
 
   return (
-    <nav className="navbar navbar-expand-lg bg-body-tertiary mt-2 mx-0 mb-4">
+    <nav
+      className="navbar navbar-expand-lg"
+      style={{
+        background: "linear-gradient(to right, #e7ecf5 0%, #c8d3e3 100%)",
+        paddingTop: "1rem",
+        paddingBottom: "1rem",
+      }}
+    >
       <div className="container">
         <div className="d-flex flex-wrap align-items-center justify-content-between w-100">
           <div className="d-flex align-items-center">

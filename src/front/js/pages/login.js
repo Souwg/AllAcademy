@@ -14,36 +14,39 @@ export const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
+
   const isMounted = useRef(true);
 
-  // Verificar si hay una sesión activa al montar el componente
   useEffect(() => {
-    let isMounted = true;
+    isMounted.current = true;
+
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user"));
 
-    if (token && user && isMounted) {
+    if (token && user) {
       navigate(`/${user.role}/dashboard`);
       return;
     }
 
     const savedCredentials = localStorage.getItem("rememberMeCredentials");
-    if (savedCredentials && isMounted) {
+    if (savedCredentials) {
       try {
         const { email, password } = JSON.parse(savedCredentials);
-        setFormData((prev) => ({
-          ...prev,
-          email,
-          password,
-          rememberMe: true,
-        }));
+        if (isMounted.current) {
+          setFormData((prev) => ({
+            ...prev,
+            email,
+            password,
+            rememberMe: true,
+          }));
+        }
       } catch (e) {
         console.error("Error parsing credentials", e);
       }
     }
 
     return () => {
-      isMounted = false;
+      isMounted.current = false;
     };
   }, [navigate]);
 
@@ -72,16 +75,10 @@ export const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("[Login] Inicio del proceso de login");
-    setError("");
-    setIsLoading(true);
+    if (isMounted.current) setError("");
+    if (isMounted.current) setIsLoading(true);
 
     try {
-      console.log("[Login] Enviando credenciales al servidor...", {
-        email: formData.email,
-        rememberMe: formData.rememberMe,
-      });
-
       const response = await fetch("http://localhost:3001/api/login", {
         method: "POST",
         headers: {
@@ -93,34 +90,20 @@ export const Login = () => {
         }),
       });
 
-      console.log("[Login] Respuesta recibida del servidor", {
-        status: response.status,
-        ok: response.ok,
-      });
-
       const data = await response.json();
-      console.log("[Login] Datos de respuesta:", data);
 
       if (!response.ok) {
-        // Manejar específicamente el error de usuario bloqueado
         if (response.status === 403) {
-          const errorMessage = console.log(
-            "[Login] Usuario bloqueado:",
-            data.msg
-          );
-          showBlockedAlert(errorMessage);
-          throw new Error(errorMessage);
+          showBlockedAlert(data.msg);
+          throw new Error(data.msg);
         }
-        console.error("[Login] Error en la respuesta del servidor:", data.msg);
         throw new Error(data.msg || "Error al iniciar sesión");
       }
 
-      console.log("[Login] Guardando token y datos de usuario en localStorage");
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
       if (formData.rememberMe) {
-        console.log("[Login] Guardando credenciales por 'Remember Me'");
         localStorage.setItem(
           "rememberMeCredentials",
           JSON.stringify({
@@ -129,29 +112,22 @@ export const Login = () => {
           })
         );
       } else {
-        console.log("[Login] Eliminando credenciales de 'Remember Me'");
         localStorage.removeItem("rememberMeCredentials");
       }
 
-      console.log(`[Login] Redirigiendo a dashboard de ${data.user.role}`);
       navigate(`/${data.user.role}/dashboard`);
     } catch (error) {
-      console.error("[Login] Error durante el proceso:", {
-        message: error.message,
-        error: error,
-      });
-      // Solo mostrar error en el formulario si no es un error de bloqueo
-      if (!error.message.includes("bloqueada")) {
+      console.error("Error durante el proceso de login:", error);
+      if (isMounted.current && !error.message.includes("bloqueada")) {
         setError(error.message);
       }
     } finally {
-      console.log("[Login] Finalizando estado de carga");
-      setIsLoading(false);
-      console.log("[Login] Proceso de login completado");
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
     }
   };
 
-  // Si ya hay una sesión activa, mostrar mensaje en lugar del formulario
   if (isLoggedIn) {
     return (
       <div className="container-fluid min-vh-100 d-flex flex-column">
@@ -188,12 +164,10 @@ export const Login = () => {
     );
   }
 
-  // Mostrar el formulario de login si no hay sesión activa
   return (
     <div className="container-fluid min-vh-100 d-flex flex-column">
       <div className="row flex-grow-1">
         <div className="col-xxl-2 d-none d-xxl-block"></div>
-
         <div className="col-xxl-8 col-12 d-flex align-items-center justify-content-center py-4">
           <div className="card login-card shadow-lg border-0 w-100 my-4">
             <div className="card-body px-3 px-md-5 py-4">
@@ -311,7 +285,6 @@ export const Login = () => {
             </div>
           </div>
         </div>
-
         <div className="col-xxl-2 d-none d-xxl-flex align-items-center position-relative">
           <img
             src={man}

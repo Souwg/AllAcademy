@@ -37,6 +37,20 @@ export const AdminContent = ({
   coursesError,
   onRefreshCourses,
   onDeleteCourse,
+  modules,
+  setModules,
+  addModule,
+  removeModule,
+  updateModule,
+  addLesson,
+  removeLesson,
+  updateLesson,
+  onViewCourseDetails,
+  teachers,
+  teachersLoading,
+  teachersError,
+  currentUser,
+  onEditCourse,
 }) => {
   // Función para renderizar la tabla de usuarios
   const renderUserTable = (usersToRender) => {
@@ -287,10 +301,8 @@ export const AdminContent = ({
     return (
       <div className="course-creation-container">
         <div className="creation-header">
-          <h2>Crear Nuevo Curso</h2>
-          <p>
-            Completa la información para crear un nuevo curso en la plataforma
-          </p>
+          <h2>Create New Course</h2>
+          <p>Complete the information to create a new course on the platform</p>
         </div>
 
         <form
@@ -302,28 +314,83 @@ export const AdminContent = ({
         >
           {/* Sección de información básica */}
           <div className="form-section">
-            <h3>Información Básica</h3>
+            <h3>Basic Information</h3>
             <div className="form-grid">
+              {/* Sección de imagen */}
+              <div className="form-section">
+                <h3>Course Image</h3>
+                <div className="form-grid">
+                  <div className="form-group full-width">
+                    <label htmlFor="image_url">Image URL </label>
+                    <input
+                      type="url"
+                      id="image_url"
+                      name="image_url"
+                      value={courseFormData.image_url}
+                      onChange={handleCourseInputChange}
+                      placeholder="https://ejemplo.com/imagen-curso.jpg"
+                    />
+                  </div>
+                </div>
+              </div>
               <div className="form-group full-width">
-                <label htmlFor="title">Título del Curso *</label>
+                <label htmlFor="title">Course Title *</label>
                 <input
                   type="text"
                   id="title"
                   name="title"
-                  value={courseFormData.title}
+                  value={courseFormData.title || ""}
                   onChange={handleCourseInputChange}
                   placeholder="Ej: Introducción a React JS"
                   required
                 />
               </div>
-
+              {currentUser && currentUser.role === "admin" && (
+                <div className="form-group">
+                  <label htmlFor="teacher_id">Instructor *</label>
+                  {teachersLoading ? (
+                    <p>Cargando profesores...</p>
+                  ) : teachersError ? (
+                    <p className="error-text">Error: {teachersError}</p>
+                  ) : teachers.length === 0 ? (
+                    <p>No hay profesores disponibles</p>
+                  ) : (
+                    <select
+                      id="teacher_id"
+                      name="teacher_id"
+                      value={courseFormData.teacher_id || ""}
+                      onChange={handleCourseInputChange}
+                      required
+                    >
+                      <option value="">Seleccionar un instructor</option>
+                      {teachers.map((teacher) => (
+                        <option key={teacher.id} value={teacher.id}>
+                          {teacher.first_name} {teacher.last_name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              )}
               <div className="form-group">
-                <label htmlFor="price">Precio ($) *</label>
+                <label htmlFor="duration">Duration *</label>
+                <input
+                  type="text"
+                  id="duration"
+                  name="duration"
+                  value={courseFormData.duration || ""}
+                  onChange={handleCourseInputChange}
+                  placeholder="Ej: 3 horas"
+                  required
+                ></input>
+              </div>
+              <div className="form-group">
+                <label htmlFor="price">Price ($) *</label>
                 <input
                   type="number"
                   id="price"
                   name="price"
-                  value={courseFormData.price}
+                  value={courseFormData.price || ""}
                   onChange={handleCourseInputChange}
                   min="0"
                   step="0.01"
@@ -331,27 +398,25 @@ export const AdminContent = ({
                   required
                 />
               </div>
-
               <div className="form-group">
-                <label htmlFor="discount_price">Precio con Descuento ($)</label>
+                <label htmlFor="discount_price">Discount Price ($)</label>
                 <input
                   type="number"
                   id="discount_price"
                   name="discount_price"
-                  value={courseFormData.discount_price}
+                  value={courseFormData.discount_price || ""}
                   onChange={handleCourseInputChange}
                   min="0"
                   step="0.01"
                   placeholder="19.99"
                 />
               </div>
-
               <div className="form-group">
-                <label htmlFor="level">Nivel *</label>
+                <label htmlFor="level">Level *</label>
                 <select
                   id="level"
                   name="level"
-                  value={courseFormData.level}
+                  value={courseFormData.level || ""}
                   onChange={handleCourseInputChange}
                   required
                 >
@@ -360,19 +425,33 @@ export const AdminContent = ({
                   <option value="ADVANCED">Avanzado</option>
                 </select>
               </div>
-
               <div className="form-group">
-                <label htmlFor="language">Idioma *</label>
+                <label htmlFor="language">Language *</label>
                 <select
                   id="language"
                   name="language"
-                  value={courseFormData.language}
+                  value={courseFormData.language || ""}
                   onChange={handleCourseInputChange}
                   required
                 >
-                  <option value="Spanish">Español</option>
-                  <option value="English">Inglés</option>
-                  <option value="Portuguese">Portugués</option>
+                  <option value="Spanish">Spanish</option>
+                  <option value="English">English</option>
+                  <option value="Portuguese">Portuguese</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="access_duration">Access Duration *</label>
+                <select
+                  id="access_duration"
+                  name="access_duration"
+                  value={courseFormData.access_duration}
+                  onChange={handleCourseInputChange}
+                  required
+                >
+                  <option value="lifetime">Acceso de por vida</option>
+                  <option value="3m">3 meses</option>
+                  <option value="6m">6 meses</option>
+                  <option value="12m">1 año</option>
                 </select>
               </div>
             </div>
@@ -380,14 +459,14 @@ export const AdminContent = ({
 
           {/* Sección de descripción */}
           <div className="form-section">
-            <h3>Descripción del Curso</h3>
+            <h3>Course Description</h3>
             <div className="form-grid">
               <div className="form-group full-width">
-                <label htmlFor="short_description">Descripción Corta *</label>
+                <label htmlFor="short_description">Short Description *</label>
                 <textarea
                   id="short_description"
                   name="short_description"
-                  value={courseFormData.short_description}
+                  value={courseFormData.short_description || ""}
                   onChange={handleCourseInputChange}
                   rows="3"
                   placeholder="Breve descripción que aparecerá en la lista de cursos"
@@ -396,11 +475,11 @@ export const AdminContent = ({
               </div>
 
               <div className="form-group full-width">
-                <label htmlFor="description">Descripción Completa *</label>
+                <label htmlFor="description">Full Description *</label>
                 <textarea
                   id="description"
                   name="description"
-                  value={courseFormData.description}
+                  value={courseFormData.description || ""}
                   onChange={handleCourseInputChange}
                   rows="6"
                   placeholder="Describe en detalle el contenido y objetivos del curso"
@@ -409,42 +488,83 @@ export const AdminContent = ({
               </div>
             </div>
           </div>
-
-          {/* Sección de imagen */}
+          {/* 🔹 SECCIÓN DE HORARIO DE CLASES */}
           <div className="form-section">
-            <h3>Imagen del Curso</h3>
+            <h3>Class Schedule</h3>
             <div className="form-grid">
+              {/* Checkbox días */}
               <div className="form-group full-width">
-                <label htmlFor="image_url">URL de la Imagen</label>
+                <label>Class Days *</label>
+                <div className="days-checkboxes">
+                  {[
+                    "Lunes",
+                    "Martes",
+                    "Miércoles",
+                    "Jueves",
+                    "Viernes",
+                    "Sábado",
+                    "Domingo",
+                  ].map((day) => (
+                    <label key={day} className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        name="live_class_days"
+                        value={day}
+                        checked={courseFormData.live_class_days.includes(day)}
+                        onChange={handleCourseInputChange}
+                      />
+                      <span>{day}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Horas */}
+              <div className="form-group">
+                <label htmlFor="live_class_start_time">Start Time *</label>
                 <input
-                  type="url"
-                  id="image_url"
-                  name="image_url"
-                  value={courseFormData.image_url}
+                  type="time"
+                  id="live_class_start_time"
+                  name="live_class_start_time"
+                  value={courseFormData.live_class_start_time}
                   onChange={handleCourseInputChange}
-                  placeholder="https://ejemplo.com/imagen-curso.jpg"
+                  required
                 />
               </div>
 
-              <div className="form-group full-width">
-                <label htmlFor="alt_text">
-                  Texto Alternativo para la Imagen
-                </label>
+              <div className="form-group">
+                <label htmlFor="live_class_end_time">End Time *</label>
                 <input
-                  type="text"
-                  id="alt_text"
-                  name="alt_text"
-                  value={courseFormData.alt_text}
+                  type="time"
+                  id="live_class_end_time"
+                  name="live_class_end_time"
+                  value={courseFormData.live_class_end_time}
                   onChange={handleCourseInputChange}
-                  placeholder="Descripción de la imagen para accesibilidad"
+                  required
                 />
+              </div>
+
+              {/* Zona horaria */}
+              <div className="form-group full-width">
+                <label htmlFor="live_class_timezone">Time Zone</label>
+                <select
+                  id="live_class_timezone"
+                  name="live_class_timezone"
+                  value={courseFormData.live_class_timezone}
+                  onChange={handleCourseInputChange}
+                >
+                  <option value="GMT-5">GMT-5 (Bogotá, Lima, CDMX)</option>
+                  <option value="GMT-3">GMT-3 (Buenos Aires, São Paulo)</option>
+                  <option value="GMT-8">GMT-8 (Los Angeles)</option>
+                  <option value="GMT+1">GMT+1 (Madrid)</option>
+                  <option value="GMT+9">GMT+9 (Tokyo)</option>
+                </select>
               </div>
             </div>
           </div>
-
           {/* Sección de objetivos de aprendizaje */}
           <div className="form-section">
-            <h3>¿Qué aprenderán los estudiantes?</h3>
+            <h3>What will students learn?</h3>
             <div className="form-group full-width">
               <div className="dynamic-list">
                 <div className="list-items">
@@ -475,7 +595,7 @@ export const AdminContent = ({
                   className="add-item-btn"
                   onClick={addLearningObjective}
                 >
-                  + Agregar objetivo de aprendizaje
+                  + Add Learning Objective
                 </button>
               </div>
             </div>
@@ -483,7 +603,7 @@ export const AdminContent = ({
 
           {/* Sección de requisitos */}
           <div className="form-section">
-            <h3>Requisitos del Curso</h3>
+            <h3>Course Requirements</h3>
             <div className="form-group full-width">
               <div className="dynamic-list">
                 <div className="list-items">
@@ -514,29 +634,138 @@ export const AdminContent = ({
                   className="add-item-btn"
                   onClick={addRequirement}
                 >
-                  + Agregar requisito
+                  + Add requirement
                 </button>
               </div>
             </div>
           </div>
+          {/* Sección de Módulos y Lecciones */}
+          <div className="form-section">
+            <h3>Modules and Lessons</h3>
 
+            {modules.map((module, moduleIndex) => (
+              <div key={moduleIndex} className="module-card">
+                <div className="module-header">
+                  <h4>Module {moduleIndex + 1}</h4>
+                  {modules.length > 1 && (
+                    <button
+                      type="button"
+                      className="remove-module-btn"
+                      onClick={() => removeModule(moduleIndex)}
+                    >
+                      × Remove Module
+                    </button>
+                  )}
+                </div>
+
+                <div className="form-grid">
+                  <div className="form-group full-width">
+                    <label>Module Title *</label>
+                    <input
+                      type="text"
+                      value={module.title}
+                      onChange={(e) =>
+                        updateModule(moduleIndex, "title", e.target.value)
+                      }
+                      placeholder="Ej: Introducción a React"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group full-width">
+                    <label>Module Description</label>
+                    <textarea
+                      value={module.description}
+                      onChange={(e) =>
+                        updateModule(moduleIndex, "description", e.target.value)
+                      }
+                      rows="3"
+                      placeholder="Describe los objetivos de este módulo"
+                    ></textarea>
+                  </div>
+                </div>
+
+                <div className="lessons-container">
+                  <h5>Lessons in this module</h5>
+
+                  {module.lessons.map((lesson, lessonIndex) => (
+                    <div key={lessonIndex} className="lesson-card">
+                      <div className="lesson-header">
+                        <h6>Lesson {lessonIndex + 1}</h6>
+                        {module.lessons.length > 1 && (
+                          <button
+                            type="button"
+                            className="remove-lesson-btn"
+                            onClick={() =>
+                              removeLesson(moduleIndex, lessonIndex)
+                            }
+                          >
+                            × Delete
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="form-grid">
+                        <div className="form-group full-width">
+                          <label>Lesson Title *</label>
+                          <input
+                            type="text"
+                            value={lesson.title}
+                            onChange={(e) =>
+                              updateLesson(
+                                moduleIndex,
+                                lessonIndex,
+                                "title",
+                                e.target.value
+                              )
+                            }
+                            placeholder="Ej: ¿Qué es React?"
+                            required
+                          />
+                        </div>
+                        <div className="form-group full-width">
+                          <label>Lesson Description</label>
+                          <textarea
+                            value={lesson.description}
+                            onChange={(e) =>
+                              updateLesson(
+                                moduleIndex,
+                                lessonIndex,
+                                "description",
+                                e.target.value
+                              )
+                            }
+                            rows="2"
+                            placeholder="Breve descripción de esta lección"
+                          ></textarea>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    className="add-lesson-btn"
+                    onClick={() => addLesson(moduleIndex)}
+                  >
+                    + Add Lesson
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              className="add-module-btn"
+              onClick={addModule}
+            >
+              + Add Module
+            </button>
+          </div>
           {/* Sección de opciones adicionales */}
           <div className="form-section">
-            <h3>Opciones Adicionales</h3>
+            <h3>Other options</h3>
             <div className="form-grid">
-              <div className="form-group">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    id="certificate_available"
-                    name="certificate_available"
-                    checked={courseFormData.certificate_available}
-                    onChange={handleCourseInputChange}
-                  />
-                  <span>Incluir certificado de finalización</span>
-                </label>
-              </div>
-
               <div className="form-group">
                 <label className="checkbox-label">
                   <input
@@ -546,7 +775,7 @@ export const AdminContent = ({
                     checked={courseFormData.is_published}
                     onChange={handleCourseInputChange}
                   />
-                  <span>Publicar curso inmediatamente</span>
+                  <span>Publish course immediately</span>
                 </label>
               </div>
             </div>
@@ -559,24 +788,14 @@ export const AdminContent = ({
               className="btn-cancel"
               onClick={() => setActiveView("courses")}
             >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => handleCreateCourse(true)}
-              disabled={courseCreationStatus.loading}
-            >
-              {courseCreationStatus.loading
-                ? "Guardando..."
-                : "Guardar como borrador"}
+              Cancel
             </button>
             <button
               type="submit"
               className="btn-primary"
               disabled={courseCreationStatus.loading}
             >
-              {courseCreationStatus.loading ? "Creando..." : "Crear Curso"}
+              {courseCreationStatus.loading ? "Creating..." : "Create Course"}
             </button>
           </div>
         </form>
@@ -601,98 +820,102 @@ export const AdminContent = ({
     return (
       <div className="courses-management">
         <div className="section-header">
-          <h3>Cursos Existentes</h3>
+          <h3>Courses</h3>
           <button onClick={onRefreshCourses} className="refresh-btn">
-            Actualizar
+            Refresh
           </button>
         </div>
 
-        <div className="courses-grid">
+        <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
           {courses.map((course) => (
-            <div key={course.id} className="course-card">
-              <div className="course-image">
-                {course.image_url ? (
-                  <img
-                    src={course.image_url}
-                    alt={course.alt_text || course.title}
-                  />
-                ) : (
-                  <div className="course-image-placeholder">📚</div>
-                )}
-              </div>
-
-              <div className="course-info">
-                <h4>{course.title}</h4>
-                <p className="course-description">{course.short_description}</p>
-
-                <div className="course-meta">
-                  <span
-                    className={`status ${
-                      course.is_published ? "published" : "draft"
-                    }`}
-                  >
-                    {course.is_published ? "📢 Publicado" : "📝 Borrador"}
-                  </span>
-                  <span className="price">${course.price}</span>
-                  {course.discount_price > 0 && (
-                    <span className="discount">${course.discount_price}</span>
+            <div key={course.id} className="col">
+              <div className="grid-course-card">
+                <div className="grid-course-image">
+                  {course.image_url ? (
+                    <img
+                      src={course.image_url}
+                      alt={course.alt_text || course.title}
+                      className="img-fluid w-100 h-100"
+                    />
+                  ) : (
+                    <div className="course-image-placeholder">📚</div>
                   )}
                 </div>
 
-                <div className="course-details">
-                  <p>
-                    <strong>Nivel:</strong> {course.level}
-                  </p>
-                  <p>
-                    <strong>Idioma:</strong> {course.language}
-                  </p>
-                  <p>
-                    <strong>Certificado:</strong>{" "}
-                    {course.certificate_available ? "Sí" : "No"}
+                <div className="grid-course-content">
+                  <div className="mb-2">
+                    <h3 className="grid-course-title">{course.title}</h3>
+                    <p className="instructor-name">
+                      Por {course.instructor || "Instructor"}
+                    </p>
+                  </div>
+
+                  <p className="grid-course-description">
+                    {course.short_description ||
+                      course.description.substring(0, 100) + "..."}
                   </p>
 
-                  {course.what_you_learn && course.what_you_learn.length > 0 && (
-                    <div className="learning-objectives">
-                      <strong>Lo que aprenderán:</strong>
-                      <ul>
-                        {course.what_you_learn.map((objective, index) => (
-                          <li key={index}>{objective}</li>
-                        ))}
-                      </ul>
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <div className="course-meta-info">
+                      <span className="d-flex align-items-center">
+                        <i className="far fa-clock me-1"></i>{" "}
+                        {course.duration || "10h"}
+                      </span>
+                      <span className="d-flex align-items-center">
+                        <i className="far fa-list-alt me-1"></i>{" "}
+                        {course.lessons || 0} lecciones
+                      </span>
                     </div>
-                  )}
-                  {/* AQUÍ ESTÁ LA SECCIÓN NUEVA - Learning Objectives */}
-                  {course.whatYouLearn && course.whatYouLearn.length > 0 && (
-                    <div className="learning-objectives">
-                      <strong>Lo que aprenderán:</strong>
-                      <ul>
-                        {course.whatYouLearn.map((objective, index) => (
-                          <li key={index}>{objective}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                    <span
+                      className={`level-badge badge ${course.level?.toLowerCase()}`}
+                    >
+                      {course.level || "BEGINNER"}
+                    </span>
+                  </div>
 
-                  {course.requirements && course.requirements.length > 0 && (
-                    <div className="requirements">
-                      <strong>Requisitos:</strong>
-                      <ul>
-                        {course.requirements.map((requirement, index) => (
-                          <li key={index}>{requirement}</li>
-                        ))}
-                      </ul>
+                  <div className="d-flex justify-content-between align-items-center mt-auto">
+                    <div>
+                      <span className="price-container">${course.price}</span>
+                      {course.discount_price > 0 && (
+                        <span className="original-price">
+                          ${course.discount_price}
+                        </span>
+                      )}
                     </div>
-                  )}
-                </div>
+                    <div className="course-actions">
+                      <button
+                        className="btn btn-primary btn-sm btn-enroll"
+                        onClick={() => onViewCourseDetails(course)}
+                      >
+                        View Details
+                      </button>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => onEditCourse(course)}
+                      >
+                        Edit
+                      </button>
 
-                <div className="course-actions">
-                  <button
-                    className="btn-delete"
-                    onClick={() => onDeleteCourse(course.id)}
-                    title="Eliminar curso"
-                  >
-                    Eliminar
-                  </button>
+                      <button
+                        className="btn btn-danger btn-sm ms-2"
+                        onClick={() => onDeleteCourse(course.id)}
+                        title="Eliminar curso"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Estado de publicación */}
+                  <div className="mt-2">
+                    <span
+                      className={`status ${
+                        course.is_published ? "published" : "draft"
+                      }`}
+                    >
+                      {course.is_published ? "📢 Publicado" : "📝 Borrador"}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -701,26 +924,25 @@ export const AdminContent = ({
 
         {courses.length === 0 && (
           <div className="empty-state">
-            <p>No hay cursos creados todavía</p>
+            <p>No courses have been created yet</p>
           </div>
         )}
       </div>
     );
   };
-
   // Renderizado del header
   const renderHeader = () => {
     const titles = {
-      dashboard: "Panel de Administración",
-      users: "Gestión de Usuarios",
-      courses: "Gestión de Cursos",
-      settings: "Configuración del Sistema",
+      dashboard: "Administration Panel",
+      users: "User Management",
+      courses: "Course Management",
+      settings: "System Settings",
     };
 
     const descriptions = {
-      dashboard: "Bienvenido al panel de control principal",
-      courses: "Administra los cursos disponibles",
-      settings: "Configura los parámetros del sistema",
+      dashboard: "Welcome to the main control panel",
+      courses: "Manage the available courses",
+      settings: "Configure the system settings",
     };
 
     return (
@@ -745,7 +967,7 @@ export const AdminContent = ({
             {renderCoursesList()}
           </div>
         ) : (
-          <div>Vista en desarrollo</div>
+          <div>View in development</div>
         )}
       </div>
     </div>

@@ -26,7 +26,8 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(250), nullable=False)  
     first_name = db.Column(db.String(50), nullable=False)  
-    last_name = db.Column(db.String(50), nullable=False) 
+    last_name = db.Column(db.String(50), nullable=False)
+    bio = db.Column(db.Text, nullable=True)
     image_url = db.Column(db.String(250), nullable=True)
     country = db.Column(db.String(2), nullable=False)
     id_number = db.Column(db.String(20), nullable=False)
@@ -57,6 +58,7 @@ class User(db.Model):
             "image": self.image_url,
             "first_name": self.first_name,
             "last_name": self.last_name,
+            "bio": self.bio,
             "country": self.country,
             "id_number": self.id_number,
             "is_active": self.is_active,  
@@ -78,7 +80,6 @@ class LiveClass(db.Model):
     course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
     teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     scheduled_at = db.Column(db.DateTime, nullable=False)  # fecha y hora
-    duration = db.Column(db.Integer)  # en minutos
     meeting_url = db.Column(db.String(500), nullable=False)
     recording_url = db.Column(db.String(500))  # si queda grabada
 
@@ -95,7 +96,6 @@ class LiveClass(db.Model):
             "course_id": self.course_id,
             "teacher_id": self.teacher_id,
             "scheduled_at": self.scheduled_at.isoformat() if self.scheduled_at else None,
-            "duration": self.duration,
             "meeting_url": self.meeting_url,
             "recording_url": self.recording_url,
             # opcional si quieres mostrar también
@@ -108,25 +108,30 @@ class Course(db.Model):
     title = db.Column(db.String(200), nullable=False)
     slug = db.Column(db.String(200), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=False)
+    duration = db.Column(db.String(100))
     short_description = db.Column(db.String(300))  
-    alt_text = db.Column(db.String(200))
     price = db.Column(db.Float, nullable=False)
     discount_price = db.Column(db.Float)
     level = db.Column(db.Enum(CourseLevel), default=CourseLevel.BEGINNER)
     language = db.Column(db.String(50), default="English")
-    certificate_available = db.Column(db.Boolean, default=True)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_published = db.Column(db.Boolean, default=False)
     published_at = db.Column(db.DateTime, nullable=True)
+    access_duration= db.Column(db.String(50), default="Lifetime")
+    has_live_classes = db.Column(db.Boolean, default=False)
+    has_recorded_videos = db.Column(db.Boolean, default=False)
+    live_class_days = db.Column(db.String(100))  
+    live_class_start_time = db.Column(db.Time)   
+    live_class_end_time = db.Column(db.Time) 
+    live_class_timezone = db.Column(db.String(50), default="GMT-5")
     
     # Claves foráneas
     teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
-    # Relaciones
+     # Relaciones
     modules = db.relationship('Module', backref='course', lazy=True, cascade="all, delete-orphan")
     live_classes = db.relationship("LiveClass", back_populates="course", cascade="all, delete-orphan")
-    reviews = db.relationship('Review', backref='course', lazy=True, cascade="all, delete-orphan")
     what_you_learn = db.relationship('LearningObjective', backref='course', lazy=True, cascade="all, delete-orphan")
     requirements = db.relationship('Requirement', backref='course', lazy=True, cascade="all, delete-orphan")
     
@@ -134,24 +139,35 @@ class Course(db.Model):
         return f'<Course {self.title}>'
     
     def serialize(self):
+        modules_ordered = sorted(self.modules, key=lambda x: x.order) if self.modules else []
+        class_days = self.live_class_days.split(',') if self.live_class_days else []
         return {
             "id": self.id,
             "title": self.title,
             "slug": self.slug,
             "description": self.description,
             "short_description": self.short_description,    
-            "alt": self.alt_text,
             "price": self.price,
-            "discountPrice": self.discount_price,
+            "discount_price": self.discount_price,
+            "duration": self.duration,
             "level": self.level.value,
             "language": self.language,
-            "certificate": self.certificate_available,
             "lastUpdated": self.last_updated.strftime("%B %Y"),
+            "access_duration": self.access_duration,
+            "teacher_id": self.teacher_id,
+
             "instructor": self.teacher.first_name + " " + self.teacher.last_name,
+            "instructorBio": self.teacher.bio if self.teacher else "",
             "lessons": sum(len(module.lessons) for module in self.modules),
-            "whatYouLearn": [obj.objective for obj in self.what_you_learn],
+            "what_you_learn": [obj.objective for obj in self.what_you_learn],
             "requirements": [req.requirement for req in self.requirements],
-            "curriculum": [module.serialize() for module in self.modules]
+            "modules": [module.serialize() for module in modules_ordered],
+             "liveClasses": self.has_live_classes,
+            "recordedVideos": self.has_recorded_videos,
+            "live_class_days": class_days,
+            "live_class_start_time": self.live_class_start_time.strftime("%H:%M") if self.live_class_start_time else None,
+            "live_class_end_time": self.live_class_end_time.strftime("%H:%M") if self.live_class_end_time else None,
+            "live_class_timezone": self.live_class_timezone
         }
 
 class Module(db.Model):
@@ -183,11 +199,9 @@ class Lesson(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
-    content = db.Column(db.Text)  # Puede ser texto, HTML, o referencia a video
+    content = db.Column(db.Text)
     video_url = db.Column(db.String(500))
-    duration = db.Column(db.Integer)  # Duración en minutos
     order = db.Column(db.Integer, nullable=False)
-    is_preview = db.Column(db.Boolean, default=False)
     
     # Claves foráneas
     module_id = db.Column(db.Integer, db.ForeignKey('module.id'), nullable=False)
@@ -200,11 +214,8 @@ class Lesson(db.Model):
             "id": self.id,
             "title": self.title,
             "description": self.description,
-            "content": self.content,
             "video_url": self.video_url,
-            "duration": self.duration,
             "order": self.order,
-            "is_preview": self.is_preview
         }
 
 class LearningObjective(db.Model):
@@ -226,19 +237,6 @@ class Requirement(db.Model):
     
     def __repr__(self):
         return f'<Requirement {self.requirement[:50]}...>'
-
-class Review(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    rating = db.Column(db.Integer, nullable=False)  # 1-5
-    comment = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Claves foráneas
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
-    
-    def __repr__(self):
-        return f'<Review {self.rating} by {self.user_id}>'
 
 class BlockedTokenList(db.Model):
     id = db.Column(db.Integer, primary_key=True)
