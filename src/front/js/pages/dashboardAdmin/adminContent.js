@@ -57,8 +57,15 @@ export const AdminContent = ({
     if (usersToRender.length === 0) {
       return (
         <div className="empty-state">
-          <span>📭</span>
-          <p>No se encontraron usuarios</p>
+          <span>
+            <span
+              className="💀"
+              data-content="📫"
+              data-hover-content="📪"
+              data-active-content="📬"
+            ></span>
+          </span>
+          <p>No users found</p>
         </div>
       );
     }
@@ -469,7 +476,6 @@ export const AdminContent = ({
                   value={courseFormData.short_description || ""}
                   onChange={handleCourseInputChange}
                   rows="3"
-                  placeholder="Breve descripción que aparecerá en la lista de cursos"
                   required
                 ></textarea>
               </div>
@@ -875,11 +881,11 @@ export const AdminContent = ({
 
                   <div className="d-flex justify-content-between align-items-center mt-auto">
                     <div>
-                      <span className="price-container">${course.price}</span>
-                      {course.discount_price > 0 && (
-                        <span className="original-price">
-                          ${course.discount_price}
-                        </span>
+                      <span className="price-container">
+                        ${course.discount_price}
+                      </span>
+                      {course.price > 0 && (
+                        <span className="original-price">${course.price}</span>
                       )}
                     </div>
                     <div className="course-actions">

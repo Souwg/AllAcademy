@@ -1,0 +1,998 @@
+/* ======================
+   MODALES
+====================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  padding: 1.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
+  border-radius: 16px 16px 0 0;
+}
+
+.modal-header.warning {
+  border-bottom: 1px solid rgba(228, 38, 60, 0.2);
+  background: rgba(228, 38, 60, 0.05);
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #2d3078;
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.modal-icon {
+  color: #e4263c;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6c757d;
+  transition: all 0.3s ease;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.close-modal:hover {
+  background: #e2e8f0;
+  color: #001933;
+}
+
+.modal-body {
+  padding: 1.75rem;
+}
+
+/* ======================
+   FORMULARIOS EN MODALES
+====================== */
+.user-edit-form {
+  width: 100%;
+}
+
+.form-group {
+  margin-bottom: 1.75rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: #001933;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  font-size: 1rem;
+  background-color: white;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #00c9ff;
+  box-shadow: 0 0 0 3px rgba(0, 201, 255, 0.15);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.25rem;
+  margin-top: 2rem;
+}
+
+.btn-cancel {
+  background: white;
+  color: #001933;
+  border: 1px solid #e2e8f0;
+  padding: 0.85rem 1.75rem;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-cancel:hover {
+  background: #e2e8f0;
+}
+
+.btn-primary {
+  background: #2d3078;
+  color: white;
+  border: none;
+  padding: 0.85rem 1.75rem;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(45, 48, 120, 0.08);
+}
+
+.btn-primary:hover {
+  background: #3f42a0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* ======================
+   MODAL DE CONFIRMACIÓN DE ELIMINACIÓN
+====================== */
+.confirm-modal .modal-header h2 {
+  color: #e4263c;
+}
+
+.delete-confirm-text {
+  margin-bottom: 1.5rem;
+  color: #001933;
+  font-size: 1.1rem;
+}
+
+.user-to-delete {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  background: #e2e8f0;
+  border-radius: 16px;
+  margin-bottom: 2rem;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2d3078 0%, #3f42a0 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.user-info strong {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #001933;
+}
+
+.user-info span {
+  font-size: 0.95rem;
+  color: #6c757d;
+}
+
+.warning-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #e4263c;
+  font-weight: 400;
+  margin-bottom: 2rem;
+  font-size: 1.05rem;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #ef4444;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: rgba(239, 68, 68, 0.05);
+  border-radius: 8px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.25rem;
+}
+
+.btn-confirm-delete {
+  background: #e4263c;
+  color: white;
+  border: none;
+  padding: 0.85rem 1.75rem;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(228, 38, 60, 0.2);
+}
+
+.btn-confirm-delete:hover {
+  background: #c11e32;
+  box-shadow: 0 6px 20px rgba(228, 38, 60, 0.3);
+}
+
+.btn-confirm-delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loading-delete {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ======================
+   NOTIFICACIÓN FLOTANTE
+====================== */
+.notification {
+  position: fixed;
+  bottom: 2.5rem;
+  right: 2.5rem;
+  padding: 1.25rem 1.75rem;
+  border-radius: 16px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  z-index: 1001;
+  animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  max-width: 400px;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification.success {
+  background: #10b981;
+  color: white;
+}
+
+.notification.error {
+  background: #ef4444;
+  color: white;
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.notification-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.close-notification {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+  margin-left: 0.75rem;
+  font-size: 1.25rem;
+}
+
+.close-notification:hover {
+  opacity: 1;
+}
+
+/* ======================
+   MODAL DE DETALLES DEL CURSO
+====================== */
+.course-details-modal {
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.course-details-header {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  align-items: flex-start;
+}
+
+.course-detail-image {
+  width: 200px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.course-image-placeholder-large {
+  width: 200px;
+  height: 150px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+}
+
+.course-basic-info {
+  flex: 1;
+}
+
+.course-short-description {
+  color: #666;
+  margin: 10px 0;
+}
+
+.course-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.detail-section {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.detail-section:last-child {
+  border-bottom: none;
+}
+
+.detail-section h4 {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.learning-objectives,
+.requirements {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.learning-objectives li,
+.requirements li {
+  padding: 5px 0;
+  position: relative;
+  padding-left: 20px;
+}
+
+.learning-objectives li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #28a745;
+}
+
+.requirements li:before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #007bff;
+}
+
+.price-details {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.price {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.discount-price {
+  font-size: 1.2rem;
+  text-decoration: line-through;
+  color: #999;
+}
+
+.modules-list {
+  margin-top: 15px;
+}
+
+.module-item {
+  background-color: #f9f9f9;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.module-item h5 {
+  margin-bottom: 10px;
+  color: #444;
+}
+
+.lessons-list {
+  margin-top: 10px;
+}
+
+.lessons-list h6 {
+  margin-bottom: 10px;
+  color: #666;
+}
+
+.lesson-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+  gap: 10px;
+}
+
+.lesson-item:last-child {
+  border-bottom: none;
+}
+
+.lesson-order {
+  font-weight: bold;
+  min-width: 20px;
+}
+
+.lesson-title {
+  flex: 1;
+}
+
+.lesson-duration {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.preview-badge {
+  background-color: #ffc107;
+  color: #333;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.language-badge {
+  background-color: #e9ecef;
+  color: #495057;
+  padding: 4px 10px;
+  border-radius: 12px;
+  margin-left: 8px;
+  font-size: 0.85rem;
+}
+
+.duration-badge {
+  background-color: #e0f7fa;
+  color: #006064;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 12px;
+  margin-left: 8px;
+}
+
+.level-badge {
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 12px;
+  margin-left: 8px;
+}
+
+.access-badge {
+  background-color: #f3e8ff;
+  color: #7e22ce;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 12px;
+  margin-left: 8px;
+}
+
+.level-badge.beginner {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.level-badge.intermediate {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.level-badge.advanced {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.instructor-info {
+  margin-top: 10px;
+}
+
+.instructor-details p {
+  margin: 5px 0;
+}
+
+.instructor-bio {
+  color: #666;
+  font-style: italic;
+}
+
+.instructor-bio.empty {
+  color: #999;
+}
+
+/* ======================
+   MODAL DE EDICIÓN DE CURSOS
+====================== */
+.course-edit-modal {
+  max-width: 850px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  padding-bottom: 2rem;
+}
+
+.course-edit-modal .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.course-edit-modal .form-group label {
+  display: block;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.course-edit-modal input,
+.course-edit-modal select,
+.course-edit-modal textarea {
+  width: 100%;
+  padding: 0.4rem 1rem;
+  border-top: none;
+  border-right: none;
+  border-left: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background-color: #ffff;
+  transition: all 0.3s ease;
+}
+
+.course-edit-modal input:focus,
+.course-edit-modal select:focus,
+.course-edit-modal textarea:focus {
+  outline: none;
+  border-color: #00c9ff;
+  background: #fff;
+  box-shadow: 0 0 3px 0 rgba(0, 201, 255, 0.12);
+}
+
+.course-edit-modal textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.teacher-bio {
+  background-color: #f8f9fa !important;
+  color: #6c757d;
+}
+
+.course-edit-modal .list-item {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.course-edit-modal .list-item input {
+  flex: 1;
+}
+
+.course-edit-modal .list-item button {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.course-edit-modal .list-item button:hover {
+  background: #dc2626;
+}
+
+.course-edit-modal .form-group > button {
+  background: none;
+  border: 1px dashed #aaa;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #2d3078;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.course-edit-modal .form-group > button:hover {
+  background: #f5f3ff;
+  border-color: #2d3078;
+}
+
+.module-edit {
+  background: #ffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #00c9ff;
+  transition: all 0.3s ease;
+}
+
+.module-edit:hover {
+  transform: translateY(-3px);
+}
+
+.module-edit h5 {
+  margin-bottom: 1rem;
+  color: #2d3078;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.module-edit input,
+.module-edit textarea {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-top: none;
+  border-right: none;
+  border-left: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+  background: #ffff;
+  transition: all 0.2s ease;
+}
+
+.module-edit input:focus,
+.module-edit textarea:focus {
+  outline: none;
+  border-color: #00c9ff;
+  box-shadow: 0 0 3px 0 rgba(0, 201, 255, 0.15);
+}
+
+.lesson-edit {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.lesson-edit input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border-top: none;
+  border-right: none;
+  border-left: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  height: 42px;
+  line-height: 1.2;
+}
+
+.lesson-edit .remove-item-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 0 1rem;
+  height: 42px;
+  margin-bottom: 13px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lesson-edit .remove-item-btn:hover {
+  background: #c82333;
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.25);
+}
+
+.add-module-btn,
+.add-lesson-btn {
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  transition: all 0.3s ease;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-module-btn {
+  background: #28a745;
+  color: #fff;
+}
+
+.add-lesson-btn {
+  background: #17a2b8;
+  color: #fff;
+}
+
+.add-module-btn:hover {
+  background: #218838;
+  box-shadow: 0 4px 10px rgba(45, 48, 120, 0.08);
+}
+
+.add-lesson-btn:hover {
+  background: #138496;
+  box-shadow: 0 4px 10px rgba(45, 48, 120, 0.08);
+}
+
+.remove-module-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  margin-left: 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-top: 0.75rem;
+  transition: all 0.3s ease;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-module-btn:hover {
+  background: #c82333;
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.25);
+}
+
+.course-edit-modal .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eee;
+  margin-top: 2rem;
+}
+
+.course-edit-modal .btn-cancel {
+  background: white;
+  color: #555;
+  border: 1px solid #ddd;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.course-edit-modal .btn-cancel:hover {
+  background: #f1f1f1;
+}
+
+.course-edit-modal .btn-primary {
+  background: #2d3078;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.course-edit-modal .btn-primary:hover {
+  background: #3f42a0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* ======================
+   RESPONSIVE
+====================== */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    margin: 1rem;
+  }
+
+  .form-actions,
+  .modal-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .btn-cancel,
+  .btn-primary,
+  .btn-confirm-delete {
+    width: 100%;
+    text-align: center;
+  }
+
+  .notification {
+    max-width: calc(100% - 2rem);
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    width: auto;
+    animation: slideUpMobile 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  @keyframes slideUpMobile {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .course-details-header {
+    flex-direction: column;
+  }
+
+  .course-detail-image,
+  .course-image-placeholder-large {
+    width: 100%;
+    height: 200px;
+  }
+
+  .course-edit-modal .form-actions {
+    flex-direction: column;
+  }
+
+  .module-edit {
+    padding: 1rem;
+  }
+
+  .lesson-edit {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lesson-edit .remove-item-btn {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .modal-header {
+    padding: 1.25rem;
+  }
+
+  .modal-body {
+    padding: 1.25rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .user-to-delete {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .course-meta {
+    flex-direction: column;
+    gap: 5px;
+  }
+}

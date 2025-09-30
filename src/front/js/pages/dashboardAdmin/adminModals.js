@@ -311,7 +311,7 @@ export const AdminModals = ({
             <div className="modal-header">
               <h2>
                 <FiBook className="modal-icon" />
-                Detalles del Curso
+                Course Details
               </h2>
               <button
                 className="close-modal"

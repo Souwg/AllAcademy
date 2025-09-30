@@ -209,7 +209,7 @@ export const Signup = () => {
           <div className="card signup-card shadow-lg border-0 w-100 my-4">
             <div className="card-body px-3 px-md-5 py-4">
               <div className="text-center mb-4">
-                <h2 className="fw-bold mb-3">Create your account</h2>
+                <h3 className="fw-bold mb-3">Create your account</h3>
                 <p className="text-muted">Start your learning journey today</p>
               </div>
 
@@ -277,7 +277,7 @@ export const Signup = () => {
                         value={formData.country}
                         onChange={handleChange}
                       >
-                        <option value="">Select a country</option>
+                        <option value="">Select</option>
                         {countries.map((country) => (
                           <option key={country.code} value={country.code}>
                             {country.name}

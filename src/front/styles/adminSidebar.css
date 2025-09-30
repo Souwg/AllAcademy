@@ -1,0 +1,68 @@
+.admin-sidebar {
+  width: var(--sidebar-width);
+  background: white;
+  padding: 2rem 0;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: 10;
+  border-right: 1px solid var(--gray-light);
+}
+
+.sidebar-header {
+  padding: 0 1.5rem 1.5rem;
+  border-bottom: 1px solid var(--gray-light);
+  margin-bottom: 1rem;
+}
+
+.sidebar-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.sidebar-menu {
+  list-style: none;
+  padding: 0 1rem;
+  margin: 0;
+  flex: 1;
+}
+
+.menu-item {
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: var(--transition);
+  border-radius: var(--border-radius);
+  margin-bottom: 0.5rem;
+  color: var(--dark);
+  font-weight: 600;
+}
+
+.menu-item:hover {
+  background-color: rgba(45, 48, 120, 0.05);
+  color: var(--primary);
+}
+
+.menu-item.active {
+  background-color: var(--primary);
+  color: white;
+  box-shadow: 0 8px 20px rgba(45, 48, 120, 0.2);
+}
+
+.menu-icon {
+  margin-right: 1rem;
+  font-size: 1.1rem;
+  color: var(--gray);
+  transition: var(--transition);
+}
+
+.menu-item.active .menu-icon {
+  color: white;
+}
+.admin-layout {
+  display: flex;
+  flex-direction: row; /* Sidebar a la izquierda, contenido a la derecha */
+  min-height: 100vh; /* Que ocupe toda la altura */
+  background-color: var(--light);
+}

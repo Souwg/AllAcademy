@@ -1,9 +1,17 @@
-import React from "react";
+import React, { useContext, useEffect } from "react";
+import { Context } from "../../store/appContext";
 import "../../../styles/chooseCourses.css";
 import { Link } from "react-router-dom";
-import { courses } from "../coursesData";
+import noImage from "../../../img/noImage.jpg";
 
 export const ChooseCourses = () => {
+  const { store, actions } = useContext(Context);
+  const { courses, coursesLoading, coursesError } = store;
+
+  useEffect(() => {
+    actions.loadCourses();
+  }, []);
+
   return (
     <div
       className="container-fluid"
@@ -30,6 +38,14 @@ export const ChooseCourses = () => {
         </div>
       </div>
 
+      {/* Loading / Error */}
+      {coursesLoading && (
+        <p className="text-center text-muted">Loading courses...</p>
+      )}
+      {coursesError && (
+        <p className="text-center text-danger">{coursesError}</p>
+      )}
+
       {/* Tarjetas de cursos */}
       <div className="container">
         <div className="row g-4">
@@ -39,24 +55,32 @@ export const ChooseCourses = () => {
                 {/* Imagen del curso */}
                 <div className="course-image-container">
                   <img
-                    src={course.image}
-                    alt={course.alt}
+                    src={
+                      course.image_url && course.image_url.trim() !== ""
+                        ? course.image_url
+                        : noImage
+                    }
+                    alt={course.title}
                     className="course-image"
                   />
-                  <div className="course-hover-overlay">
-                    <Link
-                      to={`/courses/${course.slug}`}
-                      className="preview-button"
-                    >
-                      Ver Detalles
-                    </Link>
-                  </div>
+                  {!course.isDummy && (
+                    <div className="course-hover-overlay">
+                      <Link
+                        to={`/courses/${course.slug}`}
+                        className="preview-button"
+                      >
+                        Ver Detalles
+                      </Link>
+                    </div>
+                  )}
                 </div>
 
                 {/* Contenido de la tarjeta */}
                 <div className="course-card-content">
                   <div className="course-meta">
-                    <span className="course-level">{course.level}</span>
+                    <span className="course-level">
+                      {course.level || "BEGINNER"}
+                    </span>
                   </div>
 
                   <Link
@@ -66,23 +90,37 @@ export const ChooseCourses = () => {
                     <h3 className="course-title">{course.title}</h3>
                   </Link>
 
-                  <p className="course-description">{course.description}</p>
+                  <p className="course-description">
+                    {course.short_description}
+                  </p>
 
                   <div className="course-footer">
-                    <div className="course-stats">
-                      <div className="stat-item">
-                        <i className="fas fa-play-circle"></i>
-                        <span>{course.lessons} Lecciones</span>
-                      </div>
-                      <div className="stat-item">
-                        <i className="fas fa-clock"></i>
-                        <span>{course.duration}</span>
-                      </div>
-                    </div>
-
-                    <div className="course-price-container">
-                      <span className="price">${course.price}</span>
-                    </div>
+                    {course.isDummy ? (
+                      <span className="coming-soon">Coming Soon</span>
+                    ) : (
+                      <>
+                        <div className="course-stats">
+                          <div className="stat-item">
+                            <i className="fas fa-play-circle"></i>
+                            <span>{course.lessons || 0} Lecciones</span>
+                          </div>
+                          <div className="stat-item">
+                            <i className="fas fa-clock"></i>
+                            <span>{course.duration || "N/A"}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <span className="price-container">
+                            ${course.discount_price}
+                          </span>
+                          {course.price > 0 && (
+                            <span className="original-price">
+                              ${course.price}
+                            </span>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

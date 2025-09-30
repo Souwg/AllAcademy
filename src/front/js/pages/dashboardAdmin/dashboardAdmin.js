@@ -3,7 +3,9 @@ import Swal from "sweetalert2";
 import { AdminSidebar } from "./adminSidebar";
 import { AdminContent } from "./adminContent";
 import { AdminModals } from "./adminModals";
-import "../../../styles/dashboardAdmin.css";
+import "../../../styles/adminModals.css";
+import "../../../styles/adminContent.css";
+import "../../../styles/adminSidebar.css";
 
 export const DashboardAdmin = () => {
   /* ==============================
@@ -228,6 +230,9 @@ export const DashboardAdmin = () => {
         type: "success",
         message: "Usuario actualizado correctamente",
       });
+      setTimeout(() => {
+        setNotification({ show: false, type: "", message: "" });
+      }, 4000);
     } catch (err) {
       setNotification({
         show: true,
@@ -727,6 +732,10 @@ export const DashboardAdmin = () => {
         type: "error",
         message: err.message || "Error al crear el curso",
       });
+      setTimeout(
+        () => setNotification({ show: false, type: "", message: "" }),
+        4000
+      );
     }
   };
 

@@ -172,7 +172,7 @@ export const Login = () => {
           <div className="card login-card shadow-lg border-0 w-100 my-4">
             <div className="card-body px-3 px-md-5 py-4">
               <div className="text-center mb-4">
-                <h2 className="fw-bold mb-3">Welcome back</h2>
+                <h3 className="fw-bold mb-3">Welcome back</h3>
                 <p className="text-muted">
                   Sign in to your account to continue
                 </p>

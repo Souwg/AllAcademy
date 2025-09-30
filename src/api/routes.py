@@ -408,21 +408,25 @@ def create_course():
         user = User.query.get(user_id)
         
         if not user or user.role not in ['admin', 'teacher']:
-            return jsonify({"msg": "Solo administradores y profesores pueden crear cursos"}), 403
+            return jsonify({"msg": "Only administrators and teachers can create courses"}), 403
         
         # Obtener datos del curso
         data = request.get_json()
         print(f"Datos recibidos: {data}")
         
         if not data:
-            return jsonify({"msg": "Datos JSON requeridos"}), 400
+            return jsonify({"msg": "Required JSON data"}), 400
+        
+        short_description = data.get("short_description", "")            
+        if len(short_description.strip()) < 60:
+            return jsonify({"msg": "Short description must be at least 60 characters."}), 400
         
         # Validaciones básicas
         required_fields = ['title', 'description', 'price']
         for field in required_fields:
             if not data.get(field):
-                return jsonify({"msg": f"El campo {field} es requerido"}), 400
-        
+                return jsonify({"msg": f"The {field} is required"}), 400
+
         # Crear slug a partir del título
         slug = slugify(data['title'])
         
@@ -447,14 +451,14 @@ def create_course():
                 try:
                     start_time = datetime.strptime(data['live_class_start_time'], '%H:%M').time()
                 except ValueError:
-                    return jsonify({"msg": "Formato de hora de inicio inválido. Use HH:MM"}), 400
+                    return jsonify({"msg": "Invalid start time format. Use HH:MM"}), 400
             
             # Procesar hora de fin
         if data.get('live_class_end_time'):
                 try:
                     end_time = datetime.strptime(data['live_class_end_time'], '%H:%M').time()
                 except ValueError:
-                    return jsonify({"msg": "Formato de hora de fin inválido. Use HH:MM"}), 400
+                    return jsonify({"msg": "Invalid end time format. Use HH:MM"}), 400
         
         # Crear el curso
         new_course = Course(
@@ -536,14 +540,14 @@ def create_course():
         db.session.commit()
         
         return jsonify({
-            "msg": "Curso creado exitosamente",
+            "msg": "Course created successfully",
             "course": new_course.serialize()
         }), 201
         
     except Exception as e:
         db.session.rollback()
         print(f"Error al crear el curso: {str(e)}")
-        return jsonify({"msg": "Error al crear el curso", "error": str(e)}), 500
+        return jsonify({"msg": "Error creating course", "error": str(e)}), 500
     
 
 @api.route('/courses/<int:course_id>/modules', methods=['POST'])
@@ -769,7 +773,7 @@ def get_course(course_id):
 @jwt_required()
 def update_course(course_id):
     """
-    Actualiza todos los datos de un curso: info básica, objetivos, requisitos, módulos y lecciones.
+     Updates all course data: basic info, objectives, requirements, modules, and lessons.
     """
     try:
         claims = get_jwt()
@@ -778,16 +782,22 @@ def update_course(course_id):
         # Solo admin o el profesor dueño puede editar
         user = User.query.get(user_id)
         if not user or (user.role != "admin" and user.role != "teacher"):
-            return jsonify({"msg": "No autorizado"}), 403
+            return jsonify({"msg": "Unauthorized"}), 403
 
         course = Course.query.get(course_id)
         if not course:
-            return jsonify({"msg": "Curso no encontrado"}), 404
+            return jsonify({"msg": "Course not found"}), 404
 
         data = request.get_json()
-        print("Datos recibidos en update_course:", data)  # 👈 debug
+        print("Received data in update_course:", data)  # 👈 debug
         if not data:
-            return jsonify({"msg": "Datos JSON requeridos"}), 400
+            return jsonify({"msg": "Required JSON data"}), 400
+        
+        if "short_description" in data:
+            short_description = data.get("short_description", "").strip()
+            if len(short_description) < 60:
+                return jsonify({"msg": "Short description must be at least 60 characters."}), 400
+
 
         # === INFO BÁSICA DEL CURSO ===
         course.title = data.get("title", course.title)
@@ -865,12 +875,12 @@ def update_course(course_id):
                     db.session.add(new_lesson)
 
         db.session.commit()
-        return jsonify({"msg": "Curso actualizado correctamente", "course": course.serialize()}), 200
+        return jsonify({"msg": "Course updated successfully", "course": course.serialize()}), 200
 
     except Exception as e:
         db.session.rollback()
-        print(f"Error al actualizar curso {course_id}: {str(e)}")
-        return jsonify({"msg": "Error al actualizar curso", "error": str(e)}), 500
+        print(f"Error updating course {course_id}: {str(e)}")
+        return jsonify({"msg": "Error updating course", "error": str(e)}), 500
 
 # Eliminar un curso
 @api.route('/courses/<int:course_id>', methods=['DELETE'])
