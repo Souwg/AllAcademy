@@ -2,6 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
+from sqlalchemy import extract, func
 from psycopg2 import IntegrityError
 from api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement
 from api.utils import generate_sitemap, APIException
@@ -10,6 +11,7 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, get_jwt
 from datetime import datetime
 from slugify import slugify
+import calendar
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
@@ -416,11 +418,7 @@ def create_course():
         
         if not data:
             return jsonify({"msg": "Required JSON data"}), 400
-        
-        short_description = data.get("short_description", "")            
-        if len(short_description.strip()) < 60:
-            return jsonify({"msg": "Short description must be at least 60 characters."}), 400
-        
+              
         # Validaciones básicas
         required_fields = ['title', 'description', 'price']
         for field in required_fields:
@@ -917,3 +915,52 @@ def delete_course(course_id):
         db.session.rollback()
         print(f"Error deleting course {course_id}: {str(e)}")
         return jsonify({"msg": "Error al eliminar el curso", "error": str(e)}), 500
+
+@api.route('/stats/users-per-month', methods=['GET'])
+def users_per_month():
+    try:
+        results = (
+            db.session.query(
+                extract('year', User.created_at).label('year'),
+                extract('month', User.created_at).label('month'),
+                func.count(User.id).label('count')
+            )
+            .group_by('year', 'month')
+            .order_by('year', 'month')
+            .all()
+        )
+
+        stats = [
+            {
+                "year": int(r.year),
+                "month": int(r.month),
+                "month_name": calendar.month_name[int(r.month)],  # 👈 aquí
+                "count": r.count
+            }
+            for r in results
+        ]
+
+        return jsonify({"stats": stats}), 200
+
+    except Exception as e:
+        print("Error en users_per_month:", str(e))
+        return jsonify({"msg": "Error obteniendo estadísticas", "error": str(e)}), 500
+
+@api.route('/courses/slug/<string:slug>', methods=['GET'])
+def get_course_by_slug(slug):
+    """
+    Endpoint público para obtener un curso específico por slug.
+    No requiere autenticación.
+    """
+    print(f"=== GET COURSE BY SLUG {slug} ENDPOINT CALLED ===")
+    try:
+        course = Course.query.filter_by(slug=slug, is_published=True).first()
+        if not course:
+            print(f"Course not found with slug: {slug}")
+            return jsonify({"msg": "Curso no encontrado"}), 404
+
+        print(f"Returning course: {course.title}")
+        return jsonify(course.serialize()), 200
+    except Exception as e:
+        print(f"Error getting course by slug {slug}: {str(e)}")
+        return jsonify({"msg": "Error al obtener el curso", "error": str(e)}), 500

@@ -1,25 +1,38 @@
-import React from "react";
+import React, { useContext, useEffect } from "react";
+import { Context } from "../store/appContext";
 import { useParams, Link } from "react-router-dom";
-import { courses } from "./coursesData";
-import {
-  FaClock,
-  FaCalendarAlt,
-  FaCertificate,
-  FaMoneyBillWave,
-  FaChevronRight,
-  FaVideo,
-  FaPlayCircle,
-} from "react-icons/fa";
+import "../../styles/courseDetails.css";
 
 export const CourseDetails = () => {
   const { slug } = useParams();
-  const course = courses.find((course) => course.slug === slug);
+  const { store, actions } = useContext(Context);
+  const { courses, coursesLoading, coursesError } = store;
+
+  useEffect(() => {
+    if (courses.length === 0) {
+      actions.loadCourses();
+    }
+  }, []);
+
+  const course = courses.find((c) => c.slug === slug);
+
+  if (coursesLoading) {
+    return <div className="container py-5 text-center">Loading course...</div>;
+  }
+
+  if (coursesError) {
+    return (
+      <div className="container py-5 text-center text-danger">
+        {coursesError}
+      </div>
+    );
+  }
 
   if (!course) {
     return (
       <div className="container py-5 text-center">
         <h2>Course not found</h2>
-        <Link to="/courses" className="btn btn-primary mt-3">
+        <Link to="/allCourses" className="btn btn-primary mt-3">
           Browse All Courses
         </Link>
       </div>
@@ -44,7 +57,7 @@ export const CourseDetails = () => {
                     </Link>
                   </li>
                   <li className="breadcrumb-item">
-                    <Link to="/courses" className="text-white-50">
+                    <Link to="/allCourses" className="text-white-50">
                       Courses
                     </Link>
                   </li>
@@ -52,28 +65,37 @@ export const CourseDetails = () => {
                     className="breadcrumb-item active text-white"
                     aria-current="page"
                   >
-                    {course.title}
+                    {course.title || "Untitled Course"}
                   </li>
                 </ol>
               </nav>
               <h1 className="text-white display-4 fw-bold mb-3">
-                {course.title}
+                {course.title || "Untitled Course"}
               </h1>
-              <p className="text-white-50 lead mb-4">{course.description}</p>
+              <p className="text-white-50 lead mb-4">
+                {course.description || "No description available"}
+              </p>
 
               <div className="d-flex flex-wrap align-items-center gap-3 mb-4">
                 <div className="d-flex align-items-center text-white">
-                  <FaClock className="me-2" />
-                  <span>Last updated {course.lastUpdated}</span>
+                  <i className="fa-solid fa-clock me-2"></i>
+                  <span>
+                    Last updated {course.lastUpdated || "No update info"}
+                  </span>
                 </div>
 
-                {/* Horario de clases en vivo - desde los datos del curso */}
-                {course.liveClasses && course.schedule && (
+                {course.liveClasses && (
                   <div className="d-flex align-items-center text-white">
-                    <FaPlayCircle className="me-2 text-warning" />
+                    <i className="fa-solid fa-circle-play me-2 text-warning"></i>
                     <span>
-                      Clases en vivo: {course.schedule.days.join(" y ")} de{" "}
-                      {course.schedule.time} ({course.schedule.timezone})
+                      Live classes:{" "}
+                      {course.live_class_days?.length > 0
+                        ? course.live_class_days.join(" and ")
+                        : "No days"}{" "}
+                      de {course.live_class_start_time || "no data"}
+                      {" - "}
+                      {course.live_class_end_time || "no data"} (
+                      {course.live_class_timezone || "no data"})
                     </span>
                   </div>
                 )}
@@ -84,16 +106,17 @@ export const CourseDetails = () => {
                   New Release
                 </span>
                 <span className="badge bg-info px-3 py-2 rounded-pill">
-                  {course.level}
+                  {course.level || "All levels"}
                 </span>
                 {course.liveClasses && (
                   <span className="badge bg-warning px-3 py-2 rounded-pill">
-                    <FaVideo className="me-1" /> Clases en vivo
+                    <i className="fa-solid fa-video"></i> Live classes
                   </span>
                 )}
+
                 {course.recordedVideos && (
                   <span className="badge bg-secondary px-3 py-2 rounded-pill">
-                    <FaVideo className="me-1" /> Videos guardados
+                    <i className="fa-solid fa-video"></i> Recorded videos
                   </span>
                 )}
               </div>
@@ -101,8 +124,11 @@ export const CourseDetails = () => {
             <div className="col-lg-4 d-none d-lg-block">
               <div className="ratio ratio-16x9">
                 <img
-                  src={course.image}
-                  alt={course.alt}
+                  src={
+                    course.image ||
+                    "https://via.placeholder.com/600x400?text=No+Image"
+                  }
+                  alt={course.alt || "Course image"}
                   className="img-fluid rounded-3 shadow"
                   style={{ objectFit: "cover" }}
                 />
@@ -115,84 +141,23 @@ export const CourseDetails = () => {
       {/* Main Content */}
       <div className="container py-5">
         <div className="row">
-          {/* Left Column - Course Content */}
+          {/* Left Column */}
           <div className="col-lg-8 pe-lg-5">
-            {/* Información de clases en vivo - solo si el curso tiene clases en vivo */}
-            {course.liveClasses && (
-              <section className="mb-5 p-4 bg-light rounded-3">
-                <h2 className="fw-bold mb-4 text-primary">
-                  <FaPlayCircle className="me-2" />
-                  Modalidad de Clases
-                </h2>
-                <div className="row">
-                  <div className="col-md-6 mb-3">
-                    <div className="d-flex align-items-center">
-                      <div className="bg-primary text-white rounded-circle p-3 me-3">
-                        <FaClock size={24} />
-                      </div>
-                      <div>
-                        <h5 className="fw-bold mb-1">Horario de Clases</h5>
-                        <p className="mb-0">
-                          {course.schedule.days.join(" y ")} de{" "}
-                          {course.schedule.time} ({course.schedule.timezone})
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-6 mb-3">
-                    <div className="d-flex align-items-center">
-                      <div className="bg-success text-white rounded-circle p-3 me-3">
-                        <FaVideo size={24} />
-                      </div>
-                      <div>
-                        <h5 className="fw-bold mb-1">Clases en Vivo</h5>
-                        <p className="mb-0">
-                          Interactúa en tiempo real con el instructor
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  {course.recordedVideos && (
-                    <div className="col-md-6 mb-3">
-                      <div className="d-flex align-items-center">
-                        <div className="bg-info text-white rounded-circle p-3 me-3">
-                          <FaPlayCircle size={24} />
-                        </div>
-                        <div>
-                          <h5 className="fw-bold mb-1">Acceso a Grabaciones</h5>
-                          <p className="mb-0">
-                            Todas las clases se graban y quedan disponibles
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  <div className="col-md-6 mb-3">
-                    <div className="d-flex align-items-center">
-                      <div className="bg-warning text-white rounded-circle p-3 me-3">
-                        <FaCalendarAlt size={24} />
-                      </div>
-                      <div>
-                        <h5 className="fw-bold mb-1">Acceso Continuo</h5>
-                        <p className="mb-0">
-                          Accede a los videos las 24/7 después de cada clase
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
-
             {/* What You'll Learn */}
             <section className="mb-5">
-              <h2 className="fw-bold mb-4">What you'll learn</h2>
+              <h2 className="section-title mb-4">
+                <i className="fa-solid fa-lightbulb text-warning me-2"></i>
+                What you'll learn
+              </h2>
               <div className="row">
-                {course.whatYouLearn.map((item, index) => (
+                {(course.what_you_learn?.length
+                  ? course.what_you_learn
+                  : ["No learning objectives available"]
+                ).map((item, index) => (
                   <div key={index} className="col-md-6 mb-3">
                     <div className="d-flex">
                       <span className="text-success me-2">
-                        <FaChevronRight />
+                        <i className="fa-solid fa-chevron-right"></i>
                       </span>
                       <span>{item}</span>
                     </div>
@@ -203,36 +168,64 @@ export const CourseDetails = () => {
 
             {/* Course Content */}
             <section className="mb-5">
-              <h2 className="fw-bold mb-4">Course content</h2>
+              <h2 className="section-title">
+                <i className="fa-solid fa-book-open text-primary me-2"></i>
+                Course content
+              </h2>
+
               <div className="accordion" id="courseAccordion">
-                {course.curriculum.map((item, index) => (
+                {(course.modules?.length
+                  ? course.modules
+                  : [
+                      {
+                        module: "N/A",
+                        title: "No modules available",
+                        lessons: 0,
+                      },
+                    ]
+                ).map((item, index) => (
                   <div
                     key={index}
-                    className="accordion-item mb-2 border-0 shadow-sm rounded-3 overflow-hidden"
+                    className="accordion-item mb-2 border-0 rounded-3 overflow-hidden"
                   >
                     <h3 className="accordion-header">
                       <button
-                        className="accordion-button collapsed bg-white fw-bold"
+                        className="accordion-button collapsed fw-bold"
                         type="button"
                         data-bs-toggle="collapse"
                         data-bs-target={`#collapse${index}`}
                       >
                         <span className="me-3">
-                          {item.module}: {item.title}
+                          Module {index + 1}: {item.title || "Untitled Section"}
                         </span>
                         <span className="text-muted">
-                          {item.lessons} lessons
+                          {item.lessons?.length || 0} lessons
                         </span>
                       </button>
                     </h3>
                     <div
                       id={`collapse${index}`}
                       className="accordion-collapse collapse"
-                      data-bs-parent="#courseAccordion"
                     >
                       <div className="accordion-body pt-0">
                         <div className="list-group list-group-flush">
-                          {[...Array(item.lessons)].map((_, i) => (
+                          {(item.lessons?.length
+                            ? [...item.lessons].sort((a, b) => {
+                                const ao =
+                                  typeof a.order === "number"
+                                    ? a.order
+                                    : Number.MAX_SAFE_INTEGER;
+                                const bo =
+                                  typeof b.order === "number"
+                                    ? b.order
+                                    : Number.MAX_SAFE_INTEGER;
+                                if (ao !== bo) return ao - bo;
+                                const ac = a.created_at ?? 0;
+                                const bc = b.created_at ?? 0;
+                                return ac - bc; // más viejo primero
+                              })
+                            : [{ title: "No lessons available" }]
+                          ).map((lesson, i) => (
                             <div
                               key={i}
                               className="list-group-item border-0 py-3 d-flex justify-content-between align-items-center"
@@ -241,11 +234,8 @@ export const CourseDetails = () => {
                                 <span className="me-3 text-muted">
                                   {i + 1}.
                                 </span>
-                                <span>
-                                  Lesson {i + 1}: {item.title} topic
-                                </span>
+                                <span>{lesson.title || "Untitled Lesson"}</span>
                               </div>
-                              {/* Se han eliminado las etiquetas "En vivo" y "Grabación" */}
                             </div>
                           ))}
                         </div>
@@ -258,9 +248,15 @@ export const CourseDetails = () => {
 
             {/* Requirements */}
             <section className="mb-5">
-              <h2 className="fw-bold mb-4">Requirements</h2>
+              <h2 className="section-title mb-4">
+                <i className="fa-solid fa-list-check text-primary me-2"></i>
+                Requirements
+              </h2>
               <ul className="list-unstyled">
-                {course.requirements.map((item, index) => (
+                {(course.requirements?.length
+                  ? course.requirements
+                  : ["No requirements specified"]
+                ).map((item, index) => (
                   <li key={index} className="mb-2">
                     <span className="me-2">•</span>
                     {item}
@@ -271,47 +267,57 @@ export const CourseDetails = () => {
 
             {/* Instructor */}
             <section className="mb-5">
-              <h2 className="fw-bold mb-4">Instructor</h2>
+              <h2 className="section-title mb-4">
+                <i className="fa-solid fa-user-graduate text-info me-2"></i>
+                Instructor
+              </h2>
+
               <div className="d-flex align-items-start">
                 <img
-                  src={course.instructorImage}
-                  alt={course.instructor}
+                  src={
+                    course.instructorImage ||
+                    "https://via.placeholder.com/100?text=No+Image"
+                  }
+                  alt={course.instructor || "Instructor"}
                   className="rounded-circle me-4"
                   width="100"
                   height="100"
                 />
                 <div>
-                  <h3 className="fw-bold mb-1">{course.instructor}</h3>
-                  <p className="text-muted mb-2">{course.instructorBio}</p>
+                  <h3 className="fw-bold mb-1">
+                    {course.instructor || "Unknown Instructor"}
+                  </h3>
+                  <p className="text-muted mb-2">
+                    {course.instructorBio || "No biography available"}
+                  </p>
                 </div>
               </div>
             </section>
           </div>
 
-          {/* Right Column - Pricing & Details */}
+          {/* Right Column */}
           <div className="col-lg-4">
             <div className="sticky-top" style={{ top: "20px" }}>
               <div className="card shadow-lg border-0">
                 <img
-                  src={course.image}
-                  alt={course.alt}
+                  src={
+                    course.image_url ||
+                    "https://via.placeholder.com/600x400?text=No+Image"
+                  }
+                  alt={course.alt || "Course image"}
                   className="card-img-top d-lg-none"
                   style={{ height: "200px", objectFit: "cover" }}
                 />
                 <div className="card-body">
-                  <div className="mb-3">
-                    <h3 className="card-title fw-bold mb-0">
-                      ${course.discountPrice || course.price}
-                    </h3>
-                    {course.discountPrice && (
-                      <span className="text-muted text-decoration-line-through ms-2">
-                        ${course.price}
+                  <div className="mb-3 d-flex align-items-center">
+                    <span className="course-price">
+                      ${course.discount_price || course.price || "0.00"}
+                    </span>
+                    {course.discount_price && (
+                      <span className="course-price-original">
+                        ${course.price || "N/A"}
                       </span>
                     )}
-                    <div className="mt-2 text-muted small">
-                      * Use code <strong>LEARN20</strong> at checkout for 20%
-                      off
-                    </div>
                   </div>
 
                   <div className="d-grid gap-2 mb-4">
@@ -325,88 +331,64 @@ export const CourseDetails = () => {
 
                   <h5 className="fw-bold mb-3">This course includes:</h5>
                   <ul className="list-unstyled">
+                    {/* 🔹 Lessons */}
                     <li className="mb-2">
-                      <FaClock className="text-primary me-2" />
-                      <span>{course.lessons} on-demand lessons</span>
+                      <i className="fa-solid fa-video text-primary me-2"></i>
+                      <span>{course.lessons || "N/A"} on-demand lessons</span>
                     </li>
+
+                    {/* 🔹 Duración del curso (en vivo) */}
+                    {course.duration && (
+                      <li className="mb-2">
+                        <i className="fa-solid fa-clock text-primary me-2"></i>
+                        <span>Course duration: {course.duration}</span>
+                      </li>
+                    )}
+
+                    {/* 🔹 Acceso al curso */}
+                    {course.access_duration && (
+                      <li className="mb-2">
+                        <i className="fa-solid fa-calendar-days text-primary me-2"></i>
+                        <span>Access duration: {course.access_duration}</span>
+                      </li>
+                    )}
+
+                    {/* 🔹 Idioma */}
                     <li className="mb-2">
-                      <FaCalendarAlt className="text-primary me-2" />
-                      <span>Lifetime access</span>
+                      <i className="fa-solid fa-language text-primary me-2"></i>
+                      <span>
+                        Language of instruction:{" "}
+                        {course.language || "Not specified"}
+                      </span>
                     </li>
+
+                    {/* 🔹 Live classes */}
                     {course.liveClasses && (
                       <li className="mb-2">
-                        <FaPlayCircle className="text-primary me-2" />
-                        <span>Clases en vivo programadas</span>
+                        <i className="fa-solid fa-circle-play text-primary me-2"></i>
+                        <span>Live classes included</span>
                       </li>
                     )}
+
+                    {/* 🔹 Grabaciones */}
                     {course.recordedVideos && (
                       <li className="mb-2">
-                        <FaVideo className="text-primary me-2" />
-                        <span>Grabaciones de todas las clases</span>
+                        <i className="fa-solid fa-video text-primary me-2"></i>
+                        <span>Recorded videos available</span>
                       </li>
                     )}
+
+                    {/* 🔹 Certificado */}
                     {course.certificate && (
                       <li className="mb-2">
-                        <FaCertificate className="text-primary me-2" />
+                        <i className="fa-solid fa-certificate text-primary me-2"></i>
                         <span>Certificate of completion</span>
                       </li>
                     )}
                   </ul>
-
-                  {/* Información adicional sobre horarios - solo si hay clases en vivo */}
-                  {course.liveClasses && course.schedule && (
-                    <div className="mt-4 p-3 bg-light rounded-3">
-                      <h6 className="fw-bold mb-2">
-                        <FaClock className="me-2 text-warning" />
-                        Horario de clases:
-                      </h6>
-                      <p className="mb-1">{course.schedule.days.join(" y ")}</p>
-                      <p className="mb-0 fw-bold">
-                        {course.schedule.time} ({course.schedule.timezone})
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Related Courses */}
-      <div className="bg-white py-5">
-        <div className="container">
-          <h2 className="fw-bold mb-4">More courses you might like</h2>
-          <div className="row g-4">
-            {courses
-              .filter((c) => c.id !== course.id)
-              .slice(0, 3)
-              .map((relatedCourse) => (
-                <div key={relatedCourse.id} className="col-md-4">
-                  <div className="card h-100 border-0 shadow-sm">
-                    <img
-                      src={relatedCourse.image}
-                      alt={relatedCourse.alt}
-                      className="card-img-top"
-                      style={{ height: "180px", objectFit: "cover" }}
-                    />
-                    <div className="card-body">
-                      <h5 className="card-title">{relatedCourse.title}</h5>
-                      <p className="card-text text-muted small">
-                        {relatedCourse.description.substring(0, 100)}...
-                      </p>
-                    </div>
-                    <div className="card-footer bg-white border-0">
-                      <Link
-                        to={`/courses/${relatedCourse.slug}`}
-                        className="btn btn-sm btn-outline-primary"
-                      >
-                        View Course
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
           </div>
         </div>
       </div>

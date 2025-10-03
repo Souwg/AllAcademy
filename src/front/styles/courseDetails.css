@@ -1,0 +1,69 @@
+/* ============================
+   HERO SECTION (parte superior del curso)
+   ============================ */
+.hero-section-course {
+  background: linear-gradient(135deg, #012449, #283174);
+}
+.hero-section-course h1 {
+  letter-spacing: -0.5px;
+}
+
+/* ============================
+   BADGES (etiquetas de estado: New, Level, Live, etc.)
+   ============================ */
+.badge {
+  font-size: 0.85rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================
+   ACCORDION (sección de contenido del curso)
+   ============================ */
+.accordion-button::after {
+  transition: transform 0.2s ease-in-out;
+}
+.accordion-button:not(.collapsed)::after {
+  transform: rotate(90deg);
+}
+.accordion-item,
+.accordion-button {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+/* ============================
+   LISTA DE LECCIONES (hover sobre ítems)
+   ============================ */
+.list-group-item:hover {
+  background-color: #f8f9fa;
+  transition: background 0.2s;
+  /* ============================
+   TITULOS DE SECCIONES (Requirements, Course content, etc.)
+   ============================ */
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #001933;
+    border-left: 4px solid #0d6efd;
+    padding-left: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  /* ============================
+   PRECIO DEL CURSO (destacar precio actual y original)
+   ============================ */
+  .course-price {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #283174;
+  }
+  .course-price-original {
+    font-size: 1rem;
+    text-decoration: line-through;
+    color: #6c757d;
+    margin-left: 0.5rem;
+  }
+}

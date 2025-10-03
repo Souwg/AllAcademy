@@ -92,6 +92,7 @@
     "react-polyfills": "0.0.1",
     "react-router-dom": "^6.3.0",
     "react-slick": "^0.30.3",
+    "recharts": "^2.1.15",
     "slick-carousel": "^1.8.1",
     "sweetalert2": "^11.22.2",
     "xlsx": "^0.18.5"

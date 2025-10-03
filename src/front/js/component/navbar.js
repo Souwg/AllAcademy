@@ -68,7 +68,7 @@ export const Navbar = () => {
         paddingBottom: "1rem",
       }}
     >
-      <div className="container">
+      <div className="container-fluid">
         <div className="d-flex flex-wrap align-items-center justify-content-between w-100">
           <div className="d-flex align-items-center">
             <div className="col-auto">
@@ -100,7 +100,7 @@ export const Navbar = () => {
 
           <div className="col-12 col-lg-auto order-lg-2 mx-lg-auto">
             <div className="collapse navbar-collapse" id="navbarNavDropdown">
-              <ul className="navbar-nav pt-4" style={{ gap: "2rem" }}>
+              <ul className="navbar-nav pt-4" style={{ gap: "8rem" }}>
                 <li className="nav-item">
                   <Link
                     to="/"
@@ -108,7 +108,7 @@ export const Navbar = () => {
                     style={{
                       color: "#001933",
                       fontWeight: "600",
-                      fontSize: "18px",
+                      fontSize: "1rem",
                       position: "relative",
                     }}
                     aria-current="page"
@@ -124,7 +124,7 @@ export const Navbar = () => {
                     style={{
                       color: "#001933",
                       fontWeight: "600",
-                      fontSize: "18px",
+                      fontSize: "1rem",
                       position: "relative",
                     }}
                   >
@@ -139,7 +139,7 @@ export const Navbar = () => {
                     style={{
                       color: "#001933",
                       fontWeight: "600",
-                      fontSize: "18px",
+                      fontSize: "1rem",
                       position: "relative",
                     }}
                   >
@@ -159,7 +159,7 @@ export const Navbar = () => {
                     style={{
                       color: "#001933",
                       fontWeight: "600",
-                      fontSize: "18px",
+                      fontSize: "1rem",
                       padding: "8px 16px",
                       borderRadius: "8px",
                     }}
@@ -256,7 +256,7 @@ export const Navbar = () => {
                   backgroundColor: "#E4263C",
                   color: "#fff",
                   fontWeight: "600",
-                  fontSize: "18px",
+                  fontSize: "1rem",
                   whiteSpace: "nowrap",
                   transition: "all 0.2s ease",
                 }}
@@ -271,7 +271,7 @@ export const Navbar = () => {
                       className="d-block welcome-text"
                       style={{
                         color: "#6c757d",
-                        fontSize: "14px",
+                        fontSize: "0.85rem",
                         fontWeight: "500",
                       }}
                     >
@@ -282,7 +282,7 @@ export const Navbar = () => {
                       style={{
                         color: "#001933",
                         fontWeight: "600",
-                        fontSize: "16px",
+                        fontSize: "0.85rem",
                       }}
                     >
                       {user.first_name}
@@ -295,7 +295,7 @@ export const Navbar = () => {
                       backgroundColor: "#001933",
                       color: "#fff",
                       fontWeight: "600",
-                      fontSize: "18px",
+                      fontSize: "1rem",
                       whiteSpace: "nowrap",
                       transition: "all 0.2s ease",
                       padding: "8px 20px",
@@ -323,7 +323,7 @@ export const Navbar = () => {
                       border: "2px solid #eee",
                       color: "#001933",
                       fontWeight: "600",
-                      fontSize: "18px",
+                      fontSize: "1rem",
                       whiteSpace: "nowrap",
                       transition: "all 0.2s ease",
                       padding: "8px 20px",

@@ -5,8 +5,8 @@ import {
   FiX,
   FiUser,
   FiAlertTriangle,
-  FiBook,
 } from "react-icons/fi";
+import "../../../styles/adminModals.css";
 
 export const AdminModals = ({
   showModal,
@@ -40,11 +40,11 @@ export const AdminModals = ({
   // Función para obtener nombre del rol
   const getRoleDisplayName = (role) => {
     const roles = {
-      admin: "Administrador",
-      teacher: "Profesor",
-      student: "Estudiante",
+      admin: "Admin",
+      teacher: "Teacher",
+      student: "Student",
     };
-    return roles[role] || "Usuario";
+    return roles[role] || "User";
   };
 
   return (
@@ -59,12 +59,12 @@ export const AdminModals = ({
             <div className="modal-header">
               <h2>
                 <FiUser className="modal-icon" />
-                Editar Usuario
+                Edit User
               </h2>
               <button
                 className="close-modal"
                 onClick={() => setShowModal(false)}
-                aria-label="Cerrar modal"
+                aria-label="Close Modal"
               >
                 <FiX />
               </button>
@@ -79,7 +79,7 @@ export const AdminModals = ({
                 className="user-edit-form"
               >
                 <div className="form-group">
-                  <label>Nombre</label>
+                  <label>First Name</label>
                   <input
                     type="text"
                     value={selectedUser.first_name || ""}
@@ -93,7 +93,7 @@ export const AdminModals = ({
                 </div>
 
                 <div className="form-group">
-                  <label>Apellido</label>
+                  <label>Last Name</label>
                   <input
                     type="text"
                     value={selectedUser.last_name || ""}
@@ -121,7 +121,7 @@ export const AdminModals = ({
                 </div>
 
                 <div className="form-group">
-                  <label>País</label>
+                  <label>Country</label>
                   <input
                     type="text"
                     value={selectedUser.country || ""}
@@ -135,7 +135,7 @@ export const AdminModals = ({
                 </div>
 
                 <div className="form-group">
-                  <label>ID / Documento</label>
+                  <label>ID / Document</label>
                   <input
                     type="text"
                     value={selectedUser.id_number || ""}
@@ -160,7 +160,7 @@ export const AdminModals = ({
                 </div>
 
                 <div className="form-group">
-                  <label>Rol</label>
+                  <label>Role</label>
                   <select
                     value={selectedUser.role || "student"}
                     onChange={(e) =>
@@ -179,10 +179,10 @@ export const AdminModals = ({
                     className="btn-cancel"
                     onClick={() => setShowModal(false)}
                   >
-                    Cancelar
+                    Cancel
                   </button>
                   <button type="submit" className="btn-primary">
-                    Guardar Cambios
+                    Save Changes
                   </button>
                 </div>
               </form>
@@ -202,8 +202,7 @@ export const AdminModals = ({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header warning">
-              <FiAlertTriangle className="modal-icon" />
-              <h2>Confirmar Eliminación</h2>
+              <h2>Confirm Delete</h2>
               <button
                 className="close-modal"
                 onClick={() =>
@@ -218,7 +217,7 @@ export const AdminModals = ({
 
             <div className="modal-body">
               <p className="delete-confirm-text">
-                ¿Estás seguro de eliminar permanentemente al usuario:
+                Are you sure you want to permanently delete the user:
               </p>
 
               <div className="user-to-delete">
@@ -234,7 +233,8 @@ export const AdminModals = ({
               </div>
 
               <p className="warning-message">
-                <FiAlertTriangle /> Esta acción no se puede deshacer
+                <i className="fa-solid fa-triangle-exclamation modal-icon"></i>{" "}
+                This action cannot be undone!
               </p>
 
               {deleteStatus.error && (
@@ -250,7 +250,7 @@ export const AdminModals = ({
                   onClick={() => setShowDeleteModal(false)}
                   disabled={deleteStatus.loading}
                 >
-                  Cancelar
+                  Cancel
                 </button>
                 <button
                   type="button"
@@ -261,10 +261,10 @@ export const AdminModals = ({
                   {deleteStatus.loading ? (
                     <span className="loading-delete">
                       <span className="spinner"></span>
-                      Eliminando...
+                      Deleting...
                     </span>
                   ) : (
-                    "Confirmar Eliminación"
+                    "Confirm Delete"
                   )}
                 </button>
               </div>
@@ -290,7 +290,7 @@ export const AdminModals = ({
             <button
               className="close-notification"
               onClick={closeNotification}
-              aria-label="Cerrar notificación"
+              aria-label="Close Notification"
             >
               <FiX size={16} />
             </button>
@@ -310,7 +310,7 @@ export const AdminModals = ({
           >
             <div className="modal-header">
               <h2>
-                <FiBook className="modal-icon" />
+                <i className="fa-solid fa-book modal-icon"></i>
                 Course Details
               </h2>
               <button
@@ -318,7 +318,7 @@ export const AdminModals = ({
                 onClick={() => setShowCourseDetails(false)}
                 aria-label="Cerrar modal"
               >
-                <FiX />
+                <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
 
@@ -379,7 +379,7 @@ export const AdminModals = ({
                         </p>
                       ) : (
                         <p className="instructor-bio empty">
-                          Este profesor aún no tiene bio.
+                          This teacher does not have a bio yet.
                         </p>
                       )}
                     </div>
@@ -387,35 +387,41 @@ export const AdminModals = ({
                 </div>
 
                 <div className="detail-section">
-                  <h4>Precio</h4>
+                  <h4>Price</h4>
                   <div className="price-details">
-                    <span className="price">
-                      ${selectedCourse.discount_price}
-                    </span>
-                    {selectedCourse.price > 0 && (
-                      <span className="discount-price">
-                        ${selectedCourse.price}
-                      </span>
+                    {selectedCourse.discount_price &&
+                    selectedCourse.discount_price > 0 ? (
+                      <>
+                        <span className="price">
+                          ${selectedCourse.discount_price}
+                        </span>
+                        <span className="discount-price">
+                          ${selectedCourse.price}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="price">${selectedCourse.price}</span>
                     )}
                   </div>
                 </div>
+
                 <div className="detail-section">
-                  <h4>Tiempo de Acceso</h4>
+                  <h4>Access Duration</h4>
                   <p>
                     {selectedCourse.access_duration === "lifetime"
-                      ? "Acceso de por vida"
+                      ? "Lifetime Access"
                       : selectedCourse.access_duration === "3m"
-                      ? "3 meses"
+                      ? "3 Months"
                       : selectedCourse.access_duration === "6m"
-                      ? "6 meses"
+                      ? "6 Months"
                       : selectedCourse.access_duration === "12m"
-                      ? "1 año"
+                      ? "1 Year"
                       : selectedCourse.access_duration}
                   </p>
                 </div>
 
                 <div className="detail-section">
-                  <h4>Lo que aprenderán</h4>
+                  <h4>Learning Objectives</h4>
                   <ul className="learning-objectives">
                     {selectedCourse.what_you_learn?.map((objective, index) => (
                       <li key={index}>{objective}</li>
@@ -424,7 +430,7 @@ export const AdminModals = ({
                 </div>
 
                 <div className="detail-section">
-                  <h4>Requisitos</h4>
+                  <h4>Requirements</h4>
                   <ul className="requirements">
                     {selectedCourse.requirements?.map((requirement, index) => (
                       <li key={index}>{requirement}</li>
@@ -432,18 +438,18 @@ export const AdminModals = ({
                   </ul>
                 </div>
                 <div className="detail-section">
-                  <h4>Módulos y Lecciones</h4>
+                  <h4>Modules and Lessons</h4>
                   {selectedCourse.modules?.length > 0 ? (
                     <div className="modules-list">
                       {selectedCourse.modules.map((module, index) => (
                         <div key={index} className="module-item">
                           <h5>
-                            Módulo {index + 1}: {module.title}
+                            Module {index + 1}: {module.title}
                           </h5>
                           <p>{module.description}</p>
                           {module.lessons?.length > 0 && (
                             <div className="lessons-list">
-                              <h6>Lecciones ({module.lessons.length})</h6>
+                              <h6>Lessons ({module.lessons.length})</h6>
                               {module.lessons.map((lesson, lessonIndex) => (
                                 <div key={lessonIndex} className="lesson-item">
                                   <span className="lesson-order">
@@ -459,7 +465,7 @@ export const AdminModals = ({
                                   )}
                                   {lesson.is_preview && (
                                     <span className="preview-badge">
-                                      Vista previa
+                                      Preview
                                     </span>
                                   )}
                                 </div>
@@ -470,7 +476,7 @@ export const AdminModals = ({
                       ))}
                     </div>
                   ) : (
-                    <p>No hay módulos definidos para este curso.</p>
+                    <p>No modules have been defined for this course.</p>
                   )}
                 </div>
               </div>
@@ -488,12 +494,16 @@ export const AdminModals = ({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">
-              <h2>Edit Course</h2>
+              <h2>
+                <i class="fa-solid fa-pen-to-square modal-icon"></i>
+                Edit Course
+              </h2>
               <button
                 className="close-modal"
                 onClick={() => setShowEditCourseModal(false)}
+                aria-label="Cerrar modal"
               >
-                <FiX />
+                <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
 
@@ -801,51 +811,92 @@ export const AdminModals = ({
 
                       {/* === LESSONS === */}
                       <h6>Lessons</h6>
-                      {module.lessons?.map((lesson, lIndex) => (
-                        <div key={lIndex} className="lesson-edit">
-                          <input
-                            type="text"
-                            placeholder="Lesson title"
-                            value={lesson.title}
-                            onChange={(e) => {
-                              const updatedModules = [...courseToEdit.modules];
-                              updatedModules[mIndex].lessons[lIndex].title =
-                                e.target.value;
-                              setCourseToEdit({
-                                ...courseToEdit,
-                                modules: updatedModules,
-                              });
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="remove-item-btn"
-                            onClick={() => {
-                              const updatedModules = [...courseToEdit.modules];
-                              updatedModules[mIndex].lessons.splice(lIndex, 1);
-                              setCourseToEdit({
-                                ...courseToEdit,
-                                modules: updatedModules,
-                              });
-                            }}
-                          >
-                            Remove Lesson
-                          </button>
-                        </div>
-                      ))}
+                      {[...(module.lessons || [])]
+                        .sort((a, b) => {
+                          const ao =
+                            typeof a.order === "number"
+                              ? a.order
+                              : Number.MAX_SAFE_INTEGER;
+                          const bo =
+                            typeof b.order === "number"
+                              ? b.order
+                              : Number.MAX_SAFE_INTEGER;
+                          if (ao !== bo) return ao - bo;
+                          const ac = a.created_at ?? 0;
+                          const bc = b.created_at ?? 0;
+                          return ac - bc; // más viejo primero, más nuevo al final
+                        })
+                        .map((lesson, lIndex) => (
+                          <div key={lIndex} className="lesson-edit">
+                            <input
+                              type="text"
+                              placeholder="Lesson title"
+                              value={lesson.title}
+                              onChange={(e) => {
+                                const updatedModules = [
+                                  ...courseToEdit.modules,
+                                ];
+                                updatedModules[mIndex].lessons[lIndex].title =
+                                  e.target.value;
+                                setCourseToEdit({
+                                  ...courseToEdit,
+                                  modules: updatedModules,
+                                });
+                              }}
+                            />
+                            <button
+                              type="button"
+                              className="remove-item-btn-edit-modal"
+                              onClick={() => {
+                                const updatedModules = [
+                                  ...courseToEdit.modules,
+                                ];
+                                updatedModules[mIndex].lessons.splice(
+                                  lIndex,
+                                  1
+                                );
+                                setCourseToEdit({
+                                  ...courseToEdit,
+                                  modules: updatedModules,
+                                });
+                              }}
+                            >
+                              Remove Lesson
+                            </button>
+                          </div>
+                        ))}
 
                       <button
                         type="button"
-                        className="add-lesson-btn"
+                        className="add-lesson-btn-edit-modal"
                         onClick={() => {
-                          const updatedModules = [...courseToEdit.modules];
-                          updatedModules[mIndex].lessons = [
-                            ...(updatedModules[mIndex].lessons || []),
-                            { title: "" },
-                          ];
-                          setCourseToEdit({
-                            ...courseToEdit,
-                            modules: updatedModules,
+                          setCourseToEdit((prev) => {
+                            const updatedModules = [...prev.modules];
+                            const currLessons =
+                              updatedModules[mIndex].lessons || [];
+
+                            // próximo "order" (último + 1; robusto si faltan orders)
+                            const nextOrder =
+                              currLessons.length > 0
+                                ? Math.max(
+                                    ...currLessons.map((l) =>
+                                      typeof l.order === "number" ? l.order : 0
+                                    )
+                                  ) + 1
+                                : 1;
+
+                            const newLesson = {
+                              title: "",
+                              order: nextOrder,
+                              created_at: Date.now(),
+                            };
+
+                            updatedModules[mIndex] = {
+                              ...updatedModules[mIndex],
+                              lessons: [...currLessons, newLesson], // 👈 añade al FINAL
+                            };
+
+                            return { ...prev, modules: updatedModules };
                           });
                         }}
                       >
@@ -855,7 +906,7 @@ export const AdminModals = ({
                       {/* Remove Module */}
                       <button
                         type="button"
-                        className="remove-module-btn"
+                        className="remove-module-btn-edit-modal"
                         onClick={() => {
                           setCourseToEdit({
                             ...courseToEdit,
@@ -873,7 +924,7 @@ export const AdminModals = ({
                   {/* Add Module Button */}
                   <button
                     type="button"
-                    className="add-module-btn"
+                    className="add-module-btn-edit-modal"
                     onClick={() =>
                       setCourseToEdit({
                         ...courseToEdit,

@@ -3,17 +3,14 @@ import { FiHome, FiUsers, FiBook, FiSettings } from "react-icons/fi";
 
 export const AdminSidebar = ({ activeView, setActiveView }) => {
   const menuItems = [
-    { view: "dashboard", icon: <FiHome />, label: "Inicio" },
-    { view: "users", icon: <FiUsers />, label: "Usuarios" },
-    { view: "courses", icon: <FiBook />, label: "Cursos" },
-    { view: "settings", icon: <FiSettings />, label: "Configuración" },
+    { view: "dashboard", icon: <FiHome />, label: "Dashboard" },
+    { view: "users", icon: <FiUsers />, label: "Users" },
+    { view: "courses", icon: <FiBook />, label: "Courses" },
+    { view: "settings", icon: <FiSettings />, label: "Settings" },
   ];
 
   return (
     <div className="admin-sidebar">
-      <div className="sidebar-header">
-        <h3>Panel de Administración</h3>
-      </div>
       <ul className="sidebar-menu">
         {menuItems.map((item) => (
           <li

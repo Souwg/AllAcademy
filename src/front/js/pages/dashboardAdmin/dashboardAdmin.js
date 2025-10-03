@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { Context } from "../../store/appContext";
 import Swal from "sweetalert2";
 import { AdminSidebar } from "./adminSidebar";
 import { AdminContent } from "./adminContent";
 import { AdminModals } from "./adminModals";
-import "../../../styles/adminModals.css";
-import "../../../styles/adminContent.css";
+
 import "../../../styles/adminSidebar.css";
 
 export const DashboardAdmin = () => {
   /* ==============================
    * ESTADOS PRINCIPALES
    * ============================== */
+  const { store, actions } = useContext(Context);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -56,6 +57,7 @@ export const DashboardAdmin = () => {
     error: null,
     success: false,
   });
+  const [validationErrors, setValidationErrors] = useState({});
 
   /* ==============================
    * ESTADOS PARA MODALES
@@ -75,6 +77,27 @@ export const DashboardAdmin = () => {
     message: "",
   });
 
+  const validateCourseForm = () => {
+    const errors = {};
+    if (!courseFormData.title.trim()) errors.title = "Course title is required";
+    if (!courseFormData.description.trim())
+      errors.description = "Full description is required";
+    if (!courseFormData.teacher_id.trim())
+      errors.teacher_id = "Teacher is required";
+    if (!courseFormData.short_description.trim())
+      errors.short_description = "Short description is required";
+    else if (courseFormData.short_description.trim().length < 60)
+      errors.short_description =
+        "Short description must be at least 60 characters";
+    if (!courseFormData.price || parseFloat(courseFormData.price) <= 0)
+      errors.price = "Price must be greater than 0";
+    if (!courseFormData.duration.trim())
+      errors.duration = "Duration is required";
+    if (!courseFormData.level) errors.level = "Level is required";
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0; // ✅ Si no hay errores
+  };
   /* ==============================
    * ESTADOS DE BÚSQUEDA DE USUARIOS
    * ============================== */
@@ -134,6 +157,9 @@ export const DashboardAdmin = () => {
     setShowEditCourseModal(true);
   };
 
+  useEffect(() => {
+    actions.getUserStatsPerMonth(); // 🚀 carga las stats al montar el dashboard
+  }, []);
   // ==============================
   // ACTUALIZAR CURSO
   // ==============================
@@ -176,8 +202,11 @@ export const DashboardAdmin = () => {
       setNotification({
         show: true,
         type: "success",
-        message: "Curso actualizado correctamente",
+        message: "Course updated successfully",
       });
+      setTimeout(() => {
+        setNotification({ show: false, type: "", message: "" });
+      }, 4000);
 
       setShowEditCourseModal(false);
     } catch (err) {
@@ -228,7 +257,7 @@ export const DashboardAdmin = () => {
       setNotification({
         show: true,
         type: "success",
-        message: "Usuario actualizado correctamente",
+        message: "User updated successfully",
       });
       setTimeout(() => {
         setNotification({ show: false, type: "", message: "" });
@@ -421,10 +450,14 @@ export const DashboardAdmin = () => {
     }
   };
 
-  // Llamar a fetchTeachers cuando se active la vista de cursos
+  // 1. Cargar cursos siempre que se monte el Dashboard
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  // 2. Cargar teachers solo cuando la vista es courses
   useEffect(() => {
     if (activeView === "courses") {
-      fetchCourses();
       fetchTeachers();
     }
   }, [activeView]);
@@ -479,21 +512,21 @@ export const DashboardAdmin = () => {
   const handleBlockUser = async (userId) => {
     try {
       const { value: reason } = await Swal.fire({
-        title: "Bloquear Usuario",
+        title: "Block User",
         input: "textarea",
-        inputLabel: "Razón del bloqueo",
-        inputPlaceholder: "Ingrese la razón del bloqueo...",
+        inputLabel: "Reason for blocking",
+        inputPlaceholder: "Enter the reason for blocking...",
         inputAttributes: {
-          "aria-label": "Ingrese la razón del bloqueo",
+          "aria-label": "Enter the reason for blocking...",
         },
         showCancelButton: true,
-        confirmButtonText: "Bloquear",
-        cancelButtonText: "Cancelar",
+        confirmButtonText: "Block",
+        cancelButtonText: "Cancel",
         confirmButtonColor: "#d33",
         cancelButtonColor: "#3085d6",
         inputValidator: (value) => {
           if (!value) {
-            return "Debe ingresar una razón para bloquear al usuario";
+            return "You must enter a reason to block the user";
           }
         },
       });
@@ -515,7 +548,7 @@ export const DashboardAdmin = () => {
       );
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.msg || "Error al bloquear usuario");
+        throw new Error(errorData.msg || "Error blocking user");
       }
       const responseData = await response.json();
       const updatedUser = responseData.user;
@@ -534,7 +567,7 @@ export const DashboardAdmin = () => {
       setNotification({
         show: true,
         type: "success",
-        message: "Usuario bloqueado correctamente",
+        message: "User successfully blocked",
       });
 
       setTimeout(
@@ -545,8 +578,8 @@ export const DashboardAdmin = () => {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: err.message || "Error al bloquear usuario",
-        confirmButtonText: "Entendido",
+        text: err.message || "Error blocking user",
+        confirmButtonText: "Understood",
       });
     }
   };
@@ -625,7 +658,13 @@ export const DashboardAdmin = () => {
   /* ==============================
    * CREAR CURSO
    * ============================== */
+  // Función para crear curso
   const handleCreateCourse = async (isDraft = false) => {
+    // 👉 Primero validar en frontend
+    if (!validateCourseForm()) {
+      return; // 🚫 No sigue si hay errores
+    }
+
     setCourseCreationStatus({ loading: true, error: null, success: false });
 
     try {
@@ -662,7 +701,7 @@ export const DashboardAdmin = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.msg || "Error al crear el curso");
+        throw new Error(result.msg || "Error creating course");
       }
 
       setCourseCreationStatus({
@@ -670,17 +709,21 @@ export const DashboardAdmin = () => {
         error: null,
         success: true,
       });
+
       setNotification({
         show: true,
         type: "success",
         message: isDraft
-          ? "Curso guardado como borrador correctamente"
-          : "Curso creado exitosamente",
+          ? "Course saved as draft successfully"
+          : "Course created successfully",
       });
+
       setTimeout(
         () => setNotification({ show: false, type: "", message: "" }),
         4000
       );
+
+      // ✅ Limpiar formulario después de crear
       if (!isDraft) {
         setCourseFormData({
           title: "",
@@ -688,6 +731,7 @@ export const DashboardAdmin = () => {
           short_description: "",
           price: "",
           discount_price: "",
+          duration: "",
           level: "BEGINNER",
           language: "Spanish",
           is_published: false,
@@ -719,6 +763,7 @@ export const DashboardAdmin = () => {
             ],
           },
         ]);
+        setValidationErrors({});
       }
     } catch (err) {
       setCourseCreationStatus({
@@ -730,7 +775,7 @@ export const DashboardAdmin = () => {
       setNotification({
         show: true,
         type: "error",
-        message: err.message || "Error al crear el curso",
+        message: err.message || "Error creating course",
       });
       setTimeout(
         () => setNotification({ show: false, type: "", message: "" }),
@@ -745,14 +790,14 @@ export const DashboardAdmin = () => {
   const handleDeleteCourse = async (courseId) => {
     try {
       const result = await Swal.fire({
-        title: "¿Estás seguro?",
-        text: "Esta acción no se puede deshacer. El curso será eliminado permanentemente.",
+        title: "Confirm Deletion",
+        text: "This action is irreversible. The course will be permanently removed from the system.",
         icon: "warning",
         showCancelButton: true,
         confirmButtonColor: "#d33",
         cancelButtonColor: "#3085d6",
-        confirmButtonText: "Sí, eliminar",
-        cancelButtonText: "Cancelar",
+        confirmButtonText: "Yes, delete",
+        cancelButtonText: "Cancel",
       });
 
       if (result.isConfirmed) {
@@ -774,8 +819,8 @@ export const DashboardAdmin = () => {
         setCourses(courses.filter((course) => course.id !== courseId));
 
         Swal.fire(
-          "¡Eliminado!",
-          "El curso ha sido eliminado correctamente.",
+          "deleted!",
+          "The course has been successfully deleted.",
           "success"
         );
       }
@@ -783,7 +828,7 @@ export const DashboardAdmin = () => {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: err.message || "Error al eliminar el curso",
+        text: err.message || "Error dele",
       });
     }
   };
@@ -851,7 +896,7 @@ export const DashboardAdmin = () => {
       setNotification({
         show: true,
         type: "success",
-        message: "Usuario desbloqueado correctamente",
+        message: "User successfully unblocked",
       });
 
       setTimeout(
@@ -954,87 +999,93 @@ export const DashboardAdmin = () => {
   if (error) return <ErrorDisplay error={error} />;
 
   return (
-    <div className="admin-layout">
-      <AdminSidebar activeView={activeView} setActiveView={setActiveView} />
+    <div className="admin-wrapper">
+      <div className="admin-layout">
+        <AdminSidebar activeView={activeView} setActiveView={setActiveView} />
 
-      {/* Contenido principal */}
-      <AdminContent
-        activeView={activeView}
-        users={users}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        searchAdmins={searchAdmins}
-        setSearchAdmins={setSearchAdmins}
-        searchTeachers={searchTeachers}
-        setSearchTeachers={setSearchTeachers}
-        searchStudents={searchStudents}
-        setSearchStudents={setSearchStudents}
-        getUserStats={getUserStats}
-        filterUsers={filterUsers}
-        setSelectedUser={setSelectedUser}
-        setShowModal={setShowModal}
-        setUserToDelete={setUserToDelete}
-        setShowDeleteModal={setShowDeleteModal}
-        handleBlockUser={handleBlockUser}
-        handleUnblockUser={handleUnblockUser}
-        courseFormData={courseFormData}
-        learningObjectives={learningObjectives}
-        requirements={requirements}
-        courseCreationStatus={courseCreationStatus}
-        handleCourseInputChange={handleCourseInputChange}
-        handleLearningObjectiveChange={handleLearningObjectiveChange}
-        handleRequirementChange={handleRequirementChange}
-        addLearningObjective={addLearningObjective}
-        removeLearningObjective={removeLearningObjective}
-        addRequirement={addRequirement}
-        removeRequirement={removeRequirement}
-        handleCreateCourse={handleCreateCourse}
-        courses={courses}
-        coursesLoading={coursesLoading}
-        coursesError={coursesError}
-        onRefreshCourses={fetchCourses}
-        onDeleteCourse={handleDeleteCourse}
-        modules={modules}
-        setModules={setModules}
-        addModule={addModule}
-        removeModule={removeModule}
-        updateModule={updateModule}
-        addLesson={addLesson}
-        removeLesson={removeLesson}
-        updateLesson={updateLesson}
-        onViewCourseDetails={handleViewCourseDetails}
-        teachers={teachers}
-        teachersLoading={teachersLoading}
-        teachersError={teachersError}
-        currentUser={currentUser}
-        onEditCourse={handleEditCourse}
-      />
+        {/* Contenido principal */}
+        <AdminContent
+          activeView={activeView}
+          setActiveView={setActiveView}
+          users={users}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          searchAdmins={searchAdmins}
+          setSearchAdmins={setSearchAdmins}
+          searchTeachers={searchTeachers}
+          setSearchTeachers={setSearchTeachers}
+          searchStudents={searchStudents}
+          setSearchStudents={setSearchStudents}
+          getUserStats={getUserStats}
+          filterUsers={filterUsers}
+          setSelectedUser={setSelectedUser}
+          setShowModal={setShowModal}
+          setUserToDelete={setUserToDelete}
+          setShowDeleteModal={setShowDeleteModal}
+          handleBlockUser={handleBlockUser}
+          handleUnblockUser={handleUnblockUser}
+          courseFormData={courseFormData}
+          learningObjectives={learningObjectives}
+          requirements={requirements}
+          courseCreationStatus={courseCreationStatus}
+          handleCourseInputChange={handleCourseInputChange}
+          handleLearningObjectiveChange={handleLearningObjectiveChange}
+          handleRequirementChange={handleRequirementChange}
+          addLearningObjective={addLearningObjective}
+          removeLearningObjective={removeLearningObjective}
+          addRequirement={addRequirement}
+          removeRequirement={removeRequirement}
+          handleCreateCourse={handleCreateCourse}
+          courses={courses}
+          coursesLoading={coursesLoading}
+          coursesError={coursesError}
+          onRefreshCourses={fetchCourses}
+          onDeleteCourse={handleDeleteCourse}
+          modules={modules}
+          setModules={setModules}
+          addModule={addModule}
+          removeModule={removeModule}
+          updateModule={updateModule}
+          addLesson={addLesson}
+          removeLesson={removeLesson}
+          updateLesson={updateLesson}
+          onViewCourseDetails={handleViewCourseDetails}
+          teachers={teachers}
+          teachersLoading={teachersLoading}
+          teachersError={teachersError}
+          currentUser={currentUser}
+          onEditCourse={handleEditCourse}
+          validationErrors={validationErrors}
+          setValidationErrors={setValidationErrors}
+          userStatsPerMonth={store.userStatsPerMonth}
+        />
 
-      {/* Modales */}
-      <AdminModals
-        showModal={showModal}
-        setShowModal={setShowModal}
-        selectedUser={selectedUser}
-        showDeleteModal={showDeleteModal}
-        setShowDeleteModal={setShowDeleteModal}
-        userToDelete={userToDelete}
-        deleteStatus={deleteStatus}
-        handleDeleteUser={handleDeleteUser}
-        handleRoleChange={handleRoleChange}
-        notification={notification}
-        setNotification={setNotification}
-        showCourseDetails={showCourseDetails}
-        setShowCourseDetails={setShowCourseDetails}
-        selectedCourse={selectedCourse}
-        handleSaveUser={handleSaveUser}
-        setSelectedUser={setSelectedUser}
-        showEditCourseModal={showEditCourseModal}
-        setShowEditCourseModal={setShowEditCourseModal}
-        courseToEdit={courseToEdit}
-        setCourseToEdit={setCourseToEdit}
-        handleUpdateCourse={handleUpdateCourse}
-        teachers={teachers}
-      />
+        {/* Modales */}
+        <AdminModals
+          showModal={showModal}
+          setShowModal={setShowModal}
+          selectedUser={selectedUser}
+          showDeleteModal={showDeleteModal}
+          setShowDeleteModal={setShowDeleteModal}
+          userToDelete={userToDelete}
+          deleteStatus={deleteStatus}
+          handleDeleteUser={handleDeleteUser}
+          handleRoleChange={handleRoleChange}
+          notification={notification}
+          setNotification={setNotification}
+          showCourseDetails={showCourseDetails}
+          setShowCourseDetails={setShowCourseDetails}
+          selectedCourse={selectedCourse}
+          handleSaveUser={handleSaveUser}
+          setSelectedUser={setSelectedUser}
+          showEditCourseModal={showEditCourseModal}
+          setShowEditCourseModal={setShowEditCourseModal}
+          courseToEdit={courseToEdit}
+          setCourseToEdit={setCourseToEdit}
+          handleUpdateCourse={handleUpdateCourse}
+          teachers={teachers}
+        />
+      </div>
     </div>
   );
 };
