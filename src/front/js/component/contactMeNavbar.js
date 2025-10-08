@@ -9,7 +9,7 @@ export const ContactMeNavbar = () => {
         className="container-fluid pb-2"
         style={{ backgroundColor: "#2D3078" }}
       >
-        <div className="container text-center">
+        <div className="container-fluid text-center">
           <div className="row">
             <div className="col d-flex mt-3">
               <div className="icon">
@@ -31,7 +31,7 @@ export const ContactMeNavbar = () => {
                 Mon to sat Open: 9am - 6pm
               </p>
             </div>
-            <div className="col d-flex justify-content-end gap-3 mt-3">
+            <div className="col d-flex justify-content-end gap-4 mt-3">
               {/* WhatsApp */}
               <Link to="/whatsapp" className="text-decoration-none">
                 <div className="socialMediaIcon d-flex align-items-center justify-content-center rounded-circle border p-2 whatsapp-hover">

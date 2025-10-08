@@ -4,16 +4,6 @@ import enum
 
 db = SQLAlchemy()
 
-# Tabla de asociación para la relación muchos-a-muchos entre cursos y estudiantes
-student_course_association = db.Table('student_course',
-    db.Column('student_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-    db.Column('course_id', db.Integer, db.ForeignKey('course.id'), primary_key=True),
-    db.Column('enrolled_at', db.DateTime, default=datetime.utcnow),
-    db.Column('progress', db.Integer, default=0),  # Porcentaje de completitud
-    db.Column('completed', db.Boolean, default=False),
-    db.Column('completed_at', db.DateTime, nullable=True)
-)
-
 # Tabla de asociación para la relación muchos-a-muchos entre cursos y wishlist
 wishlist_association = db.Table('wishlist',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
@@ -43,8 +33,11 @@ class User(db.Model):
     # Relaciones
     courses_teaching = db.relationship('Course', backref='teacher', lazy=True)
     live_classes = db.relationship("LiveClass", back_populates="teacher")
-    enrolled_courses = db.relationship('Course', secondary=student_course_association, 
-                                      backref=db.backref('students', lazy='dynamic'))
+    enrollments = db.relationship(
+    "Enrollment", back_populates="student", cascade="all, delete-orphan"
+)
+
+
     wishlist = db.relationship('Course', secondary=wishlist_association, 
                               backref=db.backref('wished_by', lazy='dynamic'))
     
@@ -134,6 +127,10 @@ class Course(db.Model):
     live_classes = db.relationship("LiveClass", back_populates="course", cascade="all, delete-orphan")
     what_you_learn = db.relationship('LearningObjective', backref='course', lazy=True, cascade="all, delete-orphan")
     requirements = db.relationship('Requirement', backref='course', lazy=True, cascade="all, delete-orphan")
+    enrollments = db.relationship(
+    "Enrollment", back_populates="course", cascade="all, delete-orphan"
+)
+
     
     def __repr__(self):
         return f'<Course {self.title}>'
@@ -244,3 +241,53 @@ class Requirement(db.Model):
 class BlockedTokenList(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     jti = db.Column(db.String(50), unique=True, nullable=False)
+
+class Enrollment(db.Model):
+    __tablename__ = "student_course"
+
+    student_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), primary_key=True)
+    enrolled_at = db.Column(db.DateTime, default=datetime.utcnow)
+    progress = db.Column(db.Integer, default=0)
+    completed = db.Column(db.Boolean, default=False)
+    completed_at = db.Column(db.DateTime, nullable=True)
+
+    # Relaciones opcionales
+    student = db.relationship("User", back_populates="enrollments")
+    course = db.relationship("Course", back_populates="enrollments")
+
+
+    def __repr__(self):
+        return f"<Enrollment User {self.student_id} in Course {self.course_id}>"
+
+    def serialize(self):
+        return {
+            "student_id": self.student_id,
+            "course_id": self.course_id,
+            "enrolled_at": self.enrolled_at.isoformat(),
+            "progress": self.progress,
+            "completed": self.completed
+        }
+    
+class CourseChatMessage(db.Model):
+    __tablename__ = "course_chat_messages"
+
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    content = db.Column(db.String(500), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relaciones
+    user = db.relationship("User", backref="chat_messages", lazy=True)
+    course = db.relationship("Course", backref="chat_messages", lazy=True)
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "course_id": self.course_id,
+            "user_id": self.user_id,
+            "user_name": f"{self.user.first_name} {self.user.last_name}" if self.user else "Unknown",
+            "content": self.content,
+            "timestamp": self.timestamp.isoformat()
+        }

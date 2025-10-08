@@ -1,8 +1,10 @@
+// src/front/js/component/dashboard/adminSidebar.js
 import React from "react";
+import { SidebarBase } from "../../component/sidebarBase";
 import { FiHome, FiUsers, FiBook, FiSettings } from "react-icons/fi";
 
 export const AdminSidebar = ({ activeView, setActiveView }) => {
-  const menuItems = [
+  const adminMenuItems = [
     { view: "dashboard", icon: <FiHome />, label: "Dashboard" },
     { view: "users", icon: <FiUsers />, label: "Users" },
     { view: "courses", icon: <FiBook />, label: "Courses" },
@@ -10,19 +12,10 @@ export const AdminSidebar = ({ activeView, setActiveView }) => {
   ];
 
   return (
-    <div className="admin-sidebar">
-      <ul className="sidebar-menu">
-        {menuItems.map((item) => (
-          <li
-            key={item.view}
-            className={`menu-item ${activeView === item.view ? "active" : ""}`}
-            onClick={() => setActiveView(item.view)}
-          >
-            <span className="menu-icon">{item.icon}</span>
-            <span className="menu-label">{item.label}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <SidebarBase
+      activeView={activeView}
+      setActiveView={setActiveView}
+      menuItems={adminMenuItems}
+    />
   );
 };

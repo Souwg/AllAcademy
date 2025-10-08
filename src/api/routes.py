@@ -4,7 +4,7 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 from flask import Flask, request, jsonify, url_for, Blueprint
 from sqlalchemy import extract, func
 from psycopg2 import IntegrityError
-from api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement
+from api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -12,6 +12,7 @@ from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_requir
 from datetime import datetime
 from slugify import slugify
 import calendar
+import stripe
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
@@ -403,22 +404,22 @@ def create_course():
     """
     try:
         print("=== CREATE COURSE ENDPOINT CALLED ===")
-        
-        # Verificar que el usuario es un profesor o admin
+
+        # Verificar autenticación
         claims = get_jwt()
         user_id = get_jwt_identity()
         user = User.query.get(user_id)
-        
+
         if not user or user.role not in ['admin', 'teacher']:
             return jsonify({"msg": "Only administrators and teachers can create courses"}), 403
-        
+
         # Obtener datos del curso
         data = request.get_json()
-        print(f"Datos recibidos: {data}")
-        
+        print(f"📩 Datos recibidos: {data}")
+
         if not data:
             return jsonify({"msg": "Required JSON data"}), 400
-              
+
         # Validaciones básicas
         required_fields = ['title', 'description', 'price']
         for field in required_fields:
@@ -427,37 +428,44 @@ def create_course():
 
         # Crear slug a partir del título
         slug = slugify(data['title'])
-        
+
         # Verificar si el slug ya existe
         existing_course = Course.query.filter_by(slug=slug).first()
         if existing_course:
             import time
             slug = f"{slug}-{int(time.time())}"
-        
-        # Procesar datos de clases en vivo
+
+        # Procesar horario de clases en vivo
         live_class_days = None
         start_time = None
         end_time = None
-        
-        
-            # Procesar días de clase
+
         if 'live_class_days' in data and isinstance(data['live_class_days'], list):
-                live_class_days = ','.join(data['live_class_days'])
-            
-            # Procesar hora de inicio
+            live_class_days = ','.join(data['live_class_days'])
+
         if data.get('live_class_start_time'):
-                try:
-                    start_time = datetime.strptime(data['live_class_start_time'], '%H:%M').time()
-                except ValueError:
-                    return jsonify({"msg": "Invalid start time format. Use HH:MM"}), 400
-            
-            # Procesar hora de fin
+            try:
+                start_time = datetime.strptime(data['live_class_start_time'], '%H:%M').time()
+            except ValueError:
+                return jsonify({"msg": "Invalid start time format. Use HH:MM"}), 400
+
         if data.get('live_class_end_time'):
-                try:
-                    end_time = datetime.strptime(data['live_class_end_time'], '%H:%M').time()
-                except ValueError:
-                    return jsonify({"msg": "Invalid end time format. Use HH:MM"}), 400
-        
+            try:
+                end_time = datetime.strptime(data['live_class_end_time'], '%H:%M').time()
+            except ValueError:
+                return jsonify({"msg": "Invalid end time format. Use HH:MM"}), 400
+
+        # ✅ Asignar correctamente el teacher_id
+        if user.role == "teacher":
+            teacher_id = user.id
+        elif user.role == "admin":
+            teacher_id = data.get("teacher_id")
+            print(f"📩 Teacher ID recibido desde frontend: {teacher_id}")
+            if not teacher_id:
+                return jsonify({"msg": "Teacher ID is required when admin creates a course"}), 400
+        else:
+            teacher_id = None
+
         # Crear el curso
         new_course = Course(
             title=data['title'],
@@ -469,7 +477,7 @@ def create_course():
             discount_price=float(data.get('discount_price', 0)) if data.get('discount_price') else None,
             level=data.get('level', 'BEGINNER'),
             language=data.get('language', 'Spanish'),
-            teacher_id=user_id if user.role == 'teacher' else data.get('teacher_id', user_id),
+            teacher_id=teacher_id,  # ✅ Asignado correctamente
             is_published=data.get('is_published', False),
             published_at=datetime.utcnow() if data.get('is_published') else None,
             has_live_classes=True,
@@ -480,10 +488,10 @@ def create_course():
             live_class_timezone=data.get('live_class_timezone', 'GMT-5'),
             access_duration=data.get('access_duration', 'lifetime')
         )
-        
+
         db.session.add(new_course)
-        db.session.flush()  # Para obtener el ID del curso sin hacer commit
-        
+        db.session.flush()  # Obtener ID antes de commit
+
         # Agregar objetivos de aprendizaje
         if 'what_you_learn' in data and isinstance(data['what_you_learn'], list):
             for objective in data['what_you_learn']:
@@ -493,7 +501,7 @@ def create_course():
                         course_id=new_course.id
                     )
                     db.session.add(learning_obj)
-        
+
         # Agregar requisitos
         if 'requirements' in data and isinstance(data['requirements'], list):
             for requirement in data['requirements']:
@@ -503,13 +511,13 @@ def create_course():
                         course_id=new_course.id
                     )
                     db.session.add(req)
-        
+
         # Agregar módulos y lecciones
         if 'modules' in data and isinstance(data['modules'], list):
             for module_index, module_data in enumerate(data['modules']):
                 if not module_data.get('title'):
                     continue
-                    
+
                 new_module = Module(
                     title=module_data['title'],
                     description=module_data.get('description', ''),
@@ -518,13 +526,12 @@ def create_course():
                 )
                 db.session.add(new_module)
                 db.session.flush()  # Para obtener el ID del módulo
-                
-                # Agregar lecciones al módulo
+
                 if 'lessons' in module_data and isinstance(module_data['lessons'], list):
                     for lesson_index, lesson_data in enumerate(module_data['lessons']):
                         if not lesson_data.get('title'):
                             continue
-                            
+
                         new_lesson = Lesson(
                             title=lesson_data['title'],
                             description=lesson_data.get('description', ''),
@@ -534,18 +541,19 @@ def create_course():
                             module_id=new_module.id
                         )
                         db.session.add(new_lesson)
-        
+
         db.session.commit()
-        
+
         return jsonify({
             "msg": "Course created successfully",
             "course": new_course.serialize()
         }), 201
-        
+
     except Exception as e:
         db.session.rollback()
-        print(f"Error al crear el curso: {str(e)}")
+        print(f"❌ Error al crear el curso: {str(e)}")
         return jsonify({"msg": "Error creating course", "error": str(e)}), 500
+
     
 
 @api.route('/courses/<int:course_id>/modules', methods=['POST'])
@@ -808,6 +816,9 @@ def update_course(course_id):
         course.language = data.get("language", course.language)
         course.access_duration = data.get("access_duration", course.access_duration)
 
+        if "teacher_id" in data and data["teacher_id"]:
+            course.teacher_id = data["teacher_id"]
+
         if "is_published" in data:
             new_status = data["is_published"]
 
@@ -964,3 +975,268 @@ def get_course_by_slug(slug):
     except Exception as e:
         print(f"Error getting course by slug {slug}: {str(e)}")
         return jsonify({"msg": "Error al obtener el curso", "error": str(e)}), 500
+    
+@api.route('/enroll/<int:course_id>', methods=['POST'])
+@jwt_required()
+def enroll_course(course_id):
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    course = Course.query.get(course_id)
+
+    if not course:
+        return jsonify({"msg": "Course not found"}), 404
+
+    if not course.is_published:
+        return jsonify({"msg": "Course is not published"}), 400
+
+    # Revisar si ya está inscrito
+    existing = Enrollment.query.filter_by(student_id=user.id, course_id=course.id).first()
+    if existing:
+        return jsonify({"msg": "Already enrolled"}), 400
+
+    # Crear la inscripción
+    enrollment = Enrollment(student_id=user.id, course_id=course.id)
+    db.session.add(enrollment)
+    db.session.commit()
+
+    return jsonify({
+        "msg": "Enrolled successfully",
+        "enrollment": enrollment.serialize()
+    }), 201
+@api.route('/my-enrollments', methods=['GET'])
+@jwt_required()
+def get_my_enrollments():
+    """
+    Devuelve los cursos en los que el usuario actual está inscrito,
+    incluyendo la información completa del curso y su progreso.
+    """
+    try:
+        user_id = get_jwt_identity()
+        enrollments = Enrollment.query.filter_by(student_id=user_id).all()
+
+        result = []
+        for e in enrollments:
+            course_data = e.course.serialize() if e.course else None
+            result.append({
+                **e.serialize(),
+                "course": course_data
+            })
+
+        return jsonify(result), 200
+    except Exception as err:
+        print(f"Error en get_my_enrollments: {err}")
+        return jsonify({"msg": "Error loading enrollments", "error": str(err)}), 500
+
+
+@api.route('/enrollments', methods=['GET'])
+@jwt_required()
+def get_all_enrollments():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if not user.is_admin:
+        return jsonify({"msg": "Unauthorized"}), 403
+
+    enrollments = Enrollment.query.all()
+    return jsonify([e.serialize() for e in enrollments]), 200
+
+# ============================
+# 🗨️ CHAT DEL CURSO
+# ============================
+
+@api.route('/course/<int:course_id>/chat', methods=['GET'])
+@jwt_required()
+def get_course_chat(course_id):
+    """
+    Obtiene todos los mensajes del chat de un curso.
+    Solo pueden acceder usuarios inscritos o el profesor.
+    """
+    from api.models import CourseChatMessage, Enrollment
+
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    course = Course.query.get(course_id)
+
+    if not course:
+        return jsonify({"msg": "Course not found"}), 404
+
+    # Verificar si el usuario pertenece al curso
+    is_teacher = course.teacher_id == user.id
+    is_student = Enrollment.query.filter_by(student_id=user.id, course_id=course_id).first()
+
+    if not is_teacher and not is_student:
+        return jsonify({"msg": "Unauthorized: not enrolled"}), 403
+
+    messages = CourseChatMessage.query.filter_by(course_id=course_id).order_by(CourseChatMessage.timestamp.asc()).all()
+    return jsonify([m.serialize() for m in messages]), 200
+
+
+@api.route('/course/<int:course_id>/chat', methods=['POST'])
+@jwt_required()
+def post_course_chat(course_id):
+    """
+    Envía un nuevo mensaje al chat de un curso.
+    """
+    from api.models import CourseChatMessage, Enrollment
+
+    user_id = get_jwt_identity()
+    data = request.get_json()
+
+    if not data or not data.get("content"):
+        return jsonify({"msg": "Message content required"}), 400
+
+    user = User.query.get(user_id)
+    course = Course.query.get(course_id)
+
+    if not course:
+        return jsonify({"msg": "Course not found"}), 404
+
+    # Solo inscritos o el profesor pueden escribir
+    is_teacher = course.teacher_id == user.id
+    is_student = Enrollment.query.filter_by(student_id=user.id, course_id=course_id).first()
+
+    if not is_teacher and not is_student:
+        return jsonify({"msg": "Unauthorized"}), 403
+
+    new_message = CourseChatMessage(
+        course_id=course_id,
+        user_id=user_id,
+        content=data["content"]
+    )
+    db.session.add(new_message)
+    db.session.commit()
+
+    return jsonify(new_message.serialize()), 201
+
+@api.route('/teacher/courses', methods=['GET'])
+@jwt_required()
+def get_teacher_courses():
+    """
+    Devuelve todos los cursos creados por un profesor junto con
+    el total de estudiantes inscritos en cada uno.
+    """
+    try:
+        teacher_id = get_jwt_identity()
+        user = User.query.get(teacher_id)
+
+        if not user or user.role != "teacher":
+            return jsonify({"msg": "Unauthorized"}), 403
+
+        # Buscar los cursos del profesor
+        courses = Course.query.filter_by(teacher_id=teacher_id).all()
+
+        result = []
+        for course in courses:
+            # Contar estudiantes inscritos en ese curso
+            total_students = Enrollment.query.filter_by(course_id=course.id).count()
+            course_data = course.serialize()
+            course_data["total_students"] = total_students
+            result.append(course_data)
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        print("Error in get_teacher_courses:", str(e))
+        return jsonify({"msg": "Error fetching teacher courses", "error": str(e)}), 500
+
+@api.route('/teacher/students', methods=['GET'])
+@jwt_required()
+def get_teacher_students():
+    """
+    Devuelve todos los estudiantes inscritos en los cursos de un profesor.
+    Incluye información del estudiante, curso, progreso y fecha de inscripción.
+    """
+    try:
+        teacher_id = get_jwt_identity()
+        user = User.query.get(teacher_id)
+
+        if not user or user.role != "teacher":
+            return jsonify({"msg": "Unauthorized"}), 403
+
+        # Buscar cursos del profesor
+        courses = Course.query.filter_by(teacher_id=teacher_id).all()
+        course_ids = [c.id for c in courses]
+
+        if not course_ids:
+            return jsonify([]), 200
+
+        # Buscar inscripciones de esos cursos
+        enrollments = (
+            db.session.query(Enrollment, User, Course)
+            .join(User, Enrollment.student_id == User.id)
+            .join(Course, Enrollment.course_id == Course.id)
+            .filter(Enrollment.course_id.in_(course_ids))
+            .all()
+        )
+
+        result = []
+        for enrollment, student, course in enrollments:
+            result.append({
+                "id": student.id,
+                "first_name": student.first_name,
+                "last_name": student.last_name,
+                "email": student.email,
+                "course_title": course.title,
+                "progress": getattr(enrollment, "progress", 0),
+                # 🔧 aquí estaba el error
+                "enrolled_at": enrollment.enrolled_at.strftime("%Y-%m-%d")
+                if enrollment.enrolled_at else None,
+            })
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        print("Error in get_teacher_students:", str(e))
+        return jsonify({"msg": "Error fetching students", "error": str(e)}), 500
+
+
+@api.route('/teacher/course/<int:course_id>/students', methods=['GET'])
+@jwt_required()
+def get_students_by_course(course_id):
+    """
+    Devuelve los estudiantes inscritos en un curso específico del profesor.
+    """
+    try:
+        teacher_id = get_jwt_identity()
+        user = User.query.get(teacher_id)
+
+        if not user:
+            return jsonify({"msg": "Usuario no encontrado"}), 404
+
+        # Permitir tanto teachers como admins
+        if user.role not in ["teacher", "admin"]:
+            return jsonify({"msg": "No autorizado"}), 403
+
+        course = Course.query.get(course_id)
+        if not course:
+            return jsonify({"msg": "Curso no encontrado"}), 404
+
+        # Si es teacher, verificar que sea el dueño del curso
+        if user.role == "teacher" and course.teacher_id != user.id:
+            return jsonify({"msg": "No tienes acceso a este curso"}), 403
+
+        enrollments = (
+            db.session.query(Enrollment, User)
+            .join(User, Enrollment.student_id == User.id)
+            .filter(Enrollment.course_id == course_id)
+            .all()
+        )
+
+        result = []
+        for enrollment, student in enrollments:
+            result.append({
+                "id": student.id,
+                "first_name": student.first_name,
+                "last_name": student.last_name,
+                "email": student.email,
+                "progress": getattr(enrollment, "progress", 0),
+                "enrolled_at": enrollment.enrolled_at.strftime("%Y-%m-%d")
+                if enrollment.enrolled_at else None,
+            })
+
+        print(f"📊 Encontrados {len(result)} estudiantes para el curso {course_id}")
+        return jsonify(result), 200
+
+    except Exception as e:
+        print("Error in get_students_by_course:", str(e))
+        return jsonify({"msg": "Error fetching students", "error": str(e)}), 500

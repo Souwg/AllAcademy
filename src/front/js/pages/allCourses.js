@@ -201,7 +201,7 @@ export const AllCourses = () => {
                           to={`/courses/${course.slug}`}
                           className="btn btn-primary btn-sm btn-enroll"
                         >
-                          Enroll Now
+                          View Details
                         </Link>
                       </>
                     )}

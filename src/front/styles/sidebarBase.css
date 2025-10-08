@@ -10,7 +10,7 @@
   flex: 0 0 260px;
   height: 95vh;
   position: sticky;
-  border-radius: 15px;
+  border-top-right-radius: 15px;
   top: 0;
   background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(18px) saturate(180%);

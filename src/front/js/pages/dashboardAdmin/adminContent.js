@@ -541,7 +541,8 @@ export const AdminContent = ({
                 aria-selected="false"
               >
                 <i className="bi bi-gear me-2"></i>
-                Settings
+                Settings and{" "}
+                <strong className="text-primary">Create Course</strong>
               </button>
             </li>
           </ul>
@@ -568,7 +569,6 @@ export const AdminContent = ({
                       className="form-control"
                       value={courseFormData.image_url}
                       onChange={handleCourseInputChange}
-                      placeholder="https://ejemplo.com/imagen-curso.jpg"
                     />
                   </div>
 
@@ -1078,7 +1078,7 @@ export const AdminContent = ({
                               )
                             }
                             rows="3"
-                            placeholder="Describe los objetivos de este módulo"
+                            placeholder="Describe the objectives of this module."
                           ></textarea>
                         </div>
                       </div>
@@ -1127,7 +1127,6 @@ export const AdminContent = ({
                                       )
                                     }
                                     placeholder="Ex: What is React?"
-                                    required
                                   />
                                 </div>
                                 <div className="form-group full-width">

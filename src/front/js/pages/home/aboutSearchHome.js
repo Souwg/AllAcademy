@@ -10,8 +10,40 @@ export const AboutSearch = () => {
         {/* Hero Section */}
         <div className="hero-section">
           {/* Floating abstract shapes */}
+
           <div className="floating-shape floating-shape-1"></div>
           <div className="floating-shape floating-shape-2"></div>
+          <div className="floating-icons">
+            <span className="shape circle"></span>
+            <span className="shape circle small"></span>
+            <span className="shape triangle"></span>
+            <span className="shape triangle small"></span>
+            <span className="shape square"></span>
+            <span className="shape square small"></span>
+            <span className="shape diamond"></span>
+            <span className="shape star"></span>
+          </div>
+          <div className="floating-icons themed">
+            {/* Tecnología */}
+            <i className="fa-solid fa-laptop-code"></i>
+            <i className="fa-solid fa-robot"></i>
+
+            {/* Creatividad */}
+            <i className="fa-solid fa-paintbrush"></i>
+            <i className="fa-solid fa-pen-nib"></i>
+
+            {/* Ciencia / Datos */}
+            <i className="fa-solid fa-database"></i>
+            <i className="fa-solid fa-brain"></i>
+
+            {/* Idiomas */}
+            <i className="fa-solid fa-language"></i>
+            <i className="fa-solid fa-globe"></i>
+
+            {/* Motivación */}
+            <i className="fa-solid fa-bolt"></i>
+            <i className="fa-solid fa-star"></i>
+          </div>
 
           <div className="container position-relative">
             <div className="row align-items-center">

@@ -6,11 +6,12 @@ import { BackendURL } from "./component/backendURL";
 import { Home } from "./pages/home/home";
 import { AllCourses } from "./pages/allCourses";
 import { CourseDetails } from "./pages/courseDetails";
+import { MyEnrollments } from "./pages/myEnrollments";
 import { Signup } from "./pages/signup";
 import { Login } from "./pages/login";
 import { DashboardAdmin } from "./pages/dashboardAdmin/dashboardAdmin";
-import { DashboardTeacher } from "./pages/dashboardTeacher";
-import { DashboardStudent } from "./pages/dashboardStudent";
+import { DashboardTeacher } from "./pages/dashboardTeacher/dashboardTeacher";
+import { DashboardStudent } from "./pages/dashboardStudent/dashboardStudent";
 import { NotFound } from "./pages/notFound";
 import injectContext from "./store/appContext";
 
@@ -39,6 +40,7 @@ const Layout = () => {
             <Route element={<CourseDetails />} path="/courses/:slug" />
             <Route element={<Signup />} path="/signup" />
             <Route element={<Login />} path="/login" />
+            <Route element={<MyEnrollments />} path="/my-enrollments" />
             <Route element={<DashboardAdmin />} path="/admin/dashboard" />
             <Route element={<DashboardTeacher />} path="/teacher/dashboard" />
             <Route element={<DashboardStudent />} path="/student/dashboard" />

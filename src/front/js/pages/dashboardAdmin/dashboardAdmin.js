@@ -4,9 +4,6 @@ import Swal from "sweetalert2";
 import { AdminSidebar } from "./adminSidebar";
 import { AdminContent } from "./adminContent";
 import { AdminModals } from "./adminModals";
-
-import "../../../styles/adminSidebar.css";
-
 export const DashboardAdmin = () => {
   /* ==============================
    * ESTADOS PRINCIPALES
@@ -995,7 +992,7 @@ export const DashboardAdmin = () => {
   /* ==============================
    * RENDER PRINCIPAL
    * ============================== */
-  if (loading) return <LoadingSpinner />;
+
   if (error) return <ErrorDisplay error={error} />;
 
   return (
@@ -1089,16 +1086,6 @@ export const DashboardAdmin = () => {
     </div>
   );
 };
-
-/* ==============================
- * COMPONENTES LOCALES
- * ============================== */
-const LoadingSpinner = () => (
-  <div className="loading-container">
-    <div className="loading-spinner"></div>
-    <p>Cargando datos...</p>
-  </div>
-);
 
 const ErrorDisplay = ({ error }) => (
   <div className="error-container">

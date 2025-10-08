@@ -37,33 +37,35 @@
 .list-group-item:hover {
   background-color: #f8f9fa;
   transition: background 0.2s;
-  /* ============================
+}
+
+/* ============================
    TITULOS DE SECCIONES (Requirements, Course content, etc.)
    ============================ */
-  .section-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #001933;
-    border-left: 4px solid #0d6efd;
-    padding-left: 0.5rem;
-    margin-bottom: 1rem;
-  }
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #001933;
+  border-left: 4px solid #0d6efd;
+  padding-left: 0.5rem;
+  margin-bottom: 1rem;
+}
 
-  /* ============================
+/* ============================
    PRECIO DEL CURSO (destacar precio actual y original)
    ============================ */
-  .course-price {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #283174;
-  }
-  .course-price-original {
-    font-size: 1rem;
-    text-decoration: line-through;
-    color: #6c757d;
-    margin-left: 0.5rem;
-  }
+.course-price {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #283174;
+}
+
+.course-price-original {
+  font-size: 1rem;
+  text-decoration: line-through;
+  color: #6c757d;
+  margin-left: 0.5rem;
 }

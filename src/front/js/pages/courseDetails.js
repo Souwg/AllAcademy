@@ -1,9 +1,11 @@
 import React, { useContext, useEffect } from "react";
 import { Context } from "../store/appContext";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import noImage from "../../img/noImage.jpg";
 import "../../styles/courseDetails.css";
 
 export const CourseDetails = () => {
+  const navigate = useNavigate();
   const { slug } = useParams();
   const { store, actions } = useContext(Context);
   const { courses, coursesLoading, coursesError } = store;
@@ -124,10 +126,7 @@ export const CourseDetails = () => {
             <div className="col-lg-4 d-none d-lg-block">
               <div className="ratio ratio-16x9">
                 <img
-                  src={
-                    course.image ||
-                    "https://via.placeholder.com/600x400?text=No+Image"
-                  }
+                  src={course.image || noImage}
                   alt={course.alt || "Course image"}
                   className="img-fluid rounded-3 shadow"
                   style={{ objectFit: "cover" }}
@@ -274,15 +273,13 @@ export const CourseDetails = () => {
 
               <div className="d-flex align-items-start">
                 <img
-                  src={
-                    course.instructorImage ||
-                    "https://via.placeholder.com/100?text=No+Image"
-                  }
+                  src={course.instructorImage || noImage}
                   alt={course.instructor || "Instructor"}
                   className="rounded-circle me-4"
                   width="100"
                   height="100"
                 />
+
                 <div>
                   <h3 className="fw-bold mb-1">
                     {course.instructor || "Unknown Instructor"}
@@ -300,10 +297,7 @@ export const CourseDetails = () => {
             <div className="sticky-top" style={{ top: "20px" }}>
               <div className="card shadow-lg border-0">
                 <img
-                  src={
-                    course.image_url ||
-                    "https://via.placeholder.com/600x400?text=No+Image"
-                  }
+                  src={course.image_url || noImage}
                   alt={course.alt || "Course image"}
                   className="card-img-top d-lg-none"
                   style={{ height: "200px", objectFit: "cover" }}
@@ -321,7 +315,15 @@ export const CourseDetails = () => {
                   </div>
 
                   <div className="d-grid gap-2 mb-4">
-                    <button className="btn btn-primary btn-lg py-3 fw-bold">
+                    <button
+                      className="btn btn-primary"
+                      onClick={async () => {
+                        const result = await actions.enrollCourse(course.id);
+                        if (result) {
+                          navigate("/my-enrollments");
+                        }
+                      }}
+                    >
                       Enroll Now
                     </button>
                     <button className="btn btn-outline-secondary py-3">

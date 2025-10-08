@@ -466,3 +466,255 @@
     border-radius: 24px;
   }
 }
+.floating-icons {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* Base de todas las figuras */
+.shape {
+  position: absolute;
+  opacity: 0.15;
+  animation: floatUpDown 8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* ANIMACIONES */
+@keyframes floatUpDown {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-15px) rotate(10deg);
+  }
+}
+
+@keyframes spinSlow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* === FORMAS === */
+
+/* Circles */
+.shape.circle {
+  width: 40px;
+  height: 40px;
+  background: #2d3078;
+  border-radius: 50%;
+  top: 10%;
+  left: 15%;
+  animation-delay: 0s;
+}
+.shape.circle.small {
+  width: 20px;
+  height: 20px;
+  top: 80%;
+  left: 80%;
+  background: #6a1b9a;
+  animation-delay: 1s;
+}
+
+/* Triangles */
+.shape.triangle,
+.shape.triangle.small {
+  width: 0;
+  height: 0;
+  border-left: 15px solid transparent;
+  border-right: 15px solid transparent;
+  border-bottom: 25px solid #6a1b9a;
+  animation: floatUpDown 10s ease-in-out infinite;
+}
+
+.shape.triangle {
+  top: 30%;
+  left: 70%;
+  opacity: 0.18;
+}
+
+.shape.triangle.small {
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 16px solid #ffd700;
+  top: 60%;
+  left: 10%;
+  animation-delay: 2s;
+}
+
+/* Squares */
+.shape.square {
+  width: 25px;
+  height: 25px;
+  background: #ffd700;
+  top: 70%;
+  left: 40%;
+  animation-delay: 1.5s;
+}
+
+.shape.square.small {
+  width: 15px;
+  height: 15px;
+  background: #2d3078;
+  top: 25%;
+  left: 85%;
+  animation-delay: 3s;
+}
+
+/* Diamond (giro animado) */
+.shape.diamond {
+  width: 20px;
+  height: 20px;
+  background: #00c9ff;
+  transform: rotate(45deg);
+  top: 50%;
+  left: 55%;
+  opacity: 0.2;
+  animation: spinSlow 12s linear infinite, floatUpDown 9s ease-in-out infinite;
+}
+
+/* Star (SVG decorativa) */
+.shape.star {
+  width: 20px;
+  height: 20px;
+  background: none;
+  top: 15%;
+  left: 50%;
+  animation: spinSlow 15s linear infinite, floatUpDown 8s ease-in-out infinite;
+}
+
+.shape.star::before {
+  content: "★";
+  font-size: 18px;
+  color: #ffa500;
+  opacity: 0.3;
+}
+.main-heading {
+  animation: fadeSlideIn 1.2s ease-out;
+}
+
+@keyframes fadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.floating-icons.themed {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.floating-icons.themed i {
+  position: absolute;
+  font-size: 22px;
+  opacity: 0.12;
+  animation: floatIcon 10s ease-in-out infinite;
+  color: #2d3078;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: transform 0.5s ease, opacity 0.3s ease;
+}
+
+@keyframes floatIcon {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(10deg);
+  }
+}
+
+.floating-icons.themed i:hover {
+  opacity: 0.6;
+  transform: scale(1.3);
+  color: #ffd700;
+}
+
+/* Distribución de los íconos */
+.floating-icons.themed i:nth-child(1) {
+  top: 15%;
+  left: 12%;
+  animation-delay: 0s;
+}
+.floating-icons.themed i:nth-child(2) {
+  top: 35%;
+  left: 80%;
+  animation-delay: 1s;
+  color: #6a1b9a;
+}
+.floating-icons.themed i:nth-child(3) {
+  top: 65%;
+  left: 20%;
+  animation-delay: 2s;
+  color: #00c9ff;
+}
+.floating-icons.themed i:nth-child(4) {
+  top: 75%;
+  left: 70%;
+  animation-delay: 3s;
+  color: #ffa500;
+}
+.floating-icons.themed i:nth-child(5) {
+  top: 50%;
+  left: 50%;
+  animation-delay: 4s;
+  color: #2d3078;
+}
+.floating-icons.themed i:nth-child(6) {
+  top: 10%;
+  left: 85%;
+  animation-delay: 2s;
+  color: #ffd700;
+}
+.floating-icons.themed i:nth-child(7) {
+  top: 40%;
+  left: 30%;
+  animation-delay: 3.5s;
+  color: #6a1b9a;
+}
+.floating-icons.themed i:nth-child(8) {
+  top: 60%;
+  left: 55%;
+  animation-delay: 1.5s;
+  color: #2d3078;
+}
+.floating-icons.themed i:nth-child(9) {
+  top: 25%;
+  left: 45%;
+  animation-delay: 5s;
+  color: #00c9ff;
+}
+.floating-icons.themed i:nth-child(10) {
+  top: 85%;
+  left: 25%;
+  animation-delay: 2.8s;
+  color: #ffa500;
+}
+@keyframes glowPulse {
+  0%,
+  100% {
+    text-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+  50% {
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+  }
+}
+
+.floating-icons.themed i:nth-child(3),
+.floating-icons.themed i:nth-child(6),
+.floating-icons.themed i:nth-child(9) {
+  animation: floatIcon 10s ease-in-out infinite,
+    glowPulse 4s infinite ease-in-out;
+}

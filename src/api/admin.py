@@ -1,6 +1,6 @@
 import os
 from flask_admin import Admin
-from .models import db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement
+from .models import db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment, CourseChatMessage
 from flask_admin.contrib.sqla import ModelView
 
 def setup_admin(app):
@@ -17,6 +17,8 @@ def setup_admin(app):
     admin.add_view(ModelView(Lesson, db.session))
     admin.add_view(ModelView(LearningObjective, db.session))
     admin.add_view(ModelView(Requirement, db.session))
+    admin.add_view(ModelView(Enrollment, db.session))
+    admin.add_view(ModelView(CourseChatMessage, db.session))
 
     # You can duplicate that line to add new models
     # admin.add_view(ModelView(YourModelName, db.session))
