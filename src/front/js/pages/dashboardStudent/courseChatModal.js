@@ -1,21 +1,27 @@
 import React, { useEffect, useState, useContext, useRef } from "react";
 import { Context } from "../../store/appContext";
-import "../../../styles/studentChatModal.css";
+import "../../../styles/chatModal.css";
 
-export const StudentChatModal = ({ show, onClose, course }) => {
-  const { actions } = useContext(Context);
+export const CourseChatModal = ({ show, onClose, course }) => {
+  const { store, actions } = useContext(Context);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const chatEndRef = useRef(null);
 
-  // Cargar mensajes al abrir el modal
+  const currentUserId = store.user?.id; // 👈 ID del usuario actual
+
   useEffect(() => {
+    // Si ya vienen mensajes precargados, se muestran de inmediato
+    if (course?.messages) {
+      setMessages(course.messages);
+    }
+
+    // 👇 Luego haces un fetch por si hay mensajes nuevos (background update)
     if (show && course?.id) {
       actions.getCourseChat(course.id).then(setMessages);
     }
   }, [show, course]);
 
-  // Scroll automático al final
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -39,12 +45,18 @@ export const StudentChatModal = ({ show, onClose, course }) => {
 
         <div className="chat-body">
           {messages.length > 0 ? (
-            messages.map((msg) => (
-              <div key={msg.id} className="chat-message">
-                <strong>{msg.user_name}: </strong>
-                <span>{msg.content}</span>
-              </div>
-            ))
+            messages.map((msg) => {
+              const isOwn = msg.user_id === currentUserId; // 👈 Verifica si es tuyo
+              return (
+                <div
+                  key={msg.id}
+                  className={`chat-message ${isOwn ? "own" : "other"}`}
+                >
+                  {!isOwn && <strong>{msg.user_name}:</strong>}
+                  <span>{msg.content}</span>
+                </div>
+              );
+            })
           ) : (
             <p className="text-muted text-center">No messages yet.</p>
           )}

@@ -4,7 +4,7 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 from flask import Flask, request, jsonify, url_for, Blueprint
 from sqlalchemy import extract, func
 from psycopg2 import IntegrityError
-from api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment
+from api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment, CourseChatMessage, PrivateChatMessage
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -1051,7 +1051,7 @@ def get_course_chat(course_id):
     Obtiene todos los mensajes del chat de un curso.
     Solo pueden acceder usuarios inscritos o el profesor.
     """
-    from api.models import CourseChatMessage, Enrollment
+    
 
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
@@ -1077,7 +1077,6 @@ def post_course_chat(course_id):
     """
     Envía un nuevo mensaje al chat de un curso.
     """
-    from api.models import CourseChatMessage, Enrollment
 
     user_id = get_jwt_identity()
     data = request.get_json()
@@ -1108,13 +1107,56 @@ def post_course_chat(course_id):
 
     return jsonify(new_message.serialize()), 201
 
+@api.route('/chat/<int:student_id>', methods=['GET'])
+@jwt_required()
+def get_private_chat(student_id):
+    """
+    Obtiene todos los mensajes entre el profesor actual y un estudiante.
+    """
+
+    teacher_id = get_jwt_identity()
+    user = User.query.get(teacher_id)
+
+    if user.role not in ["teacher", "admin", "student"]:
+        return jsonify({"msg": "No autorizado"}), 403
+
+    messages = PrivateChatMessage.query.filter(
+        ((PrivateChatMessage.sender_id == teacher_id) & (PrivateChatMessage.receiver_id == student_id)) |
+        ((PrivateChatMessage.sender_id == student_id) & (PrivateChatMessage.receiver_id == teacher_id))
+    ).order_by(PrivateChatMessage.timestamp.asc()).all()
+
+    return jsonify([m.serialize() for m in messages]), 200
+
+@api.route('/chat/<int:student_id>', methods=['POST'])
+@jwt_required()
+def send_private_message(student_id):
+    """
+    Envía un mensaje privado entre profesor y estudiante.
+    """
+
+    sender_id = get_jwt_identity()
+    data = request.get_json()
+    content = data.get("content")
+
+    if not content:
+        return jsonify({"msg": "El mensaje no puede estar vacío"}), 400
+
+    new_msg = PrivateChatMessage(
+        sender_id=sender_id,
+        receiver_id=student_id,
+        content=content
+    )
+    db.session.add(new_msg)
+    db.session.commit()
+
+    return jsonify(new_msg.serialize()), 201
+
+
 @api.route('/teacher/courses', methods=['GET'])
 @jwt_required()
 def get_teacher_courses():
-    """
-    Devuelve todos los cursos creados por un profesor junto con
-    el total de estudiantes inscritos en cada uno.
-    """
+    """Devuelve todos los cursos creados por un profesor junto con
+    el total de estudiantes inscritos en cada uno."""
     try:
         teacher_id = get_jwt_identity()
         user = User.query.get(teacher_id)
@@ -1122,12 +1164,11 @@ def get_teacher_courses():
         if not user or user.role != "teacher":
             return jsonify({"msg": "Unauthorized"}), 403
 
-        # Buscar los cursos del profesor
+        
         courses = Course.query.filter_by(teacher_id=teacher_id).all()
 
         result = []
         for course in courses:
-            # Contar estudiantes inscritos en ese curso
             total_students = Enrollment.query.filter_by(course_id=course.id).count()
             course_data = course.serialize()
             course_data["total_students"] = total_students
@@ -1176,9 +1217,11 @@ def get_teacher_students():
                 "first_name": student.first_name,
                 "last_name": student.last_name,
                 "email": student.email,
+                "country": student.country, 
                 "course_title": course.title,
                 "progress": getattr(enrollment, "progress", 0),
-                # 🔧 aquí estaba el error
+                "last_login": student.last_login.strftime("%Y-%m-%d %H:%M:%S")
+                if student.last_login else None,   
                 "enrolled_at": enrollment.enrolled_at.strftime("%Y-%m-%d")
                 if enrollment.enrolled_at else None,
             })
@@ -1229,6 +1272,9 @@ def get_students_by_course(course_id):
                 "first_name": student.first_name,
                 "last_name": student.last_name,
                 "email": student.email,
+                "country": student.country,
+                "last_login": student.last_login.strftime("%Y-%m-%d %H:%M:%S")
+                if student.last_login else None,   
                 "progress": getattr(enrollment, "progress", 0),
                 "enrolled_at": enrollment.enrolled_at.strftime("%Y-%m-%d")
                 if enrollment.enrolled_at else None,

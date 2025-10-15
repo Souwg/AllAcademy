@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { FiSearch } from "react-icons/fi";
 import "../../../styles/adminContent.css";
+
 export const AdminContent = ({
   activeView,
   setActiveView,
@@ -314,10 +315,7 @@ export const AdminContent = ({
             </div>
           ))}
 
-          <h3 className="chart-title">
-            <i className="fa-solid fa-chart-column me-2"></i> Active Users per
-            Month
-          </h3>
+          <h3 className="chart-title">Registered Users per Month</h3>
           <div className="chart-card">
             <ResponsiveContainer width="100%" height={260}>
               <BarChart
@@ -1253,10 +1251,11 @@ export const AdminContent = ({
 
     return (
       <div className="courses-management">
-        <div className="section-header">
+        <div className="admin-header">
           <h3>Available Courses</h3>
         </div>
         <button onClick={onRefreshCourses} className="refresh-btn">
+          <i className="fa-solid fa-arrows-rotate"></i>
           Refresh
         </button>
         <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
@@ -1412,6 +1411,7 @@ export const AdminContent = ({
     const descriptions = {
       dashboard: "Welcome to the main control panel",
       courses: "Manage the available courses",
+      users: "Manage the users",
       settings: "Configure the system settings",
     };
 
@@ -1461,7 +1461,7 @@ export const AdminContent = ({
             {renderCoursesList()}
           </div>
         ) : (
-          <div>View in development</div>
+          <strong>View in development...</strong>
         )}
       </div>
     </div>

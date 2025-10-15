@@ -4,7 +4,6 @@ import enum
 
 db = SQLAlchemy()
 
-# Tabla de asociación para la relación muchos-a-muchos entre cursos y wishlist
 wishlist_association = db.Table('wishlist',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
     db.Column('course_id', db.Integer, db.ForeignKey('course.id'), primary_key=True),
@@ -72,11 +71,10 @@ class LiveClass(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
     teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    scheduled_at = db.Column(db.DateTime, nullable=False)  # fecha y hora
+    scheduled_at = db.Column(db.DateTime, nullable=False)  
     meeting_url = db.Column(db.String(500), nullable=False)
-    recording_url = db.Column(db.String(500))  # si queda grabada
+    recording_url = db.Column(db.String(500))  
 
-    # relationships
     course = db.relationship("Course", back_populates="live_classes")
     teacher = db.relationship("User", back_populates="live_classes")
 
@@ -91,7 +89,6 @@ class LiveClass(db.Model):
             "scheduled_at": self.scheduled_at.isoformat() if self.scheduled_at else None,
             "meeting_url": self.meeting_url,
             "recording_url": self.recording_url,
-            # opcional si quieres mostrar también
             "course_title": self.course.title if self.course else None,
             "teacher_email": self.teacher.email if self.teacher else None
         }
@@ -119,10 +116,9 @@ class Course(db.Model):
     live_class_end_time = db.Column(db.Time) 
     live_class_timezone = db.Column(db.String(50), default="GMT-5")
     
-    # Claves foráneas
+  
     teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
-     # Relaciones
     modules = db.relationship('Module', backref='course', lazy=True, cascade="all, delete-orphan")
     live_classes = db.relationship("LiveClass", back_populates="course", cascade="all, delete-orphan")
     what_you_learn = db.relationship('LearningObjective', backref='course', lazy=True, cascade="all, delete-orphan")
@@ -176,10 +172,10 @@ class Module(db.Model):
     description = db.Column(db.Text)
     order = db.Column(db.Integer, nullable=False)
     
-    # Claves foráneas
+
     course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
     
-    # Relaciones
+
     lessons = db.relationship('Lesson', backref='module', lazy=True, cascade="all, delete-orphan")
     
     def __repr__(self):
@@ -203,7 +199,7 @@ class Lesson(db.Model):
     video_url = db.Column(db.String(500))
     order = db.Column(db.Integer, nullable=False)
     
-    # Claves foráneas
+ 
     module_id = db.Column(db.Integer, db.ForeignKey('module.id'), nullable=False)
     
     def __repr__(self):
@@ -288,6 +284,30 @@ class CourseChatMessage(db.Model):
             "course_id": self.course_id,
             "user_id": self.user_id,
             "user_name": f"{self.user.first_name} {self.user.last_name}" if self.user else "Unknown",
+            "content": self.content,
+            "timestamp": self.timestamp.isoformat()
+        }
+    
+class PrivateChatMessage(db.Model):
+    __tablename__ = "private_chat_messages"   # 👈 nombre claro y consistente
+
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    content = db.Column(db.String(500), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relaciones opcionales
+    sender = db.relationship("User", foreign_keys=[sender_id], backref="sent_messages")
+    receiver = db.relationship("User", foreign_keys=[receiver_id], backref="received_messages")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "sender_id": self.sender_id,
+            "receiver_id": self.receiver_id,
+            "sender_name": f"{self.sender.first_name} {self.sender.last_name}" if self.sender else "Unknown",
+            "receiver_name": f"{self.receiver.first_name} {self.receiver.last_name}" if self.receiver else "Unknown",
             "content": self.content,
             "timestamp": self.timestamp.isoformat()
         }

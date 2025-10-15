@@ -161,18 +161,42 @@
 }
 
 /* Estados de mensajes propios vs otros (opcional) */
-.chat-message.own {
-  background: rgba(45, 48, 120, 0.05);
-  border-left-color: #00c9ff;
-  margin-left: 2rem;
+
+.chat-message {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  max-width: 70%;
+  word-wrap: break-word;
+  animation: messageSlide 0.3s ease-out;
 }
 
+/* Mensajes propios (alineados a la derecha) */
+.chat-message.own {
+  background: #2d3078;
+  color: #fff;
+  margin-left: auto;
+  text-align: right;
+  border-top-right-radius: 0;
+}
+
+/* Mensajes de otros (alineados a la izquierda) */
 .chat-message.other {
   background: #f8f9fa;
-  border-left-color: #2d3078;
-  margin-right: 2rem;
+  color: #001933;
+  margin-right: auto;
+  border-top-left-radius: 0;
 }
 
+.chat-message.own span {
+  color: #fff;
+}
+
+.chat-message.other strong {
+  color: #2d3078;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+}
 /* Indicador de escritura (opcional) */
 .typing-indicator {
   display: flex;

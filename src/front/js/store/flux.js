@@ -294,6 +294,54 @@ const getState = ({ getStore, getActions, setStore }) => {
           return [];
         }
       },
+      getPrivateChat: async (studentId) => {
+        try {
+          const token = localStorage.getItem("token");
+          const resp = await fetch(
+            `http://localhost:3001/api/chat/${studentId}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+            }
+          );
+
+          if (!resp.ok) throw new Error("Error al obtener mensajes privados");
+          const data = await resp.json();
+          console.log("📩 Mensajes privados:", data);
+          return data;
+        } catch (err) {
+          console.error("Error en getPrivateChat:", err);
+          return [];
+        }
+      },
+
+      postPrivateChat: async (studentId, content) => {
+        try {
+          const token = localStorage.getItem("token");
+          const resp = await fetch(
+            `http://localhost:3001/api/chat/${studentId}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+              body: JSON.stringify({ content }),
+            }
+          );
+
+          if (!resp.ok) throw new Error("Error al enviar mensaje privado");
+          const data = await resp.json();
+          console.log("✅ Mensaje privado enviado:", data);
+          return data;
+        } catch (err) {
+          console.error("Error en postPrivateChat:", err);
+          return null;
+        }
+      },
     },
   };
 };
