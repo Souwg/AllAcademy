@@ -87,97 +87,177 @@ export const DashboardStudent = () => {
           <div className="container container-banner">
             <div className="student-banner">
               <h3>👋 Welcome back, {user?.first_name || "Student"}</h3>
+              <p>Here’s a quick overview of your learning activity today.</p>
             </div>
 
-            <div className="d-flex gap-3 flex-wrap mt-4">
-              <div className="card p-4 text-center flex-fill">
-                <h5>Enrolled Courses</h5>
-                <h2 className="fw-bold">{myEnrollments?.length || 0}</h2>
-              </div>
-              <div className="card p-4 text-center flex-fill">
-                <h5>Completed</h5>
-                <h2 className="fw-bold">
-                  {myEnrollments?.filter((e) => e.progress === 100).length || 0}
-                </h2>
-              </div>
-              <div className="card p-4 text-center flex-fill">
-                <h5>In Progress</h5>
-                <h2 className="fw-bold">
-                  {myEnrollments?.filter(
-                    (e) => e.progress > 0 && e.progress < 100
-                  ).length || 0}
-                </h2>
-              </div>
-            </div>
+            <div className="row">
+              {/* 📊 Stats + Courses */}
+              <div className="col-12 col-lg-9">
+                {/* Stats */}
+                <div className="d-flex gap-4 flex-wrap mt-4">
+                  <div className="card stats-card d-flex flex-row align-items-center flex-fill shadow-sm">
+                    <div className="stats-icon bg-opacity-10 text-primary rounded-3 d-flex align-items-center justify-content-center me-3">
+                      <i className="fa-solid fa-book fa-5x"></i>
+                    </div>
+                    <div>
+                      <h6 className="text-muted mb-1">Enrolled Courses</h6>
+                      <h2 className="fw-bold text-primary mb-0">
+                        {myEnrollments?.length || 0}
+                      </h2>
+                    </div>
+                  </div>
 
-            <div className="mt-5">
-              <h4 className="fw-bold mb-4">
-                <i className="fa-regular fa-bookmark me-2"></i> My Courses
-              </h4>
+                  <div className="card stats-card d-flex flex-row align-items-center flex-fill shadow-sm">
+                    <div className="stats-icon bg-opacity-10 text-success rounded-3 d-flex align-items-center justify-content-center me-3">
+                      <i className="fa-solid fa-check-circle fa-5x"></i>
+                    </div>
+                    <div>
+                      <h6 className="text-muted mb-1">Completed</h6>
+                      <h2 className="fw-bold text-success mb-0">
+                        {myEnrollments?.filter((e) => e.progress === 100)
+                          .length || 0}
+                      </h2>
+                    </div>
+                  </div>
 
-              <div className="row g-4">
-                {myEnrollments.length > 0 ? (
-                  myEnrollments.map((enroll, index) => (
-                    <div
-                      key={index}
-                      className="col-12 col-sm-6 col-lg-4 col-xl-3 d-flex justify-content-center"
-                    >
-                      <div className="card h-100">
-                        <img
-                          src={enroll.course?.image_url || noImage}
-                          className="card-img-top"
-                          alt={enroll.course?.title || "Course"}
-                        />
-                        <div className="card-body d-flex flex-column">
-                          <h5 className="card-title">
-                            {enroll.course?.title || "Untitled Course"}
-                          </h5>
-                          <p className="instructor-name">
-                            By {enroll.course?.instructor || "Instructor"}
-                          </p>
+                  <div className="card stats-card d-flex flex-row align-items-center flex-fill shadow-sm">
+                    <div className="stats-icon bg-opacity-10 text-warning rounded-3 d-flex align-items-center justify-content-center me-3">
+                      <i className="fa-solid fa-hourglass-half fa-5x"></i>
+                    </div>
+                    <div>
+                      <h6 className="text-muted mb-1">In Progress</h6>
+                      <h2 className="fw-bold text-warning mb-0">
+                        {myEnrollments?.filter(
+                          (e) => e.progress > 0 && e.progress < 100
+                        ).length || 0}
+                      </h2>
+                    </div>
+                  </div>
+                </div>
 
-                          <div className="mt-auto">
-                            <div className="progress">
-                              <div
-                                className="progress-bar"
-                                role="progressbar"
-                                style={{ width: `${enroll.progress || 0}%` }}
-                                aria-valuenow={enroll.progress || 0}
-                                aria-valuemin="0"
-                                aria-valuemax="100"
-                              ></div>
+                {/* 📚 Courses */}
+                <div className="mt-5">
+                  <h4 className="fw-bold mb-4 subtitled-dashboard">
+                    <i className="fa-regular fa-bookmark me-2"></i> My Courses
+                  </h4>
+
+                  <div className="row g-4">
+                    {myEnrollments.length > 0 ? (
+                      myEnrollments.map((enroll, index) => (
+                        <div
+                          key={index}
+                          className="col-12 col-sm-12 col-lg-6 col-xl-4 d-flex justify-content-center"
+                        >
+                          <div className="card card-list-course-modern h-100 w-100">
+                            <div className="card-img-container">
+                              <img
+                                src={enroll.course?.image_url || noImage}
+                                className="card-img-top img-fluid modern-img"
+                                alt={enroll.course?.title || "Course"}
+                              />
                             </div>
-                            <small className="d-block mt-2">
-                              Progress: {enroll.progress || 0}%
-                            </small>
-                          </div>
+                            <div className="card-body d-flex flex-column">
+                              <h5 className="card-title modern-title">
+                                {enroll.course?.title || "Untitled Course"}
+                              </h5>
+                              <p className="instructor-name text-muted mb-2">
+                                By {enroll.course?.instructor || "Instructor"}
+                              </p>
 
-                          <div className="d-flex gap-2 mt-3">
-                            <button
-                              className="btn btn-outline-primary w-50"
-                              onClick={() =>
-                                navigate(`/course/${enroll.course?.slug}`)
-                              }
-                            >
-                              Continue
-                            </button>
+                              <div className="mt-auto">
+                                <div className="progress modern-progress">
+                                  <div
+                                    className="progress-bar"
+                                    role="progressbar"
+                                    style={{
+                                      width: `${enroll.progress || 0}%`,
+                                    }}
+                                    aria-valuenow={enroll.progress || 0}
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                  ></div>
+                                </div>
+                                <small className="d-block mt-2 text-muted">
+                                  Progress: {enroll.progress || 0}%
+                                </small>
+                              </div>
 
-                            <button
-                              className="btn btn-outline-secondary w-50"
-                              onClick={() => openChat(enroll.course)}
-                            >
-                              Chat
-                            </button>
+                              <div className="d-flex gap-2 mt-3 flex-wrap">
+                                <button
+                                  className="btn modern-btn-success flex-grow-1"
+                                  onClick={() =>
+                                    navigate(`/course/${enroll.course?.slug}`)
+                                  }
+                                >
+                                  <i className="fa-solid fa-play me-1"></i>{" "}
+                                  Continue
+                                </button>
+
+                                <button
+                                  className="btn modern-btn-primary flex-grow-1"
+                                  onClick={() => openChat(enroll.course)}
+                                >
+                                  <i className="fa-regular fa-comments me-1"></i>{" "}
+                                  Chat
+                                </button>
+                              </div>
+                            </div>
                           </div>
                         </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-5 text-muted">
+                        <p>You haven't enrolled in any courses yet.</p>
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-5">
-                    <p>You haven't enrolled in any courses yet.</p>
+                    )}
                   </div>
-                )}
+                </div>
+              </div>
+
+              {/* 🛎️ Panel de Notificaciones */}
+              <div className="col-12 col-md-12 col-lg-3 mb-4">
+                <div className="card notification-panel shadow-sm border-0 rounded-4">
+                  <div
+                    className="card-header notification-header bg-white border-0 d-flex justify-content-between align-items-center flex-wrap"
+                    style={{
+                      borderTopRightRadius: "15px",
+                      borderTopLeftRadius: "15px",
+                    }}
+                  >
+                    <div className="d-flex align-items-center gap-2 flex-nowrap">
+                      <div className="notification-icon-bell d-flex align-items-center justify-content-center">
+                        <i className="fa-regular fa-bell text-warning"></i>
+                      </div>
+                      <h5 className="mb-0 fw-semibold text-dark notification-title">
+                        Notifications
+                      </h5>
+                    </div>
+
+                    <button className="btn btn-sm btn-light rounded-circle p-2 mt-2 mt-md-0">
+                      <i className="fa-solid fa-rotate"></i>
+                    </button>
+                  </div>
+
+                  <div className="card-body p-3 notification-body">
+                    <div className="notification-item border-start border-4 border-primary mb-3 p-2 rounded-3 bg-light-subtle">
+                      <small>
+                        <strong>New course:</strong> You joined Advanced Math.
+                      </small>
+                    </div>
+
+                    <div className="notification-item border-start border-4 border-success mb-3 p-2 rounded-3 bg-light-subtle">
+                      <small>
+                        <strong>New message:</strong> Your instructor replied.
+                      </small>
+                    </div>
+
+                    <div className="notification-item border-start border-4 border-warning mb-3 p-2 rounded-3 bg-light-subtle">
+                      <small>
+                        <strong>Reminder:</strong> Live class starts in 1 hour.
+                      </small>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -21,3 +21,230 @@
   font-weight: 600;
   margin-bottom: 3rem;
 }
+.subtitled-dashboard {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  color: #001933;
+  border-radius: 12px;
+  width: 300px;
+  padding: 1.5rem 2rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+/**************Card List Course
+*********************/
+.card-list-course-modern {
+  border: none;
+  border-radius: 18px;
+  overflow: hidden;
+  background-color: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  max-width: 350px;
+}
+
+.card-list-course-modern:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.card-img-container {
+  overflow: hidden;
+  position: relative;
+  height: 200px;
+}
+
+.modern-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.card-list-course-modern:hover .modern-img {
+  transform: scale(1.05);
+}
+
+.modern-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #212529;
+  min-height: 48px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.modern-btn-success,
+.modern-btn-primary,
+.modern-btn-dark {
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.modern-btn-success {
+  background-color: #e7f9f0;
+  color: #198754;
+  border: none;
+}
+
+.modern-btn-success:hover {
+  background-color: #198754;
+  color: #fff;
+}
+
+.modern-btn-primary {
+  background-color: #e8f0ff;
+  color: #0d6efd;
+  border: none;
+}
+
+.modern-btn-primary:hover {
+  background-color: #0d6efd;
+  color: #fff;
+}
+
+.modern-btn-dark {
+  background-color: #f2f2f2;
+  color: #212529;
+  border: none;
+}
+
+.modern-btn-dark:hover {
+  background-color: #212529;
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .card-list-course-modern {
+    max-width: 100%;
+  }
+  .modern-title {
+    font-size: 0.95rem;
+  }
+  .modern-btn-success,
+  .modern-btn-primary,
+  .modern-btn-dark {
+    font-size: 0.85rem;
+  }
+}
+
+/******************Stats
+**********************/
+.stats-card {
+  border: none;
+  padding: 3rem 2rem;
+  border-radius: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.stats-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: #f8bcbc;
+}
+
+.stats-icon {
+  width: 60px;
+  height: 60px;
+}
+/******************Notifications Panel
+**********************/
+/* 📬 Panel general */
+.notification-panel {
+  margin-top: 1.5rem;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+}
+
+.notification-panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.notification-header {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.notification-title {
+  font-size: 1.1rem;
+  white-space: nowrap;
+  transition: opacity 0.2s ease;
+}
+
+.notification-icon-bell {
+  width: 38px;
+  height: 38px;
+  background-color: #fff5da;
+  border-radius: 50%;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.notification-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.notification-body::-webkit-scrollbar {
+  width: 6px;
+}
+.notification-body::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 10px;
+}
+.notification-body::-webkit-scrollbar-thumb:hover {
+  background-color: #999;
+}
+
+.notification-item {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  max-width: 100%;
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.notification-item:hover {
+  background-color: #e9ecef;
+}
+
+@media (max-width: 1250px) {
+  .notification-title {
+    opacity: 0;
+    visibility: hidden;
+    width: 0;
+    overflow: hidden;
+  }
+  .notification-header {
+    justify-content: space-between;
+  }
+}
+@media (max-width: 768px) {
+  .notification-body {
+    max-height: none;
+    overflow-y: visible;
+  }
+}

@@ -21,6 +21,28 @@ export const DashboardTeacher = () => {
   const [showPrivateChatModal, setShowPrivateChatModal] = useState(false);
   const [privateMessages, setPrivateMessages] = useState([]); // 👈 NUEVO
 
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      // 📥 Trae mensajes de todos los cursos del teacher
+      for (let course of store.courses) {
+        const messages = await actions.getCourseChat(course.id);
+        const lastMsg = messages[messages.length - 1];
+
+        // Si el mensaje es nuevo, crear una notificación
+        if (lastMsg && !store.notifications.some((n) => n.id === lastMsg.id)) {
+          actions.addNotification({
+            id: lastMsg.id,
+            type: "group",
+            message: `${lastMsg.user_name} escribió en ${course.title}`,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      }
+    }, 10000); // cada 10s
+
+    return () => clearInterval(interval);
+  }, [store.courses]);
+
   const openStudentsModal = async (course) => {
     const students = await actions.getStudentsByCourse(course.id);
     setSelectedCourse(course);
@@ -121,7 +143,7 @@ export const DashboardTeacher = () => {
                 {/* Stats */}
                 <div className="d-flex gap-4 flex-wrap mt-4">
                   <div className="card stats-card d-flex flex-row align-items-center flex-fill shadow-sm">
-                    <div className="stats-icon bg-primary bg-opacity-10 text-primary rounded-3 d-flex align-items-center justify-content-center me-3">
+                    <div className="stats-icon bg-opacity-10 text-primary rounded-3 d-flex align-items-center justify-content-center me-3">
                       <i className="fa-solid fa-book fa-5x"></i>
                     </div>
                     <div>
@@ -147,7 +169,7 @@ export const DashboardTeacher = () => {
 
                 {/* Lista de cursos */}
                 <div className="mt-5">
-                  <h4 className="fw-bold mb-4 ms-2 text-dark">
+                  <h4 className="fw-bold mb-4 ms-2 subtitled-dashboard">
                     <i className="fa-solid fa-book me-2"></i> My Courses
                   </h4>
 
@@ -156,7 +178,7 @@ export const DashboardTeacher = () => {
                       store.courses.map((course, index) => (
                         <div
                           key={index}
-                          className="col-12 col-sm-12 col-lg-6 col-xl-6 d-flex justify-content-center"
+                          className="col-12 col-sm-12 col-lg-6 col-xl-6 d-flex"
                         >
                           <div className="card card-list-course-modern h-100 w-100">
                             <div className="card-img-container">

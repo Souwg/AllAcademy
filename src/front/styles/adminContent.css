@@ -868,8 +868,6 @@
   border-radius: 12px;
   box-shadow: var(--shadow-sm);
   height: 100%;
-  display: flex;
-  flex-direction: column;
 }
 
 .grid-course-image {
@@ -911,7 +909,6 @@
 }
 
 .course-meta-info {
-  display: flex;
   gap: 1rem;
   font-size: 0.8rem;
   color: #6c757d;
@@ -1119,4 +1116,98 @@ Contenedor de la gráfica
 .chart-bar {
   fill: var(--primary-light);
   transition: all 0.3s ease;
+}
+.grid-course-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.grid-course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+}
+
+/* 🔹 Imagen con proporción fija */
+.grid-course-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9; /* Mantiene proporción sin deformarse */
+  overflow: hidden;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}
+
+.grid-course-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Asegura que no se deforme */
+  transition: transform 0.3s ease;
+}
+
+.grid-course-image img:hover {
+  transform: scale(1.05);
+}
+
+.grid-course-content {
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-grow: 1;
+}
+
+/* 🔹 Mantiene tamaño de textos y tarjetas */
+.grid-course-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #001933;
+}
+
+.grid-course-description {
+  font-size: 0.9rem;
+  color: #6c757d;
+  flex-grow: 1;
+  margin-bottom: 1rem;
+}
+
+/* 🔹 Ajusta botones */
+.course-actions {
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.course-actions .course-btn {
+  font-size: 0.85rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* 🔹 Responsive: mantiene tamaño, solo cambia el número de columnas */
+@media (max-width: 1500px) {
+  .course-actions {
+    display: flex;
+    flex-direction: column;
+  }
+}
+@media (max-width: 992px) {
+  .grid-course-card {
+    margin-bottom: 1rem;
+  }
+  .course-meta-info {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 576px) {
+  .grid-course-card {
+    margin-bottom: 1rem;
+  }
 }

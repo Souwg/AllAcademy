@@ -1,4 +1,3 @@
-// flux.js
 const getState = ({ getStore, getActions, setStore }) => {
   return {
     store: {
@@ -52,7 +51,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           const data = await resp.json();
 
           // --- Dummy courses ---
-          const MIN_COURSES = 4;
+          const MIN_COURSES = 6;
           const missing =
             data.length < MIN_COURSES ? MIN_COURSES - data.length : 0;
 
@@ -86,8 +85,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 
           const data = await resp.json();
 
-          console.log("📊 Datos recibidos del backend:", data.stats);
-
           setStore({ userStatsPerMonth: data.stats });
           return data.stats;
         } catch (error) {
@@ -114,7 +111,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           });
         }
       },
-      enrollCourse: async (courseId) => {
+      enrollCourse: async (courseId, scheduleId) => {
         try {
           const resp = await fetch(
             `http://localhost:3001/api/enroll/${courseId}`,
@@ -124,12 +121,12 @@ const getState = ({ getStore, getActions, setStore }) => {
                 "Content-Type": "application/json",
                 Authorization: "Bearer " + localStorage.getItem("token"),
               },
+              body: JSON.stringify({ schedule_id: scheduleId }),
             }
           );
 
           if (!resp.ok) throw new Error("Error enrolling in course");
           const data = await resp.json();
-          console.log("Enrollment successful:", data);
           return data;
         } catch (err) {
           console.error("Error in enrollCourse:", err);
@@ -170,7 +167,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             throw new Error("Error al obtener los mensajes del chat");
           const data = await resp.json();
 
-          console.log("Mensajes del curso:", data);
           return data; // el componente los recibe directamente
         } catch (err) {
           console.error("Error en getCourseChat:", err);
@@ -196,7 +192,6 @@ const getState = ({ getStore, getActions, setStore }) => {
           if (!resp.ok) throw new Error("Error al enviar el mensaje");
           const data = await resp.json();
 
-          console.log("Mensaje enviado:", data);
           return data; // se añade al chat localmente
         } catch (err) {
           console.error("Error en postCourseChat:", err);
@@ -237,7 +232,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
           });
 
-          console.log("📚 Cursos del teacher:", data);
           return data;
         } catch (err) {
           console.error("Error in getTeacherCourses:", err);
@@ -262,7 +256,6 @@ const getState = ({ getStore, getActions, setStore }) => {
           if (!resp.ok) throw new Error("Error fetching teacher students");
 
           const data = await resp.json();
-          console.log("👩‍🎓 Students by teacher:", data);
 
           setStore({ studentsByTeacher: data });
           return data;
@@ -287,7 +280,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 
           if (!resp.ok) throw new Error("Error fetching course students");
           const data = await resp.json();
-          console.log(`👩‍🎓 Students for course ${courseId}:`, data);
           return data;
         } catch (err) {
           console.error("Error in getStudentsByCourse:", err);
@@ -310,7 +302,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 
           if (!resp.ok) throw new Error("Error al obtener mensajes privados");
           const data = await resp.json();
-          console.log("📩 Mensajes privados:", data);
           return data;
         } catch (err) {
           console.error("Error en getPrivateChat:", err);
@@ -335,7 +326,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 
           if (!resp.ok) throw new Error("Error al enviar mensaje privado");
           const data = await resp.json();
-          console.log("✅ Mensaje privado enviado:", data);
           return data;
         } catch (err) {
           console.error("Error en postPrivateChat:", err);

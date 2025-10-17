@@ -111,10 +111,6 @@ class Course(db.Model):
     access_duration= db.Column(db.String(50), default="Lifetime")
     has_live_classes = db.Column(db.Boolean, default=False)
     has_recorded_videos = db.Column(db.Boolean, default=False)
-    live_class_days = db.Column(db.String(100))  
-    live_class_start_time = db.Column(db.Time)   
-    live_class_end_time = db.Column(db.Time) 
-    live_class_timezone = db.Column(db.String(50), default="GMT-5")
     
   
     teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -132,8 +128,8 @@ class Course(db.Model):
         return f'<Course {self.title}>'
     
     def serialize(self):
+        schedules_data = [sched.serialize() for sched in self.schedules] if self.schedules else []
         modules_ordered = sorted(self.modules, key=lambda x: x.order) if self.modules else []
-        class_days = self.live_class_days.split(',') if self.live_class_days else []
         return {
             "id": self.id,
             "title": self.title,
@@ -148,23 +144,41 @@ class Course(db.Model):
             "lastUpdated": self.last_updated.strftime("%B %Y"),
             "access_duration": self.access_duration,
             "teacher_id": self.teacher_id,
-
+            "schedules": schedules_data,
             "instructor": self.teacher.first_name + " " + self.teacher.last_name,
             "instructorBio": self.teacher.bio if self.teacher else "",
             "lessons": sum(len(module.lessons) for module in self.modules),
             "what_you_learn": [obj.objective for obj in self.what_you_learn],
             "requirements": [req.requirement for req in self.requirements],
             "modules": [module.serialize() for module in modules_ordered],
-             "liveClasses": self.has_live_classes,
             "recordedVideos": self.has_recorded_videos,
-            "live_class_days": class_days,
-            "live_class_start_time": self.live_class_start_time.strftime("%H:%M") if self.live_class_start_time else None,
-            "live_class_end_time": self.live_class_end_time.strftime("%H:%M") if self.live_class_end_time else None,
-            "live_class_timezone": self.live_class_timezone,
             "is_published": self.is_published,
             "published_at": self.published_at.isoformat() if self.published_at else None
         
         }
+    
+class CourseSchedule(db.Model):
+    __tablename__ = "course_schedule"
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
+    day_of_week = db.Column(db.String(50), nullable=False)
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+    timezone = db.Column(db.String(50), default="GMT-5")
+    group_name = db.Column(db.String(100), nullable=True)  # Ej: "Grupo A", "Grupo B"
+
+    course = db.relationship("Course", backref=db.backref("schedules", cascade="all, delete-orphan"))
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "day_of_week": self.day_of_week,
+            "start_time": self.start_time.strftime("%H:%M"),
+            "end_time": self.end_time.strftime("%H:%M"),
+            "timezone": self.timezone,
+            "group_name": self.group_name
+        }
+
 
 class Module(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -248,13 +262,16 @@ class Enrollment(db.Model):
     completed = db.Column(db.Boolean, default=False)
     completed_at = db.Column(db.DateTime, nullable=True)
 
-    # Relaciones opcionales
+    
+    schedule_id = db.Column(db.Integer, db.ForeignKey('course_schedule.id'), nullable=True)
+
+    
     student = db.relationship("User", back_populates="enrollments")
     course = db.relationship("Course", back_populates="enrollments")
-
+    schedule = db.relationship("CourseSchedule")  
 
     def __repr__(self):
-        return f"<Enrollment User {self.student_id} in Course {self.course_id}>"
+        return f"<Enrollment User {self.student_id} in Course {self.course_id} - Schedule {self.schedule_id}>"
 
     def serialize(self):
         return {
@@ -262,8 +279,10 @@ class Enrollment(db.Model):
             "course_id": self.course_id,
             "enrolled_at": self.enrolled_at.isoformat(),
             "progress": self.progress,
-            "completed": self.completed
+            "completed": self.completed,
+            "schedule": self.schedule.serialize() if self.schedule else None
         }
+
     
 class CourseChatMessage(db.Model):
     __tablename__ = "course_chat_messages"

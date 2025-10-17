@@ -147,17 +147,21 @@ export const AdminModals = ({
                     }
                   />
                 </div>
-
-                <div className="form-group">
-                  <label>Bio</label>
-                  <textarea
-                    value={selectedUser.bio || ""}
-                    onChange={(e) =>
-                      setSelectedUser({ ...selectedUser, bio: e.target.value })
-                    }
-                    rows="4"
-                  />
-                </div>
+                {selectedUser.role === "teacher" && (
+                  <div className="form-group">
+                    <label>Bio</label>
+                    <textarea
+                      value={selectedUser.bio || ""}
+                      onChange={(e) =>
+                        setSelectedUser({
+                          ...selectedUser,
+                          bio: e.target.value,
+                        })
+                      }
+                      rows="4"
+                    />
+                  </div>
+                )}
 
                 <div className="form-group">
                   <label>Role</label>
@@ -437,6 +441,31 @@ export const AdminModals = ({
                     ))}
                   </ul>
                 </div>
+                {selectedCourse.schedules &&
+                  selectedCourse.schedules.length > 0 && (
+                    <div className="detail-section">
+                      <h4>Class Schedules</h4>
+                      <ul className="schedules-list">
+                        {selectedCourse.schedules.map((schedule, index) => (
+                          <li key={index}>
+                            <strong>
+                              {schedule.group_name || `Group ${index + 1}`}
+                            </strong>
+                            <span>
+                              <i className="fa-solid fa-calendar-days"></i>
+                              {schedule.day_of_week || "No days set"}
+                            </span>
+                            <span>
+                              <i className="fa-regular fa-clock"></i>
+                              {schedule.start_time} - {schedule.end_time} (
+                              {schedule.timezone})
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                 <div className="detail-section">
                   <h4>Modules and Lessons</h4>
                   {selectedCourse.modules?.length > 0 ? (
@@ -495,7 +524,7 @@ export const AdminModals = ({
           >
             <div className="modal-header">
               <h2>
-                <i class="fa-solid fa-pen-to-square modal-icon"></i>
+                <i className="fa-solid fa-pen-to-square modal-icon"></i>
                 Edit Course
               </h2>
               <button
@@ -503,7 +532,7 @@ export const AdminModals = ({
                 onClick={() => setShowEditCourseModal(false)}
                 aria-label="Cerrar modal"
               >
-                <i class="fa-solid fa-xmark"></i>
+                <i className="fa-solid fa-xmark"></i>
               </button>
             </div>
 
@@ -774,6 +803,139 @@ export const AdminModals = ({
                     }
                   >
                     + Add Requirement
+                  </button>
+                </div>
+
+                {/* === SCHEDULES / HORARIOS === */}
+                <div className="form-group">
+                  <label>Class Schedules (Groups)</label>
+                  {courseToEdit.schedules?.map((schedule, index) => (
+                    <div key={index} className="schedule-item">
+                      <input
+                        type="text"
+                        placeholder="Group name"
+                        value={schedule.group_name || ""}
+                        onChange={(e) => {
+                          const updated = [...courseToEdit.schedules];
+                          updated[index].group_name = e.target.value;
+                          setCourseToEdit({
+                            ...courseToEdit,
+                            schedules: updated,
+                          });
+                        }}
+                      />
+
+                      {/* Selección de días */}
+                      <div className="days-selector">
+                        {[
+                          "Monday",
+                          "Tuesday",
+                          "Wednesday",
+                          "Thursday",
+                          "Friday",
+                          "Saturday",
+                          "Sunday",
+                        ].map((day) => (
+                          <label key={day}>
+                            <input
+                              type="checkbox"
+                              checked={schedule.days?.includes(day)}
+                              onChange={() => {
+                                const updated = [...courseToEdit.schedules];
+                                const days = updated[index].days;
+                                updated[index].days = days.includes(day)
+                                  ? days.filter((d) => d !== day)
+                                  : [...days, day];
+                                setCourseToEdit({
+                                  ...courseToEdit,
+                                  schedules: updated,
+                                });
+                              }}
+                            />
+                            {day}
+                          </label>
+                        ))}
+                      </div>
+
+                      <input
+                        type="time"
+                        value={schedule.start_time || ""}
+                        onChange={(e) => {
+                          const updated = [...courseToEdit.schedules];
+                          updated[index].start_time = e.target.value;
+                          setCourseToEdit({
+                            ...courseToEdit,
+                            schedules: updated,
+                          });
+                        }}
+                      />
+
+                      <input
+                        type="time"
+                        value={schedule.end_time || ""}
+                        onChange={(e) => {
+                          const updated = [...courseToEdit.schedules];
+                          updated[index].end_time = e.target.value;
+                          setCourseToEdit({
+                            ...courseToEdit,
+                            schedules: updated,
+                          });
+                        }}
+                      />
+
+                      <select
+                        value={schedule.timezone || "GMT-5"}
+                        onChange={(e) => {
+                          const updated = [...courseToEdit.schedules];
+                          updated[index].timezone = e.target.value;
+                          setCourseToEdit({
+                            ...courseToEdit,
+                            schedules: updated,
+                          });
+                        }}
+                      >
+                        <option value="GMT-5">GMT-5</option>
+                        <option value="GMT-4">GMT-4</option>
+                        <option value="GMT-3">GMT-3</option>
+                      </select>
+
+                      <button
+                        type="button"
+                        className="remove-item-btn-edit-modal"
+                        onClick={() => {
+                          setCourseToEdit({
+                            ...courseToEdit,
+                            schedules: courseToEdit.schedules.filter(
+                              (_, i) => i !== index
+                            ),
+                          });
+                        }}
+                      >
+                        Remove Schedule
+                      </button>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    className="add-module-btn-edit-modal"
+                    onClick={() =>
+                      setCourseToEdit({
+                        ...courseToEdit,
+                        schedules: [
+                          ...(courseToEdit.schedules || []),
+                          {
+                            days: [],
+                            start_time: "",
+                            end_time: "",
+                            timezone: "GMT-5",
+                            group_name: "",
+                          },
+                        ],
+                      })
+                    }
+                  >
+                    + Add Schedule
                   </button>
                 </div>
 

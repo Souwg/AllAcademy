@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Context } from "../store/appContext";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import noImage from "../../img/noImage.jpg";
@@ -9,12 +9,14 @@ export const CourseDetails = () => {
   const { slug } = useParams();
   const { store, actions } = useContext(Context);
   const { courses, coursesLoading, coursesError } = store;
+  const [selectedSchedule, setSelectedSchedule] = useState("");
+  const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     if (courses.length === 0) {
       actions.loadCourses();
     }
-  }, []);
+  }, [courses.length, store.user]);
 
   const course = courses.find((c) => c.slug === slug);
 
@@ -313,12 +315,43 @@ export const CourseDetails = () => {
                       </span>
                     )}
                   </div>
+                  {user &&
+                    user.role === "student" &&
+                    course.schedules &&
+                    course.schedules.length > 0 && (
+                      <div className="mb-3">
+                        <label htmlFor="scheduleSelect" className="fw-bold">
+                          Select your schedule
+                        </label>
+                        <select
+                          id="scheduleSelect"
+                          className="form-select"
+                          value={selectedSchedule}
+                          onChange={(e) => setSelectedSchedule(e.target.value)}
+                        >
+                          <option value="">Choose a group...</option>
+                          {course.schedules.map((schedule) => (
+                            <option key={schedule.id} value={schedule.id}>
+                              {schedule.group_name || "Group"}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
                   <div className="d-grid gap-2 mb-4">
                     <button
                       className="btn btn-primary"
                       onClick={async () => {
-                        const result = await actions.enrollCourse(course.id);
+                        if (!user) {
+                          navigate("/login");
+                          return;
+                        }
+
+                        const result = await actions.enrollCourse(
+                          course.id,
+                          selectedSchedule
+                        );
                         if (result) {
                           navigate("/my-enrollments");
                         }
@@ -326,6 +359,7 @@ export const CourseDetails = () => {
                     >
                       Enroll Now
                     </button>
+
                     <button className="btn btn-outline-secondary py-3">
                       Add to Wishlist
                     </button>
@@ -352,6 +386,37 @@ export const CourseDetails = () => {
                       <li className="mb-2">
                         <i className="fa-solid fa-calendar-days text-primary me-2"></i>
                         <span>Access duration: {course.access_duration}</span>
+                      </li>
+                    )}
+                    {course.schedules && course.schedules.length > 0 && (
+                      <li className="mb-2">
+                        <i className="fa-regular fa-calendar-days text-primary me-2"></i>
+                        <div>
+                          <span className="schedule-block-title d-block">
+                            Available Schedules:
+                          </span>
+                          <ul className="enroll-schedules-list">
+                            {course.schedules
+                              .slice(0, 3)
+                              .map((schedule, index) => (
+                                <li key={index}>
+                                  <i className="fa-solid fa-clock"></i>
+                                  <strong>
+                                    {schedule.group_name ||
+                                      `Group ${index + 1}`}
+                                  </strong>
+                                  : {schedule.day_of_week} —{" "}
+                                  {schedule.start_time} - {schedule.end_time} (
+                                  {schedule.timezone})
+                                </li>
+                              ))}
+                          </ul>
+                          {course.schedules.length > 3 && (
+                            <span className="more-schedules">
+                              + More schedules available
+                            </span>
+                          )}
+                        </div>
                       </li>
                     )}
 

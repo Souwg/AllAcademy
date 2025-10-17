@@ -4,7 +4,7 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 from flask import Flask, request, jsonify, url_for, Blueprint
 from sqlalchemy import extract, func
 from psycopg2 import IntegrityError
-from api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment, CourseChatMessage, PrivateChatMessage
+from api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment, CourseChatMessage, PrivateChatMessage, CourseSchedule
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -435,26 +435,6 @@ def create_course():
             import time
             slug = f"{slug}-{int(time.time())}"
 
-        # Procesar horario de clases en vivo
-        live_class_days = None
-        start_time = None
-        end_time = None
-
-        if 'live_class_days' in data and isinstance(data['live_class_days'], list):
-            live_class_days = ','.join(data['live_class_days'])
-
-        if data.get('live_class_start_time'):
-            try:
-                start_time = datetime.strptime(data['live_class_start_time'], '%H:%M').time()
-            except ValueError:
-                return jsonify({"msg": "Invalid start time format. Use HH:MM"}), 400
-
-        if data.get('live_class_end_time'):
-            try:
-                end_time = datetime.strptime(data['live_class_end_time'], '%H:%M').time()
-            except ValueError:
-                return jsonify({"msg": "Invalid end time format. Use HH:MM"}), 400
-
         # ✅ Asignar correctamente el teacher_id
         if user.role == "teacher":
             teacher_id = user.id
@@ -482,15 +462,33 @@ def create_course():
             published_at=datetime.utcnow() if data.get('is_published') else None,
             has_live_classes=True,
             has_recorded_videos=True,
-            live_class_days=live_class_days,
-            live_class_start_time=start_time,
-            live_class_end_time=end_time,
-            live_class_timezone=data.get('live_class_timezone', 'GMT-5'),
-            access_duration=data.get('access_duration', 'lifetime')
         )
 
         db.session.add(new_course)
-        db.session.flush()  # Obtener ID antes de commit
+        db.session.flush() 
+
+        if "schedules" in data and isinstance(data["schedules"], list):
+            for sched in data["schedules"]:
+                try:
+                    days = sched.get("days", [])
+                    start_time = datetime.strptime(sched["start_time"], '%H:%M').time()
+                    end_time = datetime.strptime(sched["end_time"], '%H:%M').time()
+                    timezone = sched.get("timezone", "GMT-5")
+                    group_name = sched.get("group_name", None)
+
+                    # ✅ Guarda todos los días juntos en un solo registro
+                    new_schedule = CourseSchedule(
+                        course_id=new_course.id,
+                        day_of_week=",".join(days),  # 👈 cambio clave aquí
+                        start_time=start_time,
+                        end_time=end_time,
+                        timezone=timezone,
+                        group_name=group_name
+                    )
+                    db.session.add(new_schedule)
+
+                except Exception as e:
+                    print(f"⚠️ Error al procesar horario: {e}")
 
         # Agregar objetivos de aprendizaje
         if 'what_you_learn' in data and isinstance(data['what_you_learn'], list):
@@ -831,14 +829,6 @@ def update_course(course_id):
                 course.published_at = None
 
             course.is_published = new_status
-        # === CLASES EN VIVO ===
-        if "live_class_days" in data and isinstance(data["live_class_days"], list):
-            course.live_class_days = ",".join(data["live_class_days"])
-        if data.get("live_class_start_time"):
-            course.live_class_start_time = datetime.strptime(data["live_class_start_time"], "%H:%M").time()
-        if data.get("live_class_end_time"):
-            course.live_class_end_time = datetime.strptime(data["live_class_end_time"], "%H:%M").time()
-        course.live_class_timezone = data.get("live_class_timezone", course.live_class_timezone)
 
         # === OBJETIVOS DE APRENDIZAJE ===
         if "what_you_learn" in data and isinstance(data["what_you_learn"], list):
@@ -882,6 +872,31 @@ def update_course(course_id):
                         module_id=new_module.id
                     )
                     db.session.add(new_lesson)
+
+                        # === ACTUALIZAR HORARIOS (SCHEDULES) ===
+        if "schedules" in data and isinstance(data["schedules"], list):
+            # 1. Eliminar horarios existentes del curso
+            CourseSchedule.query.filter_by(course_id=course.id).delete()
+            db.session.flush()
+
+            # 2. Insertar los nuevos horarios
+            for sched in data["schedules"]:
+                day_of_week = sched.get("day_of_week")
+                start_time = datetime.strptime(sched.get("start_time"), "%H:%M").time()
+                end_time = datetime.strptime(sched.get("end_time"), "%H:%M").time()
+                timezone = sched.get("timezone", "GMT-5")
+                group_name = sched.get("group_name", "")
+
+                new_schedule = CourseSchedule(
+                    course_id=course.id,
+                    day_of_week=day_of_week,
+                    start_time=start_time,
+                    end_time=end_time,
+                    timezone=timezone,
+                    group_name=group_name
+                )
+                db.session.add(new_schedule)
+
 
         db.session.commit()
         return jsonify({"msg": "Course updated successfully", "course": course.serialize()}), 200
@@ -982,6 +997,8 @@ def enroll_course(course_id):
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
     course = Course.query.get(course_id)
+    data = request.get_json()
+    schedule_id = data.get("schedule_id")
 
     if not course:
         return jsonify({"msg": "Course not found"}), 404
@@ -989,13 +1006,25 @@ def enroll_course(course_id):
     if not course.is_published:
         return jsonify({"msg": "Course is not published"}), 400
 
-    # Revisar si ya está inscrito
+    # Evitar inscripción duplicada
     existing = Enrollment.query.filter_by(student_id=user.id, course_id=course.id).first()
     if existing:
         return jsonify({"msg": "Already enrolled"}), 400
 
-    # Crear la inscripción
-    enrollment = Enrollment(student_id=user.id, course_id=course.id)
+    # 🆕 Validar que el horario exista para este curso
+    if schedule_id:
+        schedule = CourseSchedule.query.filter_by(id=schedule_id, course_id=course_id).first()
+        if not schedule:
+            return jsonify({"msg": "Invalid schedule"}), 400
+    else:
+        schedule = None
+
+    enrollment = Enrollment(
+        student_id=user.id,
+        course_id=course.id,
+        schedule_id=schedule_id if schedule else None
+    )
+
     db.session.add(enrollment)
     db.session.commit()
 
@@ -1003,6 +1032,7 @@ def enroll_course(course_id):
         "msg": "Enrolled successfully",
         "enrollment": enrollment.serialize()
     }), 201
+
 @api.route('/my-enrollments', methods=['GET'])
 @jwt_required()
 def get_my_enrollments():

@@ -990,3 +990,139 @@
     gap: 5px;
   }
 }
+/* ======================
+   ESTILOS PARA HORARIOS (SCHEDULES)
+====================== */
+.schedule-item {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.schedule-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.schedule-item input[type="text"],
+.schedule-item input[type="time"],
+.schedule-item select {
+  padding: 0.6rem 0.9rem;
+  border-top: none;
+  border-right: none;
+  border-left: none;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.schedule-item input:focus,
+.schedule-item select:focus {
+  outline: none;
+  border-color: #00c9ff;
+  box-shadow: 0 0 3px rgba(0, 201, 255, 0.12);
+}
+
+.days-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.days-selector label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #f8f9fa;
+  border: 1px solid #e2e8f0;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.days-selector input[type="checkbox"] {
+  accent-color: #2d3078;
+  transform: scale(1.1);
+}
+
+.days-selector label:hover {
+  background: #eef2ff;
+  border-color: #2d3078;
+}
+
+.remove-item-btn-edit-modal {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  align-self: flex-start;
+}
+
+.remove-item-btn-edit-modal:hover {
+  background: #c82333;
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.25);
+}
+/* ======================
+   HORARIOS EN MODAL DE DETALLES
+====================== */
+.schedules-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.schedules-list li {
+  background: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.schedules-list li:hover {
+  background: #f5f5ff;
+  border-color: #d5d7f0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+}
+
+.schedules-list li strong {
+  color: #2d3078;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.schedules-list li span {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #555;
+}
+
+.schedules-list li span i {
+  color: #2d3078;
+  font-size: 1rem;
+}

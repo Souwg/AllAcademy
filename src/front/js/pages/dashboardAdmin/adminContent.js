@@ -66,6 +66,12 @@ export const AdminContent = ({
   validationErrors,
   setValidationErrors,
   userStatsPerMonth,
+  schedules,
+  setSchedules,
+  addSchedule,
+  removeSchedule,
+  updateSchedule,
+  toggleScheduleDay,
 }) => {
   // Función para renderizar la tabla de usuarios
   const renderUserTable = (usersToRender) => {
@@ -917,6 +923,7 @@ export const AdminContent = ({
             </div>
 
             {/* Tab 3: Horario */}
+            {/* Tab 3: Horario */}
             <div
               className="tab-pane fade"
               id="schedule"
@@ -924,99 +931,136 @@ export const AdminContent = ({
               aria-labelledby="schedule-tab"
             >
               <div className="form-section">
-                <h3 className="section-title">Class Schedule</h3>
-                <div className="form-grid">
-                  {/* Checkbox días */}
-                  <div className="form-group full-width">
-                    <label className="form-label">Class Days *</label>
-                    <div className="days-checkboxes">
-                      {[
-                        "Monday",
-                        "Tuesday",
-                        "Wednesday",
-                        "Thursday",
-                        "Friday",
-                        "Saturday",
-                        "Sunday",
-                      ].map((day) => (
-                        <div key={day} className="form-check form-check-inline">
-                          <input
-                            type="checkbox"
-                            name="live_class_days"
-                            value={day}
-                            checked={courseFormData.live_class_days.includes(
-                              day
-                            )}
-                            onChange={handleCourseInputChange}
-                            id={`day-${day}`}
-                          />
-                          <label
-                            className="form-check-label"
-                            htmlFor={`day-${day}`}
-                          >
-                            {day}
-                          </label>
+                <h3 className="section-title">Class Schedules</h3>
+                <p className="text-muted mb-3">
+                  Add multiple groups and select multiple class days for each
+                  group.
+                </p>
+
+                {schedules.map((schedule, index) => (
+                  <div key={index} className="schedule-card card mb-3 p-3">
+                    <div className="row g-3 align-items-end">
+                      {/* 📅 Checkbox días */}
+                      <div className="col-12">
+                        <label className="form-label">Class Days *</label>
+                        <div className="days-checkboxes">
+                          {[
+                            "Monday",
+                            "Tuesday",
+                            "Wednesday",
+                            "Thursday",
+                            "Friday",
+                            "Saturday",
+                            "Sunday",
+                          ].map((day) => (
+                            <div
+                              key={day}
+                              className="form-check form-check-inline"
+                            >
+                              <input
+                                type="checkbox"
+                                value={day}
+                                checked={schedule.days.includes(day)}
+                                onChange={() => toggleScheduleDay(index, day)}
+                                id={`day-${index}-${day}`}
+                              />
+                              <label
+                                className="form-check-label"
+                                htmlFor={`day-${index}-${day}`}
+                              >
+                                {day}
+                              </label>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+
+                      {/* ⏰ Horas */}
+                      <div className="col-md-3">
+                        <label className="form-label">Start Time *</label>
+                        <input
+                          type="time"
+                          className="form-control"
+                          value={schedule.start_time}
+                          onChange={(e) =>
+                            updateSchedule(index, "start_time", e.target.value)
+                          }
+                          required
+                        />
+                      </div>
+
+                      <div className="col-md-3">
+                        <label className="form-label">End Time *</label>
+                        <input
+                          type="time"
+                          className="form-control"
+                          value={schedule.end_time}
+                          onChange={(e) =>
+                            updateSchedule(index, "end_time", e.target.value)
+                          }
+                          required
+                        />
+                      </div>
+
+                      {/* 🌍 Zona horaria */}
+                      <div className="col-md-3">
+                        <label className="form-label">Time Zone</label>
+                        <select
+                          className="form-select"
+                          value={schedule.timezone}
+                          onChange={(e) =>
+                            updateSchedule(index, "timezone", e.target.value)
+                          }
+                        >
+                          <option value="GMT-5">
+                            GMT-5 (Bogotá, Lima, CDMX)
+                          </option>
+                          <option value="GMT-3">
+                            GMT-3 (Buenos Aires, São Paulo)
+                          </option>
+                          <option value="GMT-8">GMT-8 (Los Angeles)</option>
+                          <option value="GMT+1">GMT+1 (Madrid)</option>
+                          <option value="GMT+9">GMT+9 (Tokyo)</option>
+                        </select>
+                      </div>
+
+                      {/* 🏷️ Grupo */}
+                      <div className="col-md-3">
+                        <label className="form-label">Group</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Grupo A"
+                          value={schedule.group_name}
+                          onChange={(e) =>
+                            updateSchedule(index, "group_name", e.target.value)
+                          }
+                        />
+                      </div>
+
+                      {/* 🗑️ Botón eliminar grupo */}
+                      {schedules.length > 1 && (
+                        <div className="col-12 mt-2">
+                          <button
+                            type="button"
+                            className="btn btn-outline-danger btn-sm"
+                            onClick={() => removeSchedule(index)}
+                          >
+                            × Remove schedule
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
+                ))}
 
-                  {/* Horas */}
-                  <div className="form-group">
-                    <label
-                      htmlFor="live_class_start_time"
-                      className="form-label"
-                    >
-                      Start Time *
-                    </label>
-                    <input
-                      type="time"
-                      id="live_class_start_time"
-                      name="live_class_start_time"
-                      className="form-control"
-                      value={courseFormData.live_class_start_time}
-                      onChange={handleCourseInputChange}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="live_class_end_time" className="form-label">
-                      End Time *
-                    </label>
-                    <input
-                      type="time"
-                      id="live_class_end_time"
-                      name="live_class_end_time"
-                      className="form-control"
-                      value={courseFormData.live_class_end_time}
-                      onChange={handleCourseInputChange}
-                      required
-                    />
-                  </div>
-
-                  {/* Zona horaria */}
-                  <div className="form-group full-width">
-                    <label htmlFor="live_class_timezone" className="form-label">
-                      Time Zone
-                    </label>
-                    <select
-                      id="live_class_timezone"
-                      name="live_class_timezone"
-                      className="form-select"
-                      value={courseFormData.live_class_timezone}
-                      onChange={handleCourseInputChange}
-                    >
-                      <option value="GMT-5">GMT-5 (Bogotá, Lima, CDMX)</option>
-                      <option value="GMT-3">
-                        GMT-3 (Buenos Aires, São Paulo)
-                      </option>
-                      <option value="GMT-8">GMT-8 (Los Angeles)</option>
-                      <option value="GMT+1">GMT+1 (Madrid)</option>
-                      <option value="GMT+9">GMT+9 (Tokyo)</option>
-                    </select>
-                  </div>
-                </div>
+                <button
+                  type="button"
+                  className="btn btn-outline-primary mt-2"
+                  onClick={addSchedule}
+                >
+                  + Add another schedule
+                </button>
               </div>
             </div>
 
@@ -1261,13 +1305,13 @@ export const AdminContent = ({
         <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
           {courses.map((course) => (
             <div key={course.id} className="col">
-              <div className="grid-course-card">
+              <div className="grid-course-card h-100">
                 <div className="grid-course-image">
                   {course.image_url ? (
                     <img
                       src={course.image_url}
                       alt={course.alt_text || course.title}
-                      className="img-fluid w-100 h-100"
+                      className="img-fluid w-100 h-100 object-fit-cover"
                     />
                   ) : (
                     <div className="course-image-placeholder">📚</div>
@@ -1287,7 +1331,7 @@ export const AdminContent = ({
                       course.description.substring(0, 100) + "..."}
                   </p>
 
-                  <div className="d-flex justify-content-between align-items-center mb-3">
+                  <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                     <div className="course-meta-info">
                       <span className="d-flex align-items-center">
                         <i className="far fa-clock me-1"></i>{" "}
@@ -1305,7 +1349,7 @@ export const AdminContent = ({
                     </span>
                   </div>
 
-                  <div className="d-flex justify-content-between align-items-center mt-auto">
+                  <div className="d-flex justify-content-between align-items-center mt-auto flex-wrap gap-2">
                     <div>
                       {course.discount_price && course.discount_price > 0 ? (
                         <>
@@ -1328,25 +1372,21 @@ export const AdminContent = ({
                       >
                         View Details
                       </button>
-
                       <button
                         className="btn course-btn course-edit-btn"
                         onClick={() => onEditCourse(course)}
                       >
                         Update
                       </button>
-
                       <button
                         className="btn course-btn course-delete-btn"
                         onClick={() => onDeleteCourse(course.id)}
-                        title="Delete Course"
                       >
                         Delete
                       </button>
                     </div>
                   </div>
 
-                  {/* Estado de publicación */}
                   <div className="mt-2">
                     <span
                       className={`status ${

@@ -40,12 +40,17 @@ export const DashboardAdmin = () => {
     requirements: [""],
     has_live_classes: false,
     has_recorded_videos: false,
-    live_class_days: [],
-    live_class_start_time: "",
-    live_class_end_time: "",
-    live_class_timezone: "GMT-5",
     teacher_id: "",
   });
+  const [schedules, setSchedules] = useState([
+    {
+      days: [],
+      start_time: "",
+      end_time: "",
+      timezone: "GMT-5",
+      group_name: "",
+    },
+  ]);
 
   const [learningObjectives, setLearningObjectives] = useState([""]);
   const [requirements, setRequirements] = useState([""]);
@@ -136,11 +141,17 @@ export const DashboardAdmin = () => {
   // ABRIR MODAL DE EDICIÓN
   // ==============================
   const handleEditCourse = (course) => {
-    // Buscar el profesor en la lista de teachers
     const selectedTeacher = teachers.find((t) => t.id === course.teacher_id);
+
+    // 👇 Convertimos day_of_week (string) en array days []
+    const normalizedSchedules = (course.schedules || []).map((sch) => ({
+      ...sch,
+      days: sch.day_of_week ? sch.day_of_week.split(",") : [],
+    }));
 
     setCourseToEdit({
       ...course,
+      schedules: normalizedSchedules, // ✅ usamos el nuevo array
       is_published: course.is_published,
       level: course.level ? course.level.toUpperCase() : "BEGINNER",
       instructor: selectedTeacher
@@ -164,7 +175,16 @@ export const DashboardAdmin = () => {
     try {
       const token = localStorage.getItem("token");
 
-      console.log("Datos del curso a actualizar:", updateData);
+      // 👇 Convertimos days[] en day_of_week (string)
+      const payload = {
+        ...updateData,
+        schedules: (updateData.schedules || []).map((s) => ({
+          ...s,
+          day_of_week: (s.days || []).join(","), // 🟡 aquí la magia
+        })),
+      };
+
+      console.log("Datos del curso a actualizar:", payload);
 
       const response = await fetch(
         `http://localhost:3001/api/admin/courses/${updateData.id}`,
@@ -174,7 +194,7 @@ export const DashboardAdmin = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(updateData),
+          body: JSON.stringify(payload),
         }
       );
 
@@ -337,6 +357,19 @@ export const DashboardAdmin = () => {
     const updatedModules = [...modules];
     updatedModules[moduleIndex].lessons[lessonIndex][field] = value || "";
     setModules(updatedModules);
+  };
+
+  const toggleScheduleDay = (index, day) => {
+    const updated = [...schedules];
+    const selectedDays = updated[index].days;
+
+    if (selectedDays.includes(day)) {
+      updated[index].days = selectedDays.filter((d) => d !== day);
+    } else {
+      updated[index].days = [...selectedDays, day];
+    }
+
+    setSchedules(updated);
   };
 
   /* ==============================
@@ -630,6 +663,30 @@ export const DashboardAdmin = () => {
   const addRequirement = () => {
     setRequirements((prev) => [...prev, ""]);
   };
+  const addSchedule = () => {
+    setSchedules((prev) => [
+      ...prev,
+      {
+        days: [],
+        start_time: "",
+        end_time: "",
+        timezone: "GMT-5",
+        group_name: "",
+      },
+    ]);
+  };
+
+  const removeSchedule = (index) => {
+    if (schedules.length > 1) {
+      setSchedules((prev) => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateSchedule = (index, field, value) => {
+    const updated = [...schedules];
+    updated[index][field] = value;
+    setSchedules(updated);
+  };
 
   const removeRequirement = (index) => {
     if (requirements.length > 1) {
@@ -684,6 +741,12 @@ export const DashboardAdmin = () => {
             ),
           }))
           .filter((module) => module.title.trim() !== ""),
+        schedules: schedules
+          .filter((s) => s.days.length > 0 && s.start_time && s.end_time)
+          .map((s) => ({
+            ...s,
+            days: s.days,
+          })),
       };
 
       const response = await fetch("http://localhost:3001/api/courses", {
@@ -760,6 +823,16 @@ export const DashboardAdmin = () => {
             ],
           },
         ]);
+        setSchedules([
+          {
+            days: [],
+            start_time: "",
+            end_time: "",
+            timezone: "GMT-5",
+            group_name: "",
+          },
+        ]);
+
         setValidationErrors({});
       }
     } catch (err) {
@@ -1055,6 +1128,12 @@ export const DashboardAdmin = () => {
           validationErrors={validationErrors}
           setValidationErrors={setValidationErrors}
           userStatsPerMonth={store.userStatsPerMonth}
+          schedules={schedules}
+          setSchedules={setSchedules}
+          addSchedule={addSchedule}
+          removeSchedule={removeSchedule}
+          updateSchedule={updateSchedule}
+          toggleScheduleDay={toggleScheduleDay}
         />
 
         {/* Modales */}
