@@ -12,6 +12,9 @@ const getState = ({ getStore, getActions, setStore }) => {
       selectedCourse: null,
       selectedCourseLoading: false,
       selectedCourseError: null,
+      notifications: [],
+      lastNotifiedMessage:
+        JSON.parse(localStorage.getItem("lastNotifiedMessage")) || {},
     },
     actions: {
       loginUser: async (email, password) => {
@@ -167,7 +170,9 @@ const getState = ({ getStore, getActions, setStore }) => {
             throw new Error("Error al obtener los mensajes del chat");
           const data = await resp.json();
 
-          return data; // el componente los recibe directamente
+          console.log("📩 Mensajes del curso", courseId, data); // 👈 AGREGA ESTO
+
+          return data;
         } catch (err) {
           console.error("Error en getCourseChat:", err);
           return [];
@@ -330,6 +335,96 @@ const getState = ({ getStore, getActions, setStore }) => {
         } catch (err) {
           console.error("Error en postPrivateChat:", err);
           return null;
+        }
+      },
+      addNotification: (notification) => {
+        const store = getStore();
+        const newNotification = { ...notification, is_read: false }; // 👈 agregamos esta propiedad
+        setStore({ notifications: [newNotification, ...store.notifications] });
+      },
+
+      getUnreadCount: () => {
+        const store = getStore();
+        return store.notifications.filter((n) => !n.is_read).length;
+      },
+
+      removeNotification: (id) => {
+        const store = getStore();
+        const updated = store.notifications.filter((n) => n.id !== id);
+        setStore({ notifications: updated });
+      },
+
+      markNotificationAsRead: (id) => {
+        const store = getStore();
+        const notification = store.notifications.find((n) => n.id === id);
+
+        if (notification) {
+          // 👇 Guardar este mensaje como el último notificado para este curso
+          if (notification.course_id) {
+            getActions().setLastNotifiedMessage(notification.course_id, id);
+          }
+        }
+
+        // 👇 Marcar como leído en la lista
+        const updated = store.notifications.map((n) =>
+          n.id === id ? { ...n, is_read: true } : n
+        );
+        setStore({ notifications: updated });
+      },
+
+      setLastNotifiedMessage: (courseId, messageId) => {
+        const store = getStore();
+        const updated = {
+          ...store.lastNotifiedMessage,
+          [courseId]: messageId,
+        };
+
+        // 🧠 Persistimos en localStorage
+        localStorage.setItem("lastNotifiedMessage", JSON.stringify(updated));
+
+        setStore({ lastNotifiedMessage: updated });
+      },
+
+      checkNewNotifications: async () => {
+        const store = getStore();
+        const actions = getActions();
+
+        for (let course of store.courses) {
+          const messages = await actions.getCourseChat(course.id);
+          if (!messages.length) continue;
+
+          const lastNotifiedId = store.lastNotifiedMessage[course.id];
+
+          // 🧠 Si no hay último notificado, consideramos todos los mensajes
+          const newMessages = lastNotifiedId
+            ? messages.filter((msg) => msg.id > lastNotifiedId)
+            : messages;
+
+          // 🚀 Agregar notificación por cada mensaje nuevo
+          // 🚀 Agregar notificación por cada mensaje nuevo (excepto los míos)
+          newMessages.forEach((msg) => {
+            // ⛔ ignorar mensajes que yo misma envío
+            if (msg.user_id === store.user?.id) return;
+
+            const alreadyExists = store.notifications.find(
+              (n) => n.id === msg.id
+            );
+            if (!alreadyExists) {
+              actions.addNotification({
+                id: msg.id,
+                type: "group",
+                course_id: course.id,
+                message: `${msg.user_name} escribió en ${course.title}`,
+                timestamp: new Date().toISOString(),
+              });
+            }
+          });
+
+          // 📝 Guardar el ID del último mensaje como referencia
+          const lastMsg = messages[messages.length - 1];
+          if (lastMsg) {
+            actions.setLastNotifiedMessage(course.id, lastMsg.id);
+          }
         }
       },
     },

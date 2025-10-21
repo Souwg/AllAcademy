@@ -22,26 +22,12 @@ export const DashboardTeacher = () => {
   const [privateMessages, setPrivateMessages] = useState([]); // 👈 NUEVO
 
   useEffect(() => {
-    const interval = setInterval(async () => {
-      // 📥 Trae mensajes de todos los cursos del teacher
-      for (let course of store.courses) {
-        const messages = await actions.getCourseChat(course.id);
-        const lastMsg = messages[messages.length - 1];
+    const interval = setInterval(() => {
+      actions.checkNewNotifications();
+    }, 5000);
 
-        // Si el mensaje es nuevo, crear una notificación
-        if (lastMsg && !store.notifications.some((n) => n.id === lastMsg.id)) {
-          actions.addNotification({
-            id: lastMsg.id,
-            type: "group",
-            message: `${lastMsg.user_name} escribió en ${course.title}`,
-            timestamp: new Date().toISOString(),
-          });
-        }
-      }
-    }, 10000); // cada 10s
-
-    return () => clearInterval(interval);
-  }, [store.courses]);
+    return () => clearInterval(interval); // 🧹 limpieza al desmontar
+  }, [actions]);
 
   const openStudentsModal = async (course) => {
     const students = await actions.getStudentsByCourse(course.id);
@@ -234,39 +220,84 @@ export const DashboardTeacher = () => {
                       borderTopLeftRadius: "15px",
                     }}
                   >
-                    <div className="d-flex align-items-center gap-2 flex-nowrap">
-                      <div className="notification-icon-bell d-flex align-items-center justify-content-center">
-                        <i className="fa-regular fa-bell text-warning"></i>
+                    <div className="d-flex align-items-center gap-2 flex-nowrap position-relative">
+                      <div className="notification-icon-bell d-flex align-items-center justify-content-center position-relative">
+                        <i className="fa-regular fa-bell text-warning fs-5"></i>
+
+                        {actions.getUnreadCount() > 0 && (
+                          <span
+                            className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                            style={{ fontSize: "0.7rem" }}
+                          >
+                            {actions.getUnreadCount()}
+                          </span>
+                        )}
                       </div>
+
                       <h5 className="mb-0 fw-semibold text-dark notification-title">
                         Notifications
                       </h5>
                     </div>
 
-                    <button className="btn btn-sm btn-light rounded-circle p-2 mt-2 mt-md-0">
+                    <button
+                      className="btn btn-sm btn-success p-2 mt-2 mt-md-0"
+                      style={{ borderRadius: "15px" }}
+                      onClick={() => actions.checkNewNotifications()}
+                    >
                       <i className="fa-solid fa-rotate"></i>
                     </button>
                   </div>
 
                   <div className="card-body p-3 notification-body">
-                    <div className="notification-item border-start border-4 border-primary mb-3 p-2 rounded-3 bg-light-subtle">
-                      <small>
-                        <strong>New enrollment:</strong> Rosa joined Advanced
-                        Math.
-                      </small>
-                    </div>
+                    {store.notifications.length === 0 ? (
+                      <div className="text-center text-muted py-3">
+                        No notifications yet
+                      </div>
+                    ) : (
+                      store.notifications
+                        .filter((n) => !n.is_read)
+                        .map((n) => (
+                          <div
+                            key={n.id}
+                            onClick={async () => {
+                              if (n.type === "group") {
+                                const course = store.courses.find(
+                                  (c) => c.id === n.course_id
+                                );
+                                if (course) {
+                                  const msgs = await actions.getCourseChat(
+                                    course.id
+                                  );
+                                  setSelectedChatCourse({
+                                    ...course,
+                                    messages: msgs,
+                                    scrollToMessageId: n.id, // 👈 agregamos esto
+                                  });
+                                  setShowChatModal(true);
+                                }
+                              }
 
-                    <div className="notification-item border-start border-4 border-success mb-3 p-2 rounded-3 bg-light-subtle">
-                      <small>
-                        <strong>New message:</strong> Student sent a question.
-                      </small>
-                    </div>
-
-                    <div className="notification-item border-start border-4 border-warning mb-3 p-2 rounded-3 bg-light-subtle">
-                      <small>
-                        <strong>Reminder:</strong> Live class starts in 1 hour.
-                      </small>
-                    </div>
+                              actions.markNotificationAsRead(n.id);
+                            }}
+                            className={`notification-item border-start border-4 ${
+                              n.type === "group"
+                                ? "border-primary"
+                                : n.type === "private"
+                                ? "border-success"
+                                : "border-warning"
+                            } mb-3 p-2 rounded-3 bg-light-subtle cursor-pointer`}
+                          >
+                            <small>
+                              <strong>
+                                {n.type === "group"
+                                  ? "Group message:"
+                                  : "Notification:"}
+                              </strong>{" "}
+                              {n.message}
+                            </small>
+                          </div>
+                        ))
+                    )}
                   </div>
                 </div>
               </div>
@@ -410,30 +441,52 @@ export const DashboardTeacher = () => {
               </div>
               <div className="modal-body">
                 {courseStudents.length > 0 ? (
-                  <table className="table table-hover align-middle">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Progress</th>
-                        <th>Enrollment</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {courseStudents.map((s, i) => (
-                        <tr key={i}>
-                          <td>{i + 1}</td>
-                          <td>
-                            {s.first_name} {s.last_name}
-                          </td>
-                          <td>{s.email}</td>
-                          <td>{s.progress}%</td>
-                          <td>{s.enrolled_at || "—"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  Object.entries(
+                    courseStudents.reduce((acc, student) => {
+                      const groupName =
+                        student.schedule?.group_name || "Sin grupo";
+                      if (!acc[groupName]) acc[groupName] = [];
+                      acc[groupName].push(student);
+                      return acc;
+                    }, {})
+                  )
+                    .sort(([a], [b]) => a.localeCompare(b)) // opcional para ordenar Grupo A, B, etc.
+                    .map(([groupName, students]) => (
+                      <div key={groupName} className="mb-4">
+                        <h6 className="fw-bold text-primary mb-3">
+                          <i className="fa-solid fa-users me-2"></i> {groupName}
+                        </h6>
+
+                        <table className="table table-hover align-middle">
+                          <thead>
+                            <tr>
+                              <th>#</th>
+                              <th>Name</th>
+                              <th>Email</th>
+                              <th>Progress</th>
+                              <th>Schedule</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {students.map((s, i) => (
+                              <tr key={i}>
+                                <td>{i + 1}</td>
+                                <td>
+                                  {s.first_name} {s.last_name}
+                                </td>
+                                <td>{s.email}</td>
+                                <td>{s.progress}%</td>
+                                <td>
+                                  {s.schedule
+                                    ? `${s.schedule.day_of_week} ${s.schedule.start_time} - ${s.schedule.end_time}`
+                                    : "—"}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ))
                 ) : (
                   <p className="text-center text-muted py-4">
                     No students enrolled yet.

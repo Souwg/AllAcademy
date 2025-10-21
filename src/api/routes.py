@@ -1267,7 +1267,8 @@ def get_teacher_students():
 @jwt_required()
 def get_students_by_course(course_id):
     """
-    Devuelve los estudiantes inscritos en un curso específico del profesor.
+    Devuelve los estudiantes inscritos en un curso específico del profesor
+    e incluye información del grupo/horario si existe.
     """
     try:
         teacher_id = get_jwt_identity()
@@ -1288,15 +1289,17 @@ def get_students_by_course(course_id):
         if user.role == "teacher" and course.teacher_id != user.id:
             return jsonify({"msg": "No tienes acceso a este curso"}), 403
 
+        # 👇 Hacemos JOIN también con CourseSchedule
         enrollments = (
-            db.session.query(Enrollment, User)
+            db.session.query(Enrollment, User, CourseSchedule)
             .join(User, Enrollment.student_id == User.id)
+            .outerjoin(CourseSchedule, Enrollment.schedule_id == CourseSchedule.id)
             .filter(Enrollment.course_id == course_id)
             .all()
         )
 
         result = []
-        for enrollment, student in enrollments:
+        for enrollment, student, schedule in enrollments:
             result.append({
                 "id": student.id,
                 "first_name": student.first_name,
@@ -1304,10 +1307,16 @@ def get_students_by_course(course_id):
                 "email": student.email,
                 "country": student.country,
                 "last_login": student.last_login.strftime("%Y-%m-%d %H:%M:%S")
-                if student.last_login else None,   
+                if student.last_login else None,
                 "progress": getattr(enrollment, "progress", 0),
                 "enrolled_at": enrollment.enrolled_at.strftime("%Y-%m-%d")
                 if enrollment.enrolled_at else None,
+                "schedule": {
+                    "group_name": schedule.group_name if schedule else None,
+                    "day_of_week": schedule.day_of_week if schedule else None,
+                    "start_time": schedule.start_time.strftime("%H:%M") if schedule else None,
+                    "end_time": schedule.end_time.strftime("%H:%M") if schedule else None
+                } if schedule else None
             })
 
         print(f"📊 Encontrados {len(result)} estudiantes para el curso {course_id}")
