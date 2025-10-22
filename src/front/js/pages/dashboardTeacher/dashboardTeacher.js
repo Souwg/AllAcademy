@@ -21,6 +21,24 @@ export const DashboardTeacher = () => {
   const [showPrivateChatModal, setShowPrivateChatModal] = useState(false);
   const [privateMessages, setPrivateMessages] = useState([]);
   const [selectedScheduleId, setSelectedScheduleId] = useState(null);
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [groupStudents, setGroupStudents] = useState([]);
+
+  const openGroupManagementModal = async (course, group) => {
+    const allStudents = await actions.getStudentsByCourse(course.id);
+    const filtered = allStudents.filter((s) => s.schedule_id === group.id);
+    setSelectedCourse(course);
+    setSelectedGroup(group);
+    setGroupStudents(filtered);
+    setShowGroupModal(true);
+  };
+
+  const closeGroupManagementModal = () => {
+    setSelectedGroup(null);
+    setGroupStudents([]);
+    setShowGroupModal(false);
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -311,12 +329,15 @@ export const DashboardTeacher = () => {
 
                                             <button
                                               className="group-action-btn schedule-btn"
-                                              title="Ver horario"
+                                              title="Administrar grupo"
                                               onClick={() =>
-                                                openSchedule(group)
+                                                openGroupManagementModal(
+                                                  course,
+                                                  group
+                                                )
                                               }
                                             >
-                                              <i className="fa-regular fa-clock"></i>
+                                              <i className="fa-solid fa-gear"></i>
                                             </button>
                                           </div>
                                         </div>
@@ -803,6 +824,94 @@ export const DashboardTeacher = () => {
                       ? new Date(selectedStudent.last_login).toLocaleString()
                       : "No activity yet"}
                   </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showGroupModal && selectedGroup && (
+        <div
+          className="modal fade show d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-lg modal-dialog-centered">
+            <div className="modal-content rounded-4 border-0 shadow-lg">
+              <div className="modal-header bg-light">
+                <h5 className="modal-title fw-bold">
+                  <i className="fa-solid fa-users me-2"></i>
+                  Manage Group — {selectedGroup.group_name}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={closeGroupManagementModal}
+                ></button>
+              </div>
+              <div className="modal-body">
+                {/* 📋 Información básica */}
+                <div className="mb-4">
+                  <h6 className="fw-bold text-primary mb-2">
+                    Group Information
+                  </h6>
+                  <p>
+                    <strong>Course:</strong> {selectedCourse?.title}
+                  </p>
+                  <p>
+                    <strong>Days:</strong> {selectedGroup.day_of_week}
+                  </p>
+                  <p>
+                    <strong>Time:</strong> {selectedGroup.start_time} -{" "}
+                    {selectedGroup.end_time}
+                  </p>
+                  <p>
+                    <strong>Total Students:</strong> {groupStudents.length}
+                  </p>
+                </div>
+
+                {/* 👥 Lista de estudiantes */}
+                <div className="mb-4">
+                  <h6 className="fw-bold text-primary mb-2">Students</h6>
+                  {groupStudents.length > 0 ? (
+                    <table className="table table-hover align-middle">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Name</th>
+                          <th>Email</th>
+                          <th>Progress</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {groupStudents.map((s, i) => (
+                          <tr key={s.id}>
+                            <td>{i + 1}</td>
+                            <td>
+                              {s.first_name} {s.last_name}
+                            </td>
+                            <td>{s.email}</td>
+                            <td>{s.progress || 0}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <p className="text-muted">No students in this group yet.</p>
+                  )}
+                </div>
+
+                {/* ✨ Acciones futuras */}
+                <div className="d-flex gap-2">
+                  <button className="btn btn-outline-primary flex-grow-1">
+                    <i className="fa-solid fa-bullhorn me-2"></i> Send
+                    Announcement
+                  </button>
+                  <button
+                    className="btn flex-grow-1 text-muted border-0"
+                    disabled
+                  >
+                    <i className="fa-solid fa-pen me-2"></i> Edit Group (soon)
+                  </button>
                 </div>
               </div>
             </div>
