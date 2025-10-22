@@ -18,6 +18,8 @@ export const DashboardStudent = () => {
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [privateMessages, setPrivateMessages] = useState([]); // ✅ NUEVO
   const [showPrivateChat, setShowPrivateChat] = useState(false);
+  const [selectedScheduleId, setSelectedScheduleId] = useState(null);
+  const [originalScheduleId, setOriginalScheduleId] = useState(null);
 
   const openPrivateChat = async (teacher) => {
     const messages = await actions.getPrivateChat(teacher.id);
@@ -70,7 +72,13 @@ export const DashboardStudent = () => {
   }, []);
 
   const openChat = async (course) => {
-    const msgs = await actions.getCourseChat(course.id);
+    const enrollment = myEnrollments.find((e) => e.course.id === course.id);
+    const initialScheduleId = enrollment?.schedule?.id || null;
+
+    setSelectedScheduleId(initialScheduleId);
+    setOriginalScheduleId(initialScheduleId); // 👈 guardamos el grupo original
+
+    const msgs = await actions.getCourseChat(course.id, initialScheduleId);
     setSelectedCourse({ ...course, messages: msgs });
     setShowChat(true);
   };
@@ -353,14 +361,18 @@ export const DashboardStudent = () => {
       <StudentSidebar activeView={activeView} setActiveView={setActiveView} />
 
       {renderSection()}
-
       {showChat && (
         <CourseChatModal
           show={showChat}
           onClose={closeChat}
           course={selectedCourse}
+          selectedScheduleId={selectedScheduleId}
+          onGroupChange={setSelectedScheduleId}
+          originalScheduleId={originalScheduleId}
+          role={user?.role || "student"}
         />
       )}
+
       {showPrivateChat && selectedTeacher && (
         <PrivateChatModal
           chatUser={selectedTeacher}

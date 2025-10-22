@@ -29,6 +29,13 @@ module.exports = merge(common, {
     static: {
       directory: path.resolve(__dirname, "dist"),
     },
+    proxy: {
+      "/api": {
+        target: "http://localhost:3001", // 👈 apunta al backend
+        changeOrigin: true,
+        secure: false,
+      },
+    },
     client: {
       webSocketURL: {
         hostname: "localhost",
@@ -37,6 +44,7 @@ module.exports = merge(common, {
       },
     },
   },
+
   watchOptions: {
     poll: 1000,
     ignored: /node_modules/,

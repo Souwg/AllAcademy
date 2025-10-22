@@ -19,7 +19,8 @@ export const DashboardTeacher = () => {
   const [showStudentProfile, setShowStudentProfile] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showPrivateChatModal, setShowPrivateChatModal] = useState(false);
-  const [privateMessages, setPrivateMessages] = useState([]); // 👈 NUEVO
+  const [privateMessages, setPrivateMessages] = useState([]);
+  const [selectedScheduleId, setSelectedScheduleId] = useState(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -29,10 +30,15 @@ export const DashboardTeacher = () => {
     return () => clearInterval(interval); // 🧹 limpieza al desmontar
   }, [actions]);
 
-  const openStudentsModal = async (course) => {
+  const openStudentsModal = async (course, groupId = null) => {
     const students = await actions.getStudentsByCourse(course.id);
+
+    const filteredStudents = groupId
+      ? students.filter((student) => student.schedule_id === groupId)
+      : students;
+
     setSelectedCourse(course);
-    setCourseStudents(students);
+    setCourseStudents(filteredStudents);
     setShowModal(true);
   };
 
@@ -87,10 +93,25 @@ export const DashboardTeacher = () => {
     }
   }, [activeView]);
 
-  const openChatModal = async (course) => {
-    const msgs = await actions.getCourseChat(course.id);
-    setSelectedChatCourse({ ...course, messages: msgs });
+  const openChatModal = async (course, scheduleId = null) => {
+    const targetScheduleId = scheduleId || course.schedules?.[0]?.id || null;
+    if (!targetScheduleId) return;
+
+    setSelectedScheduleId(targetScheduleId);
+    setSelectedChatCourse({ ...course, messages: [] });
     setShowChatModal(true);
+
+    const msgs = await actions.getCourseChat(course.id, targetScheduleId);
+    setSelectedChatCourse({ ...course, messages: msgs });
+  };
+
+  const handleGroupChange = async (scheduleId) => {
+    setSelectedScheduleId(scheduleId);
+    const msgs = await actions.getCourseChat(selectedChatCourse.id, scheduleId);
+    setSelectedChatCourse((prev) => ({
+      ...prev,
+      messages: msgs,
+    }));
   };
 
   const closeChatModal = () => {
@@ -120,9 +141,27 @@ export const DashboardTeacher = () => {
     switch (activeView) {
       case "dashboard":
         return (
-          <div className="container container-banner teacher-banner">
-            <h3>👋 Welcome back, {user?.first_name || "Teacher"}</h3>
-            <p>Here’s a quick overview of your teaching activity today.</p>
+          <div className="container-fluid">
+            <div className="modern-banner">
+              <div className="banner-left">
+                <div className="greeting-icon">
+                  <i className="fa-regular fa-hand-peace"></i>
+                </div>
+                <div>
+                  <h2 className="banner-title">
+                    Welcome back,{" "}
+                    <span className="banner-name">
+                      {user?.first_name || "Teacher"}
+                    </span>{" "}
+                    👋
+                  </h2>
+                  <p className="banner-subtitle">
+                    Here’s a personalized overview of your teaching activity
+                    today.
+                  </p>
+                </div>
+              </div>
+            </div>
 
             <div className="row ">
               <div className="col-12 col-lg-9">
@@ -134,8 +173,19 @@ export const DashboardTeacher = () => {
                     </div>
                     <div>
                       <h6 className="text-muted mb-1">Total Courses</h6>
-                      <h2 className="fw-bold text-primary mb-0">
+                      <h2 className="fw-bold text-primary text-center mb-0">
                         {teacherStats?.total_courses || 0}
+                      </h2>
+                    </div>
+                  </div>
+                  <div className="card stats-card d-flex flex-row align-items-center flex-fill shadow-sm">
+                    <div className="stats-icon bg-opacity-10 text-warning rounded-3 d-flex align-items-center justify-content-center me-3">
+                      <i className="fa-solid fa-users fa-5x"></i>
+                    </div>
+                    <div>
+                      <h6 className="text-muted ms-2 mb-1">Total Groups</h6>
+                      <h2 className="fw-bold text-warning text-center mb-0">
+                        {teacherStats?.total_groups || 0}
                       </h2>
                     </div>
                   </div>
@@ -146,8 +196,19 @@ export const DashboardTeacher = () => {
                     </div>
                     <div>
                       <h6 className="text-muted mb-1">Total Students</h6>
-                      <h2 className="fw-bold text-success mb-0">
+                      <h2 className="fw-bold text-success text-center mb-0">
                         {teacherStats?.total_students || 0}
+                      </h2>
+                    </div>
+                  </div>
+                  <div className="card stats-card d-flex flex-row align-items-center flex-fill shadow-sm">
+                    <div className="stats-icon bg-opacity-10 text-info rounded-3 d-flex align-items-center justify-content-center me-3">
+                      <i className="fa-regular fa-comments fa-5x"></i>
+                    </div>
+                    <div>
+                      <h6 className="text-muted mb-1">Active Chats</h6>
+                      <h2 className="fw-bold text-info text-center mb-0">
+                        {teacherStats?.total_active_chats || 0}
                       </h2>
                     </div>
                   </div>
@@ -161,50 +222,118 @@ export const DashboardTeacher = () => {
 
                   <div className="row g-4">
                     {store.courses.length > 0 ? (
-                      store.courses.map((course, index) => (
-                        <div
-                          key={index}
-                          className="col-12 col-sm-12 col-lg-6 col-xl-6 d-flex"
-                        >
-                          <div className="card card-list-course-modern h-100 w-100">
-                            <div className="card-img-container">
-                              <img
-                                src={course.image_url || noImage}
-                                className="card-img-top img-fluid modern-img"
-                                alt={course.title}
-                              />
-                            </div>
-                            <div className="card-body d-flex flex-column">
-                              <h5 className="card-title modern-title">
-                                {course.title}
-                              </h5>
-                              <div className="d-flex gap-2 mt-auto flex-wrap">
-                                <button className="btn modern-btn-success flex-grow-1">
-                                  <i className="fa-solid fa-graduation-cap me-1"></i>{" "}
-                                  Class
-                                </button>
-                                <button
-                                  className="btn modern-btn-primary flex-grow-1"
-                                  onClick={() => openChatModal(course)}
-                                >
-                                  <i className="fa-regular fa-comments me-1"></i>{" "}
-                                  Chat
-                                </button>
-                                <button
-                                  className="btn modern-btn-dark flex-grow-1"
-                                  onClick={() => openStudentsModal(course)}
-                                >
-                                  <i className="fa-solid fa-user-group me-1"></i>{" "}
-                                  Students
-                                </button>
+                      store.courses.map((course, index) => {
+                        return (
+                          <div
+                            key={index}
+                            className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-4 d-flex"
+                          >
+                            <div className="card card-list-course-modern h-100 w-100 ms-0">
+                              <div className="card-img-container">
+                                <img
+                                  src={course.image_url || noImage}
+                                  className="card-img-top img-fluid modern-img"
+                                  alt={course.title}
+                                />
+                              </div>
+                              <div className="card-body d-flex flex-column">
+                                <div className="d-flex justify-content-between align-items-start">
+                                  <h5 className="card-title modern-title">
+                                    {course.title}
+                                  </h5>
+                                </div>
+
+                                {/* Acciones generales si quieres */}
+                                <div className="d-flex gap-2 mt-2 flex-wrap">
+                                  <button className="btn modern-btn-success flex-grow-1">
+                                    <i className="fa-solid fa-graduation-cap me-1"></i>{" "}
+                                    Class
+                                  </button>
+                                  <button
+                                    className="btn modern-btn-dark flex-grow-1"
+                                    onClick={() => openStudentsModal(course)}
+                                  >
+                                    <i className="fa-solid fa-user-group me-1"></i>{" "}
+                                    Students
+                                  </button>
+                                </div>
+
+                                {/* GRUPOS — Sección expandible */}
+                                {course.schedules &&
+                                  course.schedules.length > 0 && (
+                                    <div className="groups-list mt-3">
+                                      {course.schedules.map((group) => (
+                                        <div
+                                          key={group.id}
+                                          className="group-item"
+                                        >
+                                          <div className="group-info">
+                                            <i className="fa-solid fa-users me-2 text-primary"></i>
+                                            <div className="d-flex flex-column">
+                                              <strong>
+                                                {group.group_name}
+                                              </strong>
+                                              <span className="group-days text-muted">
+                                                {group.day_of_week
+                                                  .split(",")
+                                                  .join(", ")}
+                                              </span>
+                                              <span className="group-time text-muted">
+                                                {group.start_time} -{" "}
+                                                {group.end_time}
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          <div className="group-actions">
+                                            <button
+                                              className="group-action-btn chat-btn"
+                                              title="Chat del grupo"
+                                              onClick={() =>
+                                                openChatModal(course, group.id)
+                                              }
+                                            >
+                                              <i className="fa-regular fa-comments"></i>
+                                            </button>
+
+                                            <button
+                                              className="group-action-btn students-btn"
+                                              title="Ver estudiantes"
+                                              onClick={() =>
+                                                openStudentsModal(
+                                                  course,
+                                                  group.id
+                                                )
+                                              }
+                                            >
+                                              <i className="fa-solid fa-user-group"></i>
+                                            </button>
+
+                                            <button
+                                              className="group-action-btn schedule-btn"
+                                              title="Ver horario"
+                                              onClick={() =>
+                                                openSchedule(group)
+                                              }
+                                            >
+                                              <i className="fa-regular fa-clock"></i>
+                                            </button>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     ) : (
-                      <div className="text-center text-muted py-5">
-                        <p>No courses available yet.</p>
+                      <div className="wrapper">
+                        <div className="blue ball"></div>
+                        <div className="red ball"></div>
+                        <div className="yellow ball"></div>
+                        <div className="green ball"></div>
                       </div>
                     )}
                   </div>
@@ -265,18 +394,30 @@ export const DashboardTeacher = () => {
                                   (c) => c.id === n.course_id
                                 );
                                 if (course) {
+                                  // 1) Limpia estado para evitar parpadeos
+                                  setSelectedChatCourse(null);
+                                  setSelectedScheduleId(null);
+
+                                  // 2) (opcional) abre el modal ya vacío
+                                  setShowChatModal(true);
+
+                                  // 3) Carga mensajes DEL GRUPO correcto
                                   const msgs = await actions.getCourseChat(
-                                    course.id
+                                    course.id,
+                                    n.schedule_id
                                   );
+
+                                  // 4) Pinta el curso con mensajes + marca el mensaje objetivo
                                   setSelectedChatCourse({
                                     ...course,
                                     messages: msgs,
-                                    scrollToMessageId: n.id, // 👈 agregamos esto
+                                    scrollToMessageId: n.id,
                                   });
-                                  setShowChatModal(true);
+
+                                  // 5) Fija el grupo correcto en el selector
+                                  setSelectedScheduleId(n.schedule_id);
                                 }
                               }
-
                               actions.markNotificationAsRead(n.id);
                             }}
                             className={`notification-item border-start border-4 ${
@@ -308,36 +449,47 @@ export const DashboardTeacher = () => {
       case "students":
         return (
           <div className="container teacher-students-section">
-            <div className="teacher-banner">
-              <h3 className="fw-bold m-0">
-                <i className="fa-solid fa-graduation-cap"></i> My Students
-              </h3>
+            {/* ✨ Banner */}
+            <div className="teacher-students-banner-modern">
+              <div className="banner-icon">
+                <i className="fa-solid fa-graduation-cap"></i>
+              </div>
+              <div className="banner-content">
+                <h2 className="banner-title">My Students</h2>
+                <p className="banner-subtitle">
+                  Manage, message and view all your enrolled students easily ✨
+                </p>
+              </div>
             </div>
 
-            <div className="search-container mb-3">
+            {/* 🔍 Barra de búsqueda */}
+            <div className="teacher-search-bar mb-4">
+              <i className="fa-solid fa-magnifying-glass search-icon"></i>
               <input
                 type="text"
-                className="search-input"
+                className="teacher-search-input"
                 placeholder="Search students..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
 
+            {/* 🧑‍🎓 Tabla o estado vacío */}
             {filteredStudents.length === 0 ? (
-              <div className="empty-state">
+              <div className="empty-state-modern text-center">
+                <i className="fa-regular fa-face-frown mb-2"></i>
                 <p>No students found.</p>
               </div>
             ) : (
-              <div className="table-wrapper">
-                <table className="user-table">
+              <div className="students-table-wrapper">
+                <table className="students-table">
                   <thead>
                     <tr>
                       <th>ID</th>
                       <th>Student</th>
                       <th>Email</th>
                       <th>Course</th>
-                      <th>Enrollment Date</th>
+                      <th>Enrollment</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -355,11 +507,7 @@ export const DashboardTeacher = () => {
                         <td>
                           <div className="course-badges-container">
                             {student.courses.map((course, i) => (
-                              <span
-                                key={i}
-                                className="course-badge"
-                                title={course.title}
-                              >
+                              <span key={i} className="course-badge">
                                 <i className="fa-solid fa-book-open me-1"></i>
                                 {course.title.length > 25
                                   ? course.title.slice(0, 25) + "..."
@@ -380,16 +528,16 @@ export const DashboardTeacher = () => {
                         <td>
                           <div className="action-buttons">
                             <button
-                              className="action-btn details-btn"
+                              className="action-btn modern-view-btn"
                               onClick={() => openStudentProfile(student)}
                             >
-                              View
+                              <i className="fa-solid fa-eye"></i>
                             </button>
                             <button
-                              className="action-btn block-btn"
+                              className="action-btn modern-msg-btn"
                               onClick={() => openPrivateChat(student)}
                             >
-                              Message
+                              <i className="fa-regular fa-paper-plane"></i>
                             </button>
                           </div>
                         </td>
@@ -404,6 +552,88 @@ export const DashboardTeacher = () => {
 
       default:
         return null;
+      case "my-courses":
+        return (
+          <div className="container my-courses-section">
+            {/* ✨ Banner de sección */}
+            <div className="teacher-students-banner-modern mb-4">
+              <div className="banner-icon">
+                <i className="fa-solid fa-video"></i>
+              </div>
+              <div className="banner-content">
+                <h2 className="banner-title">My Class Videos</h2>
+                <p className="banner-subtitle">
+                  View and manage the recordings of your classes 📹
+                </p>
+              </div>
+            </div>
+
+            {/* 📂 Listado de cursos con sus videos */}
+            {store.courses.length > 0 ? (
+              store.courses.map((course) => {
+                const videos =
+                  store.videos?.filter((v) => v.course_id === course.id) || [];
+                return (
+                  <div key={course.id} className="course-card-video mb-5">
+                    <div className="d-flex align-items-center mb-3 gap-3">
+                      <img
+                        src={course.image_url || noImage}
+                        alt={course.title}
+                        className="course-img-thumbnail"
+                      />
+                      <h4 className="fw-bold">{course.title}</h4>
+                    </div>
+
+                    {videos.length > 0 ? (
+                      <ul className="list-group list-group-flush">
+                        {videos.map((video) => (
+                          <li
+                            key={video.id}
+                            className="list-group-item d-flex justify-content-between align-items-center video-item"
+                          >
+                            <div>
+                              <i className="fa-solid fa-video me-2 text-primary"></i>
+                              <strong>{video.title}</strong>
+                              <div className="small text-muted">
+                                {video.group_name} •{" "}
+                                {new Date(video.date).toLocaleDateString()} •{" "}
+                                {video.duration} min
+                              </div>
+                            </div>
+                            <div className="d-flex gap-2">
+                              <a
+                                href={video.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="btn btn-sm btn-primary"
+                              >
+                                <i className="fa-solid fa-play me-1"></i> Watch
+                              </a>
+                              <button
+                                className="btn btn-sm btn-danger"
+                                onClick={() => actions.deleteVideo(video.id)}
+                              >
+                                <i className="fa-solid fa-trash"></i>
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-muted ps-2">
+                        No videos uploaded yet 🎥
+                      </p>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-muted text-center py-5">
+                No courses available.
+              </div>
+            )}
+          </div>
+        );
     }
   };
 
@@ -418,6 +648,10 @@ export const DashboardTeacher = () => {
           show={showChatModal}
           onClose={closeChatModal}
           course={selectedChatCourse}
+          selectedScheduleId={selectedScheduleId}
+          originalScheduleId={selectedScheduleId}
+          onGroupChange={handleGroupChange}
+          role="teacher" // ✅ Teacher
         />
       )}
 

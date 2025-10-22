@@ -777,7 +777,12 @@ def get_course(course_id):
 @jwt_required()
 def update_course(course_id):
     """
-     Updates all course data: basic info, objectives, requirements, modules, and lessons.
+    📝 Actualiza toda la información del curso: 
+    - Datos básicos
+    - Objetivos
+    - Requisitos
+    - Módulos y lecciones
+    - Horarios (schedules)
     """
     try:
         claims = get_jwt()
@@ -785,7 +790,7 @@ def update_course(course_id):
 
         # Solo admin o el profesor dueño puede editar
         user = User.query.get(user_id)
-        if not user or (user.role != "admin" and user.role != "teacher"):
+        if not user or (user.role not in ["admin", "teacher"]):
             return jsonify({"msg": "Unauthorized"}), 403
 
         course = Course.query.get(course_id)
@@ -793,17 +798,13 @@ def update_course(course_id):
             return jsonify({"msg": "Course not found"}), 404
 
         data = request.get_json()
-        print("Received data in update_course:", data)  # 👈 debug
+        print("📥 Datos recibidos en update_course:", data)
         if not data:
             return jsonify({"msg": "Required JSON data"}), 400
-        
-        if "short_description" in data:
-            short_description = data.get("short_description", "").strip()
-            if len(short_description) < 60:
-                return jsonify({"msg": "Short description must be at least 60 characters."}), 400
 
-
-        # === INFO BÁSICA DEL CURSO ===
+        # =======================
+        # 📌 Información básica
+        # =======================
         course.title = data.get("title", course.title)
         course.description = data.get("description", course.description)
         course.short_description = data.get("short_description", course.short_description)
@@ -819,37 +820,36 @@ def update_course(course_id):
 
         if "is_published" in data:
             new_status = data["is_published"]
-
-        # Si pasa de no publicado a publicado, asignar fecha
             if new_status and not course.is_published:
                 course.published_at = datetime.utcnow()
-
-        # Si pasa de publicado a no publicado, limpiar fecha
             if not new_status and course.is_published:
                 course.published_at = None
-
             course.is_published = new_status
 
-        # === OBJETIVOS DE APRENDIZAJE ===
+        # =======================
+        # 🧠 Objetivos de aprendizaje
+        # =======================
         if "what_you_learn" in data and isinstance(data["what_you_learn"], list):
-            # limpiar anteriores
             LearningObjective.query.filter_by(course_id=course.id).delete()
             for obj in data["what_you_learn"]:
                 if obj.strip():
                     db.session.add(LearningObjective(objective=obj.strip(), course_id=course.id))
 
-        # === REQUISITOS ===
+        # =======================
+        # 📋 Requisitos
+        # =======================
         if "requirements" in data and isinstance(data["requirements"], list):
             Requirement.query.filter_by(course_id=course.id).delete()
             for req in data["requirements"]:
                 if req.strip():
                     db.session.add(Requirement(requirement=req.strip(), course_id=course.id))
 
-        # === MÓDULOS Y LECCIONES ===
+        # =======================
+        # 📚 Módulos y lecciones
+        # =======================
         if "modules" in data and isinstance(data["modules"], list):
-            # eliminar los anteriores
             for module in course.modules:
-               db.session.delete(module)
+                db.session.delete(module)
             db.session.flush()
 
             for module_index, module_data in enumerate(data["modules"]):
@@ -873,38 +873,76 @@ def update_course(course_id):
                     )
                     db.session.add(new_lesson)
 
-                        # === ACTUALIZAR HORARIOS (SCHEDULES) ===
+        # =======================
+        # ⏰ Horarios (schedules)
+        # =======================
         if "schedules" in data and isinstance(data["schedules"], list):
-            # 1. Eliminar horarios existentes del curso
-            CourseSchedule.query.filter_by(course_id=course.id).delete()
-            db.session.flush()
+            # ✅ Obtenemos los horarios existentes para este curso
+            existing_schedules = {s.id: s for s in course.schedules}
 
-            # 2. Insertar los nuevos horarios
-            for sched in data["schedules"]:
-                day_of_week = sched.get("day_of_week")
-                start_time = datetime.strptime(sched.get("start_time"), "%H:%M").time()
-                end_time = datetime.strptime(sched.get("end_time"), "%H:%M").time()
-                timezone = sched.get("timezone", "GMT-5")
-                group_name = sched.get("group_name", "")
+            # ✅ Guardamos IDs recibidos para detectar cuáles borrar (si es necesario)
+            received_ids = set()
 
-                new_schedule = CourseSchedule(
-                    course_id=course.id,
-                    day_of_week=day_of_week,
-                    start_time=start_time,
-                    end_time=end_time,
-                    timezone=timezone,
-                    group_name=group_name
-                )
-                db.session.add(new_schedule)
+            for sched_data in data["schedules"]:
+                sched_id = sched_data.get("id")
+                day_of_week = sched_data.get("day_of_week")
+                start = sched_data.get("start_time")
+                end = sched_data.get("end_time")
+                timezone = sched_data.get("timezone", "GMT-5")
+                group_name = sched_data.get("group_name", "")
 
+                if not day_of_week or not start or not end:
+                    print(f"⏭ Saltando horario incompleto: {sched_data}")
+                    continue
 
+                start_time = datetime.strptime(start, "%H:%M").time()
+                end_time = datetime.strptime(end, "%H:%M").time()
+
+                if sched_id and sched_id in existing_schedules:
+                    # 🛠️ Actualizar horario existente
+                    sched_obj = existing_schedules[sched_id]
+                    sched_obj.day_of_week = day_of_week
+                    sched_obj.start_time = start_time
+                    sched_obj.end_time = end_time
+                    sched_obj.timezone = timezone
+                    sched_obj.group_name = group_name
+                    received_ids.add(sched_id)
+                else:
+                    # ➕ Crear nuevo horario
+                    new_schedule = CourseSchedule(
+                        course_id=course.id,
+                        day_of_week=day_of_week,
+                        start_time=start_time,
+                        end_time=end_time,
+                        timezone=timezone,
+                        group_name=group_name
+                    )
+                    db.session.add(new_schedule)
+
+            # 🧹 Si quisieras borrar horarios sin estudiantes (opcional)
+            for sched_id, sched_obj in existing_schedules.items():
+                if sched_id not in received_ids:
+                    # Verificamos si hay estudiantes inscritos
+                    if not sched_obj.students or len(sched_obj.students) == 0:
+                        db.session.delete(sched_obj)
+                    else:
+                        print(f"⚠️ No se eliminó horario {sched_id} porque tiene estudiantes inscritos.")
+
+        else:
+            print("⚠️ No se recibieron horarios — se mantienen los existentes.")
+
+        # =======================
+        # 💾 Guardar cambios
+        # =======================
         db.session.commit()
         return jsonify({"msg": "Course updated successfully", "course": course.serialize()}), 200
 
     except Exception as e:
         db.session.rollback()
-        print(f"Error updating course {course_id}: {str(e)}")
+        print(f"❌ Error updating course {course_id}: {str(e)}")
         return jsonify({"msg": "Error updating course", "error": str(e)}), 500
+
+    
 
 # Eliminar un curso
 @api.route('/courses/<int:course_id>', methods=['DELETE'])
@@ -1078,11 +1116,8 @@ def get_all_enrollments():
 @jwt_required()
 def get_course_chat(course_id):
     """
-    Obtiene todos los mensajes del chat de un curso.
-    Solo pueden acceder usuarios inscritos o el profesor.
+    Obtiene mensajes de chat por curso y opcionalmente por grupo (schedule_id).
     """
-    
-
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
     course = Course.query.get(course_id)
@@ -1090,24 +1125,33 @@ def get_course_chat(course_id):
     if not course:
         return jsonify({"msg": "Course not found"}), 404
 
-    # Verificar si el usuario pertenece al curso
+    # Verificar si pertenece al curso
     is_teacher = course.teacher_id == user.id
     is_student = Enrollment.query.filter_by(student_id=user.id, course_id=course_id).first()
-
     if not is_teacher and not is_student:
         return jsonify({"msg": "Unauthorized: not enrolled"}), 403
 
-    messages = CourseChatMessage.query.filter_by(course_id=course_id).order_by(CourseChatMessage.timestamp.asc()).all()
+    # 👇 Nuevo: Filtrar por grupo si se pasa schedule_id en la URL
+    schedule_id = request.args.get("schedule_id", type=int)
+    query = CourseChatMessage.query.filter_by(course_id=course_id)
+
+    if schedule_id:
+        if is_student and is_student.schedule_id != schedule_id:
+            return jsonify({"msg": "Unauthorized: you are not in this group"}), 403
+
+        query = query.filter_by(schedule_id=schedule_id)
+
+    messages = query.order_by(CourseChatMessage.timestamp.asc()).all()
     return jsonify([m.serialize() for m in messages]), 200
+
 
 
 @api.route('/course/<int:course_id>/chat', methods=['POST'])
 @jwt_required()
 def post_course_chat(course_id):
     """
-    Envía un nuevo mensaje al chat de un curso.
+    Envía un nuevo mensaje al chat de un curso o grupo.
     """
-
     user_id = get_jwt_identity()
     data = request.get_json()
 
@@ -1116,26 +1160,33 @@ def post_course_chat(course_id):
 
     user = User.query.get(user_id)
     course = Course.query.get(course_id)
-
     if not course:
         return jsonify({"msg": "Course not found"}), 404
 
-    # Solo inscritos o el profesor pueden escribir
+    # Verificar si pertenece al curso
     is_teacher = course.teacher_id == user.id
     is_student = Enrollment.query.filter_by(student_id=user.id, course_id=course_id).first()
-
     if not is_teacher and not is_student:
         return jsonify({"msg": "Unauthorized"}), 403
+
+    # 👇 Nuevo: si viene un schedule_id lo guardamos
+    schedule_id = data.get("schedule_id")
+
+    if schedule_id:
+        if is_student and is_student.schedule_id != schedule_id:
+            return jsonify({"msg": "Unauthorized: cannot send to this group"}), 403
 
     new_message = CourseChatMessage(
         course_id=course_id,
         user_id=user_id,
-        content=data["content"]
+        content=data["content"],
+        schedule_id=schedule_id
     )
     db.session.add(new_message)
     db.session.commit()
 
     return jsonify(new_message.serialize()), 201
+
 
 @api.route('/chat/<int:student_id>', methods=['GET'])
 @jwt_required()
@@ -1311,12 +1362,15 @@ def get_students_by_course(course_id):
                 "progress": getattr(enrollment, "progress", 0),
                 "enrolled_at": enrollment.enrolled_at.strftime("%Y-%m-%d")
                 if enrollment.enrolled_at else None,
+                "schedule_id": schedule.id if schedule else None,
                 "schedule": {
+                    "id": schedule.id if schedule else None,
                     "group_name": schedule.group_name if schedule else None,
                     "day_of_week": schedule.day_of_week if schedule else None,
                     "start_time": schedule.start_time.strftime("%H:%M") if schedule else None,
                     "end_time": schedule.end_time.strftime("%H:%M") if schedule else None
                 } if schedule else None
+
             })
 
         print(f"📊 Encontrados {len(result)} estudiantes para el curso {course_id}")

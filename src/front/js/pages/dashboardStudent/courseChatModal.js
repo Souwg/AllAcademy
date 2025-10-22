@@ -2,7 +2,15 @@ import React, { useEffect, useState, useContext, useRef } from "react";
 import { Context } from "../../store/appContext";
 import "../../../styles/chatModal.css";
 
-export const CourseChatModal = ({ show, onClose, course }) => {
+export const CourseChatModal = ({
+  show,
+  onClose,
+  course,
+  selectedScheduleId, // 👈 nuevo prop
+  onGroupChange,
+  originalScheduleId,
+  role,
+}) => {
   const { store, actions } = useContext(Context);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -10,7 +18,7 @@ export const CourseChatModal = ({ show, onClose, course }) => {
   const chatContainerRef = useRef(null);
   const [highlightedOnce, setHighlightedOnce] = useState(false);
 
-  const currentUserId = store.user?.id; // 👈 ID del usuario actual
+  const currentUserId = store.user?.id;
 
   useEffect(() => {
     if (
@@ -18,7 +26,7 @@ export const CourseChatModal = ({ show, onClose, course }) => {
       course?.scrollToMessageId &&
       messages.length > 0 &&
       chatContainerRef.current &&
-      !highlightedOnce // 👈 solo si no se ha resaltado ya
+      !highlightedOnce
     ) {
       const targetElement = chatContainerRef.current.querySelector(
         `[data-message-id="${course.scrollToMessageId}"]`
@@ -31,23 +39,21 @@ export const CourseChatModal = ({ show, onClose, course }) => {
           setTimeout(() => {
             targetElement.classList.remove("highlighted-message");
           }, 3000);
-          setHighlightedOnce(true); // ✅ lo marcamos como ya resaltado
+          setHighlightedOnce(true);
         }, 100);
       }
     }
   }, [show, course?.scrollToMessageId, messages, highlightedOnce]);
 
   useEffect(() => {
-    // Si ya vienen mensajes precargados, se muestran de inmediato
-    if (course?.messages) {
-      setMessages(course.messages);
-    }
+    // limpia para evitar que se vean mensajes del grupo anterior
+    setMessages([]);
 
-    // 👇 Luego haces un fetch por si hay mensajes nuevos (background update)
-    if (show && course?.id) {
-      actions.getCourseChat(course.id).then(setMessages);
+    // solo pedimos mensajes si YA hay grupo seleccionado
+    if (show && course?.id && selectedScheduleId !== null) {
+      actions.getCourseChat(course.id, selectedScheduleId).then(setMessages);
     }
-  }, [show, course]);
+  }, [show, course?.id, selectedScheduleId]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -55,7 +61,11 @@ export const CourseChatModal = ({ show, onClose, course }) => {
 
   const handleSend = async () => {
     if (!newMessage.trim()) return;
-    const msg = await actions.postCourseChat(course.id, newMessage);
+    const msg = await actions.postCourseChat(
+      course.id,
+      newMessage,
+      selectedScheduleId
+    ); // 👈 también aquí
     if (msg) setMessages([...messages, msg]);
     setNewMessage("");
   };
@@ -65,9 +75,26 @@ export const CourseChatModal = ({ show, onClose, course }) => {
   return (
     <div className="chat-modal-overlay">
       <div className="chat-modal glass-effect">
-        <div className="chat-header">
-          <h5>💬 {course?.title || "Course Chat"}</h5>
-          <i className="fa-solid fa-xmark" onClick={onClose}></i>
+        <div className="chat-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <h5 className="m-0">
+            💬 {course?.title || "Course Chat"}{" "}
+            {selectedScheduleId && (
+              <span className="text-primary fw-semibold">
+                —{" "}
+                {
+                  course.schedules.find(
+                    (sched) => sched.id === selectedScheduleId
+                  )?.group_name
+                }{" "}
+                (
+                {course.schedules.find(
+                  (sched) => sched.id === selectedScheduleId
+                )?.total_students || 0}
+                )
+              </span>
+            )}
+          </h5>
+          <i className="fa-solid fa-xmark cursor-pointer" onClick={onClose}></i>
         </div>
 
         <div className="chat-body" ref={chatContainerRef}>
@@ -77,7 +104,7 @@ export const CourseChatModal = ({ show, onClose, course }) => {
               return (
                 <div
                   key={msg.id}
-                  data-message-id={msg.id} // 👈 esto es lo nuevo
+                  data-message-id={msg.id}
                   className={`chat-message ${isOwn ? "own" : "other"}`}
                 >
                   {!isOwn && <strong>{msg.user_name}:</strong>}

@@ -74,12 +74,12 @@ class LiveClass(db.Model):
     scheduled_at = db.Column(db.DateTime, nullable=False)  
     meeting_url = db.Column(db.String(500), nullable=False)
     recording_url = db.Column(db.String(500))  
+    schedule_id = db.Column(db.Integer, db.ForeignKey('course_schedule.id'), nullable=True)  # 🆕
+    title = db.Column(db.String(200), nullable=True)  # 🆕 título visible de la clase
 
     course = db.relationship("Course", back_populates="live_classes")
     teacher = db.relationship("User", back_populates="live_classes")
-
-    def __repr__(self):
-        return f'<LiveClass {self.id} for Course {self.course_id}>'
+    schedule = db.relationship("CourseSchedule")  # Relación al grupo
 
     def serialize(self):
         return {
@@ -89,10 +89,34 @@ class LiveClass(db.Model):
             "scheduled_at": self.scheduled_at.isoformat() if self.scheduled_at else None,
             "meeting_url": self.meeting_url,
             "recording_url": self.recording_url,
+            "title": self.title,
+            "group_name": self.schedule.group_name if self.schedule else None,
             "course_title": self.course.title if self.course else None,
             "teacher_email": self.teacher.email if self.teacher else None
         }
+class Recording(db.Model):
+    __tablename__ = "recordings"
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey("course.id"), nullable=False)
+    schedule_id = db.Column(db.Integer, db.ForeignKey("course_schedule.id"), nullable=True)  # grupo opcional
+    teacher_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    title = db.Column(db.String(255), nullable=False)
+    recording_url = db.Column(db.String(500), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    course = db.relationship("Course", backref="recordings")
+    schedule = db.relationship("CourseSchedule", backref="recordings")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "course_id": self.course_id,
+            "schedule_id": self.schedule_id,
+            "teacher_id": self.teacher_id,
+            "title": self.title,
+            "recording_url": self.recording_url,
+            "created_at": self.created_at.isoformat()
+        }
 class Course(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -170,13 +194,17 @@ class CourseSchedule(db.Model):
     course = db.relationship("Course", backref=db.backref("schedules", cascade="all, delete-orphan"))
 
     def serialize(self):
+        from .models import Enrollment  
+
+        total_students = Enrollment.query.filter_by(schedule_id=self.id).count()
         return {
             "id": self.id,
             "day_of_week": self.day_of_week,
             "start_time": self.start_time.strftime("%H:%M"),
             "end_time": self.end_time.strftime("%H:%M"),
             "timezone": self.timezone,
-            "group_name": self.group_name
+            "group_name": self.group_name,
+            "total_students": total_students
         }
 
 
@@ -292,10 +320,12 @@ class CourseChatMessage(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     content = db.Column(db.String(500), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    schedule_id = db.Column(db.Integer, db.ForeignKey('course_schedule.id'), nullable=True)
 
     # Relaciones
     user = db.relationship("User", backref="chat_messages", lazy=True)
     course = db.relationship("Course", backref="chat_messages", lazy=True)
+    schedule = db.relationship("CourseSchedule") 
 
     def serialize(self):
         return {
@@ -304,7 +334,9 @@ class CourseChatMessage(db.Model):
             "user_id": self.user_id,
             "user_name": f"{self.user.first_name} {self.user.last_name}" if self.user else "Unknown",
             "content": self.content,
-            "timestamp": self.timestamp.isoformat()
+            "timestamp": self.timestamp.isoformat(),
+            "schedule_id": self.schedule_id
+            
         }
     
 class PrivateChatMessage(db.Model):

@@ -1,25 +1,96 @@
-/* ===== Banner ===== */
-.container-banner {
-  background: rgba(255, 255, 255, 0.65);
+/* =======================================================================
+🌐 GLOBAL
+======================================================================= */
+
+html,
+body {
+  overflow-x: hidden; /* 🚫 Evita scroll horizontal */
+}
+
+/* =======================================================================
+🏷️ 1. BANNER PRINCIPAL (Dashboard Teacher)
+======================================================================= */
+
+.modern-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #ffffffcc 0%, #f5f9ffcc 100%);
   backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
-  color: #001933;
-  border-radius: 12px;
-  padding: 1.5rem 2rem;
-  margin-top: 2rem;
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  padding: 2rem 2.5rem;
+  border-radius: 20px;
   margin-bottom: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
-.teacher-banner h3 {
+.banner-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.greeting-icon {
+  background: #e6f0ff;
+  color: #0052cc;
   font-size: 2rem;
-  font-weight: 700;
+  padding: 1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.teacher-banner p {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 3rem;
+.banner-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #001933;
+  margin-bottom: 0.3rem;
 }
+
+.banner-name {
+  color: #0052cc;
+}
+
+.banner-subtitle {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #6c757d;
+  margin: 0;
+}
+
+.banner-right {
+  flex-shrink: 0;
+}
+
+.banner-illustration {
+  max-width: 110px;
+  opacity: 0.9;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.1));
+}
+
+@media (max-width: 768px) {
+  .modern-banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.5rem;
+  }
+
+  .banner-left {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .banner-illustration {
+    margin-top: 1rem;
+    max-width: 80px;
+  }
+}
+
+/* =======================================================================
+🏷️ 2. SUBTÍTULOS DE SECCIÓN
+======================================================================= */
+
 .subtitled-dashboard {
   background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(20px) saturate(180%);
@@ -31,8 +102,11 @@
   margin-top: 2rem;
   margin-bottom: 2rem;
 }
-/**************Card List Course
-*********************/
+
+/* =======================================================================
+🏷️ 3. CARDS DE CURSOS (Card List Course)
+======================================================================= */
+
 .card-list-course-modern {
   border: none;
   border-radius: 18px;
@@ -40,7 +114,10 @@
   background-color: #ffffff;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
-  max-width: 350px;
+  max-width: 420px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .card-list-course-modern:hover {
@@ -48,11 +125,12 @@
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
 }
 
-/* 🖼 Imagen con efecto */
+/* 📸 Imagen */
 .card-img-container {
   overflow: hidden;
   position: relative;
   height: 200px;
+  background: #f5f5f5;
 }
 
 .modern-img {
@@ -66,6 +144,7 @@
   transform: scale(1.05);
 }
 
+/* 📝 Título */
 .modern-title {
   font-size: 1.05rem;
   font-weight: 600;
@@ -80,6 +159,21 @@
   -webkit-box-orient: vertical;
 }
 
+/* 🔘 Toggle */
+.toggle-btn {
+  background: #f5f5f5;
+  border-radius: 8px;
+  border: none;
+  padding: 5px 8px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.toggle-btn:hover {
+  background: #e0e0e0;
+}
+
+/* 🧭 Botones principales */
 .modern-btn-success,
 .modern-btn-primary,
 .modern-btn-dark {
@@ -87,6 +181,9 @@
   font-weight: 500;
   transition: all 0.3s ease;
   font-size: 0.9rem;
+  padding: 8px 12px;
+  flex: 1;
+  white-space: nowrap;
 }
 
 .modern-btn-success {
@@ -122,22 +219,198 @@
   color: #fff;
 }
 
-@media (max-width: 768px) {
+/* 📱 Responsive Cards */
+@media (max-width: 992px) {
   .card-list-course-modern {
     max-width: 100%;
   }
+
   .modern-title {
-    font-size: 0.95rem;
-  }
-  .modern-btn-success,
-  .modern-btn-primary,
-  .modern-btn-dark {
-    font-size: 0.85rem;
+    font-size: 1rem;
   }
 }
 
-/******************Stats
-**********************/
+@media (max-width: 480px) {
+  .modern-title {
+    font-size: 0.95rem;
+  }
+
+  .toggle-btn {
+    padding: 4px 6px;
+  }
+}
+
+/* =======================================================================
+👥 4. LISTA DE GRUPOS DE CURSOS
+======================================================================= */
+
+.groups-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.group-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background: #f8f9fa;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  transition: 0.3s ease;
+  gap: 8px;
+}
+
+.group-item:hover {
+  background: #eef3ff;
+  border-color: #d0dfff;
+}
+
+.group-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.group-info strong {
+  font-weight: 600;
+  color: #212529;
+}
+
+.group-days {
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.group-time {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-top: 2px;
+}
+
+.group-schedule {
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+/* 🔘 Acciones */
+.group-actions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  flex-wrap: wrap;
+  margin-left: 2rem;
+}
+
+.group-action-btn {
+  background: #f5f5f5;
+  border: none;
+  padding: 8px;
+  border-radius: 15%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.group-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 🎨 Colores personalizados botones grupo */
+.chat-btn {
+  color: #0d6efd;
+  background-color: #e8f0ff;
+}
+
+.chat-btn:hover {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.students-btn {
+  color: #212529;
+  background-color: #f2f2f2;
+}
+
+.students-btn:hover {
+  background-color: #212529;
+  color: white;
+}
+
+.schedule-btn {
+  color: #198754;
+  background-color: #e7f9f0;
+}
+
+.schedule-btn:hover {
+  background-color: #198754;
+  color: white;
+}
+
+/* 🔴 Badge notificaciones */
+.unread-badge {
+  background: #dc3545;
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 3px 6px;
+  border-radius: 10px;
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-weight: 600;
+}
+
+/* 📱 Responsive Grupos */
+@media (max-width: 768px) {
+  .group-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .group-actions {
+    gap: 8px;
+  }
+
+  .group-action-btn {
+    padding: 6px;
+    font-size: 0.9rem;
+  }
+
+  .group-schedule {
+    font-size: 0.8rem;
+  }
+
+  .group-days {
+    font-size: 0.85rem;
+  }
+
+  .group-time {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .group-info {
+    font-size: 0.8rem;
+  }
+
+  .unread-badge {
+    font-size: 0.6rem;
+    padding: 2px 4px;
+  }
+}
+
+/* =======================================================================
+📊 5. STATS CARDS
+======================================================================= */
+
 .stats-card {
   border: none;
   padding: 3rem 2rem;
@@ -160,9 +433,10 @@
   height: 60px;
 }
 
-/******************Notifications Panel
-**********************/
-/* 📬 Panel general */
+/* =======================================================================
+🔔 6. NOTIFICATIONS PANEL
+======================================================================= */
+
 .notification-panel {
   margin-top: 1.5rem;
   border-radius: 15px;
@@ -181,9 +455,6 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
-.cursor-pointer {
-  cursor: pointer;
-}
 
 .notification-title {
   font-size: 1.1rem;
@@ -199,14 +470,22 @@
   font-size: 1.3rem;
   flex-shrink: 0;
 }
-
+.notification-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+  max-height: 80vh;
+}
 .notification-body::-webkit-scrollbar {
   width: 6px;
 }
+
 .notification-body::-webkit-scrollbar-thumb {
   background-color: #ccc;
   border-radius: 10px;
 }
+
 .notification-body::-webkit-scrollbar-thumb:hover {
   background-color: #999;
 }
@@ -227,6 +506,11 @@
   background-color: #e9ecef;
 }
 
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* 📱 Responsive Notifications */
 @media (max-width: 1250px) {
   .notification-title {
     opacity: 0;
@@ -234,48 +518,295 @@
     width: 0;
     overflow: hidden;
   }
+
   .notification-header {
     justify-content: space-between;
   }
 }
+
 @media (max-width: 768px) {
   .notification-body {
     max-height: none;
     overflow-y: visible;
   }
 }
-/****************************Students section
-********************************/
-.course-badges-container {
+
+/* =======================================================================
+🎓 7. STUDENTS SECTION (Teacher View)
+======================================================================= */
+
+/* ✨ Banner */
+.teacher-students-banner-modern {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  max-width: 300px;
+  align-items: center;
+  gap: 1.2rem;
+  background: linear-gradient(135deg, #ffffffcc 0%, #f0f6ffcc 100%);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 20px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.banner-icon {
+  font-size: 2.8rem;
+  color: #354cf6;
+}
+
+.banner-title {
+  font-weight: 700;
+  margin: 0;
+}
+
+.banner-subtitle {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 0;
+}
+
+/* 🔍 Search bar */
+.teacher-search-bar {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.teacher-search-bar .search-icon {
+  margin-right: 10px;
+  color: #888;
+}
+
+.teacher-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+}
+
+/* 📐 Contenedor */
+.teacher-students-section {
+  max-width: 100%;
+  overflow-x: hidden;
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+
+/* 📊 Tabla */
+.students-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 15px;
+}
+
+.students-table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.students-table th,
+.students-table td {
+  white-space: nowrap;
+  text-align: left;
+  padding: 0.75rem 0.5rem;
+}
+
+.students-table th {
+  background: #f9fafc;
+  font-weight: 600;
+}
+
+.students-table tr:nth-child(even) {
+  background: #f7f9fc;
+}
+.user-cell {
+  display: flex;
+  flex-direction: row; /* ✅ ahora se alinean horizontalmente */
+  gap: 0.4rem; /* 👌 un pequeño espacio entre nombre y apellido */
+  align-items: center;
 }
 
 .course-badge {
-  background-color: #f1f4f9;
-  color: #0d6efd;
-  font-size: 0.85rem;
-  padding: 4px 10px;
-  border-radius: 20px;
-  white-space: nowrap;
+  display: inline-block;
+  background: #354cf6;
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  margin-right: 5px;
+  margin-bottom: 5px;
+}
+
+/* 🛠️ Botones acción */
+.action-buttons {
   display: flex;
-  align-items: center;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  background: #f1f3f5;
+  border: none;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  background: #354cf6;
+  color: #fff;
+}
+
+/* 📱 Responsive Students */
+@media (max-width: 1250px) {
+  .students-table {
+    min-width: unset;
+  }
+
+  .students-table th,
+  .students-table td {
+    font-size: 0.9rem;
+    padding: 0.5rem;
+  }
+
+  .teacher-students-section {
+    padding: 0 0.8rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .teacher-students-banner-modern {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .teacher-search-bar {
+    padding: 0.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  /* 📌 Banner */
+  .teacher-students-banner-modern {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .teacher-search-bar {
+    padding: 0.8rem;
+  }
+
+  /* 📊 Tabla responsiva */
+  .students-table thead {
+    display: none;
+  }
+
+  .students-table tr {
+    display: block;
+    background: #fff;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 1rem;
+  }
+
+  .students-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+  }
+
+  .students-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #444;
+    padding-right: 1rem;
+  }
+
+  .students-table td:last-child {
+    border-bottom: none;
+  }
+}
+/* 🎥 Videos Section */
+.my-courses-section {
+  padding-top: none;
+}
+
+.course-card-video {
+  background: #fff;
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.course-img-thumbnail {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.video-item {
+  background: #f9fafc;
+  border-radius: 8px;
+  margin-top: 0.5rem;
   transition: background 0.2s ease;
 }
 
-.course-badge:hover {
-  background-color: #e0e7ff;
+.video-item:hover {
+  background: #eef2ff;
 }
 
-.user-table td:nth-child(4) {
-  /* Columna de cursos */
-  max-width: 350px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.video-item i {
+  font-size: 1.2rem;
+}
+/*******************Spinner de carga************************/
+/* From Uiverse.io by SteveBloX */
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
 }
 
-.user-table td {
-  vertical-align: middle;
+.ball {
+  --size: 16px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 11px;
+  margin: 0 10px;
+
+  animation: 2s bounce ease infinite;
+}
+
+.blue {
+  background-color: #4285f5;
+}
+
+.red {
+  background-color: #ea4436;
+  animation-delay: 0.25s;
+}
+
+.yellow {
+  background-color: #fbbd06;
+  animation-delay: 0.5s;
+}
+
+.green {
+  background-color: #34a952;
+  animation-delay: 0.75s;
+}
+
+@keyframes bounce {
+  50% {
+    transform: translateY(25px);
+  }
 }

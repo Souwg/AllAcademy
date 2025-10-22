@@ -12,7 +12,7 @@ const getState = ({ getStore, getActions, setStore }) => {
       selectedCourse: null,
       selectedCourseLoading: false,
       selectedCourseError: null,
-      notifications: [],
+      notifications: JSON.parse(localStorage.getItem("notifications")) || [],
       lastNotifiedMessage:
         JSON.parse(localStorage.getItem("lastNotifiedMessage")) || {},
     },
@@ -152,26 +152,32 @@ const getState = ({ getStore, getActions, setStore }) => {
           console.error("Error in getMyEnrollments:", err);
         }
       },
-      getCourseChat: async (courseId) => {
+      getCourseChat: async (courseId, scheduleId = null) => {
         try {
           const token = localStorage.getItem("token");
-          const resp = await fetch(
-            `http://localhost:3001/api/course/${courseId}/chat`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
-              },
-            }
-          );
+
+          let url = `http://localhost:3001/api/course/${courseId}/chat`;
+          if (scheduleId) url += `?schedule_id=${scheduleId}`;
+
+          const resp = await fetch(url, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+          });
 
           if (!resp.ok)
             throw new Error("Error al obtener los mensajes del chat");
+
           const data = await resp.json();
-
-          console.log("📩 Mensajes del curso", courseId, data); // 👈 AGREGA ESTO
-
+          console.log(
+            "📩 Mensajes del curso",
+            courseId,
+            "grupo:",
+            scheduleId,
+            data
+          );
           return data;
         } catch (err) {
           console.error("Error en getCourseChat:", err);
@@ -179,9 +185,12 @@ const getState = ({ getStore, getActions, setStore }) => {
         }
       },
 
-      postCourseChat: async (courseId, content) => {
+      postCourseChat: async (courseId, content, scheduleId = null) => {
         try {
           const token = localStorage.getItem("token");
+          const body = { content };
+          if (scheduleId) body.schedule_id = scheduleId;
+
           const resp = await fetch(
             `http://localhost:3001/api/course/${courseId}/chat`,
             {
@@ -190,19 +199,19 @@ const getState = ({ getStore, getActions, setStore }) => {
                 "Content-Type": "application/json",
                 Authorization: "Bearer " + token,
               },
-              body: JSON.stringify({ content }),
+              body: JSON.stringify(body),
             }
           );
 
           if (!resp.ok) throw new Error("Error al enviar el mensaje");
           const data = await resp.json();
-
-          return data; // se añade al chat localmente
+          return data;
         } catch (err) {
           console.error("Error en postCourseChat:", err);
           return null;
         }
       },
+
       getTeacherCourses: async () => {
         try {
           const token = localStorage.getItem("token");
@@ -221,19 +230,41 @@ const getState = ({ getStore, getActions, setStore }) => {
 
           const data = await resp.json();
 
-          // Calcular totales
           const totalCourses = data.length;
           const totalStudents = data.reduce(
             (acc, course) => acc + (course.total_students || 0),
             0
           );
+          const totalGroups = data.reduce(
+            (acc, course) => acc + (course.schedules?.length || 0),
+            0
+          );
 
-          // ✅ Aquí guardamos los cursos en el store
+          // 🆕 Calcular chats activos
+          let totalActiveChats = 0;
+          const actions = getActions();
+
+          for (const course of data) {
+            if (Array.isArray(course.schedules)) {
+              for (const sched of course.schedules) {
+                const messages = await actions.getCourseChat(
+                  course.id,
+                  sched.id
+                );
+                if (messages.length > 0) {
+                  totalActiveChats++;
+                }
+              }
+            }
+          }
+
           setStore({
-            courses: data, // 👈 importante
+            courses: data,
             teacherStats: {
               total_courses: totalCourses,
               total_students: totalStudents,
+              total_groups: totalGroups,
+              total_active_chats: totalActiveChats, // 👈 se actualiza automáticamente
             },
           });
 
@@ -339,8 +370,12 @@ const getState = ({ getStore, getActions, setStore }) => {
       },
       addNotification: (notification) => {
         const store = getStore();
-        const newNotification = { ...notification, is_read: false }; // 👈 agregamos esta propiedad
-        setStore({ notifications: [newNotification, ...store.notifications] });
+        const newNotification = { ...notification, is_read: false };
+        const updated = [newNotification, ...store.notifications];
+
+        // 📝 Guardamos en localStorage
+        localStorage.setItem("notifications", JSON.stringify(updated));
+        setStore({ notifications: updated });
       },
 
       getUnreadCount: () => {
@@ -351,6 +386,8 @@ const getState = ({ getStore, getActions, setStore }) => {
       removeNotification: (id) => {
         const store = getStore();
         const updated = store.notifications.filter((n) => n.id !== id);
+
+        localStorage.setItem("notifications", JSON.stringify(updated));
         setStore({ notifications: updated });
       },
 
@@ -359,29 +396,28 @@ const getState = ({ getStore, getActions, setStore }) => {
         const notification = store.notifications.find((n) => n.id === id);
 
         if (notification) {
-          // 👇 Guardar este mensaje como el último notificado para este curso
           if (notification.course_id) {
             getActions().setLastNotifiedMessage(notification.course_id, id);
           }
         }
 
-        // 👇 Marcar como leído en la lista
         const updated = store.notifications.map((n) =>
           n.id === id ? { ...n, is_read: true } : n
         );
+
+        // 📝 Persistimos cambios
+        localStorage.setItem("notifications", JSON.stringify(updated));
         setStore({ notifications: updated });
       },
 
-      setLastNotifiedMessage: (courseId, messageId) => {
+      setLastNotifiedMessage: (key, messageId) => {
         const store = getStore();
         const updated = {
           ...store.lastNotifiedMessage,
-          [courseId]: messageId,
+          [key]: messageId, // 👈 key = courseId-scheduleId
         };
 
-        // 🧠 Persistimos en localStorage
         localStorage.setItem("lastNotifiedMessage", JSON.stringify(updated));
-
         setStore({ lastNotifiedMessage: updated });
       },
 
@@ -389,41 +425,52 @@ const getState = ({ getStore, getActions, setStore }) => {
         const store = getStore();
         const actions = getActions();
 
+        // 📌 Recorremos cada curso
         for (let course of store.courses) {
-          const messages = await actions.getCourseChat(course.id);
-          if (!messages.length) continue;
+          // ⚠️ Aseguramos que el curso tenga grupos (schedules)
+          if (!Array.isArray(course.schedules) || course.schedules.length === 0)
+            continue;
 
-          const lastNotifiedId = store.lastNotifiedMessage[course.id];
+          // 📌 Recorremos cada grupo de ese curso
+          for (let sched of course.schedules) {
+            const messages = await actions.getCourseChat(course.id, sched.id);
+            if (!messages.length) continue;
 
-          // 🧠 Si no hay último notificado, consideramos todos los mensajes
-          const newMessages = lastNotifiedId
-            ? messages.filter((msg) => msg.id > lastNotifiedId)
-            : messages;
+            // ✅ Usamos un identificador único por curso y grupo
+            const key = `${course.id}-${sched.id}`;
+            const lastNotifiedId = store.lastNotifiedMessage[key];
 
-          // 🚀 Agregar notificación por cada mensaje nuevo
-          // 🚀 Agregar notificación por cada mensaje nuevo (excepto los míos)
-          newMessages.forEach((msg) => {
-            // ⛔ ignorar mensajes que yo misma envío
-            if (msg.user_id === store.user?.id) return;
+            // 🧠 Si no hay último notificado, consideramos todos los mensajes
+            const newMessages = lastNotifiedId
+              ? messages.filter((msg) => msg.id > lastNotifiedId)
+              : messages;
 
-            const alreadyExists = store.notifications.find(
-              (n) => n.id === msg.id
-            );
-            if (!alreadyExists) {
-              actions.addNotification({
-                id: msg.id,
-                type: "group",
-                course_id: course.id,
-                message: `${msg.user_name} escribió en ${course.title}`,
-                timestamp: new Date().toISOString(),
-              });
+            // 🚀 Agregar notificación por cada mensaje nuevo (excepto los míos)
+            newMessages.forEach((msg) => {
+              if (msg.user_id === store.user?.id) return; // Ignorar mis mensajes
+
+              const alreadyExists = store.notifications.find(
+                (n) => n.id === msg.id
+              );
+              if (!alreadyExists) {
+                actions.addNotification({
+                  id: msg.id,
+                  type: "group",
+                  course_id: course.id,
+                  schedule_id: sched.id, // 👈 importante para saber en qué grupo fue
+                  message: `${msg.user_name} escribió en ${course.title} - ${
+                    sched.group_name || "Grupo"
+                  }`,
+                  timestamp: new Date().toISOString(),
+                });
+              }
+            });
+
+            // 📝 Guardar el ID del último mensaje como referencia para este grupo
+            const lastMsg = messages[messages.length - 1];
+            if (lastMsg) {
+              actions.setLastNotifiedMessage(key, lastMsg.id);
             }
-          });
-
-          // 📝 Guardar el ID del último mensaje como referencia
-          const lastMsg = messages[messages.length - 1];
-          if (lastMsg) {
-            actions.setLastNotifiedMessage(course.id, lastMsg.id);
           }
         }
       },
