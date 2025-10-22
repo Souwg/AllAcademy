@@ -20,6 +20,10 @@ export const CourseChatModal = ({
 
   const currentUserId = store.user?.id;
 
+  const selectedSchedule = course?.schedules.find(
+    (sched) => sched.id === selectedScheduleId
+  );
+
   useEffect(() => {
     if (
       show &&
@@ -75,25 +79,19 @@ export const CourseChatModal = ({
   return (
     <div className="chat-modal-overlay">
       <div className="chat-modal glass-effect">
-        <div className="chat-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div className="chat-header d-flex justify-content-between align-items-center gap-2">
           <h5 className="m-0">
-            💬 {course?.title || "Course Chat"}{" "}
-            {selectedScheduleId && (
+            {course?.title || "Course Chat"}{" "}
+            {selectedSchedule && (
               <span className="text-primary fw-semibold">
-                —{" "}
-                {
-                  course.schedules.find(
-                    (sched) => sched.id === selectedScheduleId
-                  )?.group_name
-                }{" "}
-                (
-                {course.schedules.find(
-                  (sched) => sched.id === selectedScheduleId
-                )?.total_students || 0}
-                )
+                {selectedSchedule.group_name}
+                {role === "teacher" && (
+                  <> ({selectedSchedule.total_students || 0})</>
+                )}
               </span>
             )}
           </h5>
+
           <i className="fa-solid fa-xmark cursor-pointer" onClick={onClose}></i>
         </div>
 

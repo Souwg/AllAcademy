@@ -92,10 +92,39 @@ export const DashboardStudent = () => {
     switch (activeView) {
       case "dashboard":
         return (
-          <div className="container container-banner">
-            <div className="student-banner">
-              <h3>👋 Welcome back, {user?.first_name || "Student"}</h3>
-              <p>Here’s a quick overview of your learning activity today.</p>
+          <div className="container-fluid">
+            <div className="modern-banner">
+              <div className="banner-left">
+                <div className="greeting-icon">
+                  <i className="fa-regular fa-hand-peace"></i>
+                </div>
+                <div>
+                  <h2 className="banner-title">
+                    Welcome back,{" "}
+                    <span className="banner-name">
+                      {user?.first_name || "student"}
+                    </span>{" "}
+                    👋
+                  </h2>
+                  <p className="banner-subtitle">
+                    Here’s a personalized overview of your teaching activity
+                    today.
+                  </p>
+                </div>
+              </div>
+              {/* 🧭 Quick Access Buttons */}
+              <div className="d-flex flex-wrap gap-3 mt-3 quick-access-buttons">
+                <div className="dashboard-buttons">
+                  <button className="btn btn-light me-2">
+                    <i className="fa-solid fa-plus me-2"></i>
+                    My Certificates
+                  </button>
+                  <button className="btn  btn-outline-light me-2">
+                    <i className="fa-solid fa-users me-2"></i>
+                    Edit Profile
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="row">
@@ -109,7 +138,7 @@ export const DashboardStudent = () => {
                     </div>
                     <div>
                       <h6 className="text-muted mb-1">Enrolled Courses</h6>
-                      <h2 className="fw-bold text-primary mb-0">
+                      <h2 className="fw-bold text-center text-primary mb-0">
                         {myEnrollments?.length || 0}
                       </h2>
                     </div>
@@ -121,7 +150,7 @@ export const DashboardStudent = () => {
                     </div>
                     <div>
                       <h6 className="text-muted mb-1">Completed</h6>
-                      <h2 className="fw-bold text-success mb-0">
+                      <h2 className="fw-bold text-center text-success mb-0">
                         {myEnrollments?.filter((e) => e.progress === 100)
                           .length || 0}
                       </h2>
@@ -134,7 +163,7 @@ export const DashboardStudent = () => {
                     </div>
                     <div>
                       <h6 className="text-muted mb-1">In Progress</h6>
-                      <h2 className="fw-bold text-warning mb-0">
+                      <h2 className="fw-bold text-center text-warning mb-0">
                         {myEnrollments?.filter(
                           (e) => e.progress > 0 && e.progress < 100
                         ).length || 0}
@@ -149,7 +178,7 @@ export const DashboardStudent = () => {
                     <i className="fa-regular fa-bookmark me-2"></i> My Courses
                   </h4>
 
-                  <div className="row g-4">
+                  <div className="row g-4 mb-4">
                     {myEnrollments.length > 0 ? (
                       myEnrollments.map((enroll, index) => (
                         <div
@@ -273,10 +302,20 @@ export const DashboardStudent = () => {
 
       case "teacher":
         return (
-          <div className="container mt-4">
-            <h4 className="fw-bold mb-4">
-              <i className="fa-solid fa-chalkboard-user me-2"></i> My Teachers
-            </h4>
+          <div className="container-fluid">
+            <div className="teacher-students-banner-modern mb-4">
+              <div className="banner-icon">
+                <i class="fa-solid fa-chalkboard-user"></i>
+              </div>
+              <div className="banner-content">
+                <h2 className="banner-title">My Teachers</h2>
+                <p className="banner-subtitle">
+                  Here you can view all the teachers of the courses you’re
+                  enrolled in. Connect with them, ask questions, and stay
+                  updated with your learning journey✨
+                </p>
+              </div>
+            </div>
 
             <div className="row g-4">
               {teachers.length > 0 ? (

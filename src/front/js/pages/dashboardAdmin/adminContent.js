@@ -1468,14 +1468,14 @@ export const AdminContent = ({
         {activeView === "dashboard" && (
           <div className="dashboard-buttons">
             <button
-              className="btn btn-light me-2"
+              className="btn btn-lg btn-light me-2"
               onClick={() => setActiveView("courses")}
             >
               <i className="fa-solid fa-plus me-2"></i>
               Create Course
             </button>
             <button
-              className="btn btn-outline-light me-2"
+              className="btn btn-lg btn-outline-light me-2"
               onClick={() => setActiveView("users")}
             >
               <i className="fa-solid fa-users me-2"></i>

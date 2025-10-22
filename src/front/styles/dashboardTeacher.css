@@ -42,7 +42,7 @@ body {
 }
 
 .banner-title {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 800;
   color: #001933;
   margin-bottom: 0.3rem;
@@ -59,16 +59,6 @@ body {
   margin: 0;
 }
 
-.banner-right {
-  flex-shrink: 0;
-}
-
-.banner-illustration {
-  max-width: 110px;
-  opacity: 0.9;
-  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.1));
-}
-
 @media (max-width: 768px) {
   .modern-banner {
     flex-direction: column;
@@ -79,11 +69,6 @@ body {
   .banner-left {
     flex-direction: column;
     gap: 0.8rem;
-  }
-
-  .banner-illustration {
-    margin-top: 1rem;
-    max-width: 80px;
   }
 }
 

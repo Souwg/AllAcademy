@@ -23,10 +23,7 @@ export const PrivateChatModal = ({ chatUser, initialMessages, onClose }) => {
       <div className="chat-modal">
         {/* 🟡 HEADER */}
         <div className="chat-header">
-          <h5>
-            <i className="fa-regular fa-comments"></i> Chat with{" "}
-            {chatUser.first_name || chatUser.name}
-          </h5>
+          <h5>Chat with {chatUser.first_name || chatUser.name}</h5>
           <i className="fa-solid fa-xmark" onClick={onClose}></i>
         </div>
 

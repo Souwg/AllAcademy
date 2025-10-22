@@ -1,24 +1,66 @@
-/* ===== Banner ===== */
-.container-banner {
-  text-align: center;
-  background: rgba(255, 255, 255, 0.65);
+/* =======================================================================
+🏷️ 1. BANNER PRINCIPAL (Dashboard Teacher)
+======================================================================= */
+
+.modern-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #ffffffcc 0%, #f5f9ffcc 100%);
   backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
-  color: #001933;
-  border-radius: 12px;
-  padding: 1.5rem 2rem;
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  padding: 2rem 2.5rem;
+  border-radius: 20px;
   margin-bottom: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
-.student-banner h3 {
+.banner-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.greeting-icon {
+  background: #e6f0ff;
+  color: #0052cc;
   font-size: 2rem;
-  font-weight: 700;
+  padding: 1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.student-banner p {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 3rem;
+.banner-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #001933;
+  margin-bottom: 0.3rem;
+}
+
+.banner-name {
+  color: #0052cc;
+}
+
+.banner-subtitle {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #6c757d;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .modern-banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.5rem;
+  }
+
+  .banner-left {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
 }
 .subtitled-dashboard {
   background: rgba(255, 255, 255, 0.65);

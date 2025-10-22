@@ -575,7 +575,7 @@ export const DashboardTeacher = () => {
         return null;
       case "my-courses":
         return (
-          <div className="container my-courses-section">
+          <div className="container-fluid my-courses-section">
             {/* ✨ Banner de sección */}
             <div className="teacher-students-banner-modern mb-4">
               <div className="banner-icon">
