@@ -252,6 +252,7 @@ export const DashboardStudent = () => {
               </div>
 
               {/* 🛎️ Panel de Notificaciones */}
+              {/* 🛎️ Panel de Notificaciones */}
               <div className="col-12 col-md-12 col-lg-3 mb-4">
                 <div className="card notification-panel shadow-sm border-0 rounded-4">
                   <div
@@ -262,33 +263,47 @@ export const DashboardStudent = () => {
                     }}
                   >
                     <div className="d-flex align-items-center gap-2 flex-nowrap">
-                      <div className="notification-icon-bell d-flex align-items-center justify-content-center">
-                        <i className="fa-regular fa-bell text-warning"></i>
+                      <div className="notification-icon-bell d-flex align-items-center justify-content-center position-relative">
+                        <i className="fa-regular fa-bell text-warning fs-5"></i>
+                        {/* 🔴 Badge (placeholder visual, sin lógica) */}
+                        <span
+                          className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                          style={{ fontSize: "0.7rem" }}
+                        >
+                          0
+                        </span>
                       </div>
+
                       <h5 className="mb-0 fw-semibold text-dark notification-title">
                         Notifications
                       </h5>
                     </div>
 
-                    <button className="btn btn-sm btn-light rounded-circle p-2 mt-2 mt-md-0">
+                    <button
+                      className="btn btn-sm btn-success p-2 mt-2 mt-md-0"
+                      style={{ borderRadius: "15px" }}
+                    >
                       <i className="fa-solid fa-rotate"></i>
                     </button>
                   </div>
 
                   <div className="card-body p-3 notification-body">
-                    <div className="notification-item border-start border-4 border-primary mb-3 p-2 rounded-3 bg-light-subtle">
+                    {/* 📨 Lista simulada sin lógica */}
+                    <div className="notification-item border-start border-4 border-primary mb-3 p-2 rounded-3 bg-light-subtle cursor-pointer">
                       <small>
-                        <strong>New course:</strong> You joined Advanced Math.
+                        <strong>Group message:</strong> You joined a new course
+                        group.
                       </small>
                     </div>
 
-                    <div className="notification-item border-start border-4 border-success mb-3 p-2 rounded-3 bg-light-subtle">
+                    <div className="notification-item border-start border-4 border-success mb-3 p-2 rounded-3 bg-light-subtle cursor-pointer">
                       <small>
-                        <strong>New message:</strong> Your instructor replied.
+                        <strong>Private message:</strong> Your teacher replied
+                        to you.
                       </small>
                     </div>
 
-                    <div className="notification-item border-start border-4 border-warning mb-3 p-2 rounded-3 bg-light-subtle">
+                    <div className="notification-item border-start border-4 border-warning mb-3 p-2 rounded-3 bg-light-subtle cursor-pointer">
                       <small>
                         <strong>Reminder:</strong> Live class starts in 1 hour.
                       </small>
@@ -312,7 +327,7 @@ export const DashboardStudent = () => {
                 <p className="banner-subtitle">
                   Here you can view all the teachers of the courses you’re
                   enrolled in. Connect with them, ask questions, and stay
-                  updated with your learning journey✨
+                  updated with your learning journey✨.
                 </p>
               </div>
             </div>

@@ -25,6 +25,15 @@ export const DashboardTeacher = () => {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [groupStudents, setGroupStudents] = useState([]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (store.courses.length > 0) {
+        actions.checkNewNotifications();
+      }
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [store.courses]);
+
   const openGroupManagementModal = async (course, group) => {
     const allStudents = await actions.getStudentsByCourse(course.id);
     const filtered = allStudents.filter((s) => s.schedule_id === group.id);
@@ -39,14 +48,6 @@ export const DashboardTeacher = () => {
     setGroupStudents([]);
     setShowGroupModal(false);
   };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      actions.checkNewNotifications();
-    }, 5000);
-
-    return () => clearInterval(interval); // 🧹 limpieza al desmontar
-  }, [actions]);
 
   const openStudentsModal = async (course, groupId = null) => {
     const students = await actions.getStudentsByCourse(course.id);
