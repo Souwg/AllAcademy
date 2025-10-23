@@ -287,7 +287,6 @@ body {
   gap: 10px;
   width: 100%;
   flex-wrap: wrap;
-  margin-left: 2rem;
 }
 
 .group-action-btn {
@@ -389,6 +388,16 @@ body {
   .unread-badge {
     font-size: 0.6rem;
     padding: 2px 4px;
+  }
+}
+@media (max-width: 1050px) {
+  .group-days {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
 }
 

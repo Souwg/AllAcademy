@@ -99,6 +99,9 @@ export const DashboardTeacher = () => {
     const localUser = JSON.parse(localStorage.getItem("user"));
     if (localUser && (!user || user.id !== localUser.id)) {
       actions.syncWithLocalStorage();
+      const stored =
+        JSON.parse(localStorage.getItem(`notifications_${localUser.id}`)) || [];
+      actions.setNotifications(stored);
     }
   }, [user, actions]);
 
@@ -287,11 +290,12 @@ export const DashboardTeacher = () => {
                                           className="group-item"
                                         >
                                           <div className="group-info">
-                                            <i className="fa-solid fa-users me-2 text-primary"></i>
                                             <div className="d-flex flex-column">
                                               <strong>
-                                                {group.group_name}
+                                                {group.group_name} {""}
+                                                <i className="fa-solid fa-users text-primary"></i>
                                               </strong>
+
                                               <span className="group-days text-muted">
                                                 {group.day_of_week
                                                   .split(",")
@@ -440,7 +444,9 @@ export const DashboardTeacher = () => {
                                   setSelectedScheduleId(n.schedule_id);
                                 }
                               }
-                              actions.markNotificationAsRead(n.id);
+                              const key = `${n.course_id}-${n.schedule_id}`;
+                              actions.setLastNotifiedMessage(key, n.id);
+                              actions.removeNotification(n.id);
                             }}
                             className={`notification-item border-start border-4 ${
                               n.type === "group"

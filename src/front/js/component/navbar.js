@@ -1,10 +1,12 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
+import { Context } from "../store/appContext";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import "../../styles/navbar.css";
 import image from "../../img/Logo.png";
 
 export const Navbar = () => {
+  const { actions } = useContext(Context);
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -34,10 +36,14 @@ export const Navbar = () => {
           : {},
       });
     } catch (error) {
-      // Continuamos aunque falle el logout en el backend
+      console.warn("⚠️ Error en logout del backend");
     } finally {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+
+      // 🧽 Limpiar store global
+      actions.clearSession();
+
       navigate("/login");
     }
   };

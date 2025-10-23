@@ -1379,3 +1379,7 @@ def get_students_by_course(course_id):
     except Exception as e:
         print("Error in get_students_by_course:", str(e))
         return jsonify({"msg": "Error fetching students", "error": str(e)}), 500
+from api.models import Recording, RecordingLesson, Lesson
+from flask_jwt_extended import jwt_required, get_jwt_identity
+
+

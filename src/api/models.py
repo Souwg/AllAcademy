@@ -115,8 +115,27 @@ class Recording(db.Model):
             "teacher_id": self.teacher_id,
             "title": self.title,
             "recording_url": self.recording_url,
-            "created_at": self.created_at.isoformat()
+            "created_at": self.created_at.isoformat(),
+            "lessons": [link.lesson.serialize() for link in self.linked_lessons]  
         }
+    
+class RecordingLesson(db.Model):
+    __tablename__ = "recording_lessons"
+    id = db.Column(db.Integer, primary_key=True)
+    recording_id = db.Column(db.Integer, db.ForeignKey("recordings.id"), nullable=False)
+    lesson_id = db.Column(db.Integer, db.ForeignKey("lesson.id"), nullable=False)
+
+    recording = db.relationship("Recording", backref=db.backref("linked_lessons", cascade="all, delete-orphan"))
+    lesson = db.relationship("Lesson", backref="linked_recordings")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "recording_id": self.recording_id,
+            "lesson_id": self.lesson_id,
+            "lesson_title": self.lesson.title if self.lesson else None
+        }
+
 class Course(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -333,6 +352,7 @@ class CourseChatMessage(db.Model):
             "course_id": self.course_id,
             "user_id": self.user_id,
             "user_name": f"{self.user.first_name} {self.user.last_name}" if self.user else "Unknown",
+            "user_role": self.user.role if self.user else "unknown",
             "content": self.content,
             "timestamp": self.timestamp.isoformat(),
             "schedule_id": self.schedule_id

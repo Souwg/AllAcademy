@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 
 export const DashboardStudent = () => {
   const { store, actions } = useContext(Context);
-  const { user, myEnrollments } = store;
+  const { user, myEnrollments, notifications } = store;
   const [activeView, setActiveView] = useState("dashboard");
   const [showChat, setShowChat] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -62,14 +62,27 @@ export const DashboardStudent = () => {
   useEffect(() => {
     const localUser = JSON.parse(localStorage.getItem("user"));
     if (localUser && (!user || user.id !== localUser.id)) {
-      console.log("🔄 Dashboard: Sincronizando store...");
       actions.syncWithLocalStorage();
+      const stored =
+        JSON.parse(localStorage.getItem(`notifications_${localUser.id}`)) || [];
+      actions.setNotifications(stored);
     }
   }, [user, actions]);
 
   useEffect(() => {
+    console.log("📚 myEnrollments:", myEnrollments);
     actions.getMyEnrollments();
   }, []);
+
+  useEffect(() => {
+    if (user && user.role === "student" && myEnrollments.length > 0) {
+      const interval = setInterval(() => {
+        actions.checkNewNotifications("student");
+      }, 10000); // ⏳ cada 10 segundos
+
+      return () => clearInterval(interval);
+    }
+  }, [user, myEnrollments]);
 
   const openChat = async (course) => {
     const enrollment = myEnrollments.find((e) => e.course.id === course.id);
@@ -270,7 +283,7 @@ export const DashboardStudent = () => {
                           className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
                           style={{ fontSize: "0.7rem" }}
                         >
-                          0
+                          {actions.getUnreadCount()}
                         </span>
                       </div>
 
@@ -282,32 +295,86 @@ export const DashboardStudent = () => {
                     <button
                       className="btn btn-sm btn-success p-2 mt-2 mt-md-0"
                       style={{ borderRadius: "15px" }}
+                      onClick={() => actions.checkNewNotifications("student")}
                     >
                       <i className="fa-solid fa-rotate"></i>
                     </button>
                   </div>
 
                   <div className="card-body p-3 notification-body">
-                    {/* 📨 Lista simulada sin lógica */}
-                    <div className="notification-item border-start border-4 border-primary mb-3 p-2 rounded-3 bg-light-subtle cursor-pointer">
-                      <small>
-                        <strong>Group message:</strong> You joined a new course
-                        group.
-                      </small>
-                    </div>
+                    {notifications.length > 0 ? (
+                      notifications.map((n) => (
+                        <div
+                          key={n.id}
+                          className={`notification-item border-start border-4 mb-3 p-2 rounded-3 bg-light-subtle cursor-pointer ${
+                            n.is_read ? "opacity-50" : ""
+                          }`}
+                          style={{
+                            borderColor:
+                              n.type === "group"
+                                ? "#0d6efd" // azul para mensajes grupales
+                                : n.type === "private"
+                                ? "#198754" // verde para privados
+                                : "#ffc107", // amarillo para otros
+                          }}
+                          onClick={async () => {
+                            if (n.type === "group") {
+                              const enrollment = myEnrollments.find(
+                                (e) => e.course.id === n.course_id
+                              );
 
-                    <div className="notification-item border-start border-4 border-success mb-3 p-2 rounded-3 bg-light-subtle cursor-pointer">
-                      <small>
-                        <strong>Private message:</strong> Your teacher replied
-                        to you.
-                      </small>
-                    </div>
+                              if (enrollment) {
+                                // 1) Limpia estado para evitar parpadeos
+                                setSelectedCourse(null);
+                                setSelectedScheduleId(null);
 
-                    <div className="notification-item border-start border-4 border-warning mb-3 p-2 rounded-3 bg-light-subtle cursor-pointer">
-                      <small>
-                        <strong>Reminder:</strong> Live class starts in 1 hour.
-                      </small>
-                    </div>
+                                // 2) Abre el modal de chat vacío
+                                setShowChat(true);
+
+                                // 3) Carga los mensajes del grupo correcto
+                                const msgs = await actions.getCourseChat(
+                                  n.course_id,
+                                  n.schedule_id
+                                );
+
+                                // 4) Guarda el curso seleccionado con mensajes y el ID al que se debe scrollear
+                                setSelectedCourse({
+                                  ...enrollment.course,
+                                  messages: msgs,
+                                  scrollToMessageId: n.id,
+                                });
+
+                                // 5) Selecciona el grupo correcto
+                                setSelectedScheduleId(n.schedule_id);
+                                setOriginalScheduleId(n.schedule_id);
+                              }
+                            }
+
+                            // 🧠 🆕 Muy importante: registrar este mensaje como “último leído”
+                            const key = `${n.course_id}-${n.schedule_id}`;
+                            actions.setLastNotifiedMessage(key, n.id);
+
+                            // 🧼 y remover la notificación visualmente
+                            actions.removeNotification(n.id);
+                          }}
+                        >
+                          <small>
+                            <strong>
+                              {n.type === "group"
+                                ? "Group message: "
+                                : n.type === "private"
+                                ? "Private message: "
+                                : "Notification: "}
+                            </strong>
+                            {n.message}
+                          </small>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-muted py-3">
+                        <small>No notifications yet.</small>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
