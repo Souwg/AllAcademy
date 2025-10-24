@@ -43,10 +43,13 @@ const getState = ({ getStore, getActions, setStore }) => {
       myEnrollments: [],
       teacherStats: { total_courses: 0, total_students: 0 },
       coursesLoading: false,
+      notification: { show: false, type: "", message: "" },
       coursesError: null,
       selectedCourse: null,
       selectedCourseLoading: false,
       selectedCourseError: null,
+      videos: [],
+
       notifications: getNotifications(),
       lastNotifiedMessage:
         JSON.parse(
@@ -651,6 +654,195 @@ const getState = ({ getStore, getActions, setStore }) => {
           );
         }
         setStore({ notifications });
+      },
+      // 📽 Traer todas las grabaciones de clases de un curso
+      getRecordingsByCourse: async (courseId, scheduleId = null) => {
+        try {
+          const token = localStorage.getItem("token");
+          let url = `http://localhost:3001/api/recordings/${courseId}`;
+          if (scheduleId) url += `?schedule_id=${scheduleId}`;
+
+          const resp = await fetch(url, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+          });
+
+          if (!resp.ok) throw new Error("Error al obtener grabaciones");
+          const data = await resp.json();
+          console.log(
+            "🎥 Grabaciones recibidas para curso:",
+            courseId,
+            "horario:",
+            scheduleId,
+            data
+          );
+          // 🧠 Agregar al store todas las grabaciones para todos los cursos
+          const store = getStore();
+          setStore({
+            videos: [
+              ...(store.videos || []).filter((v) => v.course_id !== courseId),
+              ...data,
+            ],
+          });
+
+          return data;
+        } catch (err) {
+          console.error("❌ Error en getRecordingsByCourse:", err);
+          return [];
+        }
+      },
+
+      // 📤 Subir nueva grabación
+      createRecording: async (recordingData) => {
+        try {
+          const token = localStorage.getItem("token");
+          const resp = await fetch("http://localhost:3001/api/recordings", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+            body: JSON.stringify(recordingData),
+          });
+
+          if (!resp.ok) throw new Error("Error al crear grabación");
+          const data = await resp.json();
+
+          // 🆕 Actualizamos el store de videos
+          const store = getStore();
+          setStore({
+            videos: [...(store.videos || []), data.recording],
+          });
+
+          return data.recording;
+        } catch (err) {
+          console.error("❌ Error en createRecording:", err);
+          return null;
+        }
+      },
+
+      // 🧽 Eliminar grabación
+      deleteVideo: async (videoId) => {
+        try {
+          const token = localStorage.getItem("token");
+          const resp = await fetch(
+            `http://localhost:3001/api/recordings/${videoId}`,
+            {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+            }
+          );
+
+          if (!resp.ok) throw new Error("Error al eliminar grabación");
+
+          const store = getStore();
+          setStore({
+            videos: (store.videos || []).filter((v) => v.id !== videoId),
+          });
+
+          return true;
+        } catch (err) {
+          console.error("❌ Error en deleteVideo:", err);
+          return false;
+        }
+      },
+      // 📢 Publicar / despublicar grabación
+      togglePublishRecording: async (recordingId, isPublished) => {
+        try {
+          const token = localStorage.getItem("token");
+          const resp = await fetch(
+            `http://localhost:3001/api/recordings/${recordingId}/publish`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+              body: JSON.stringify({ is_published: isPublished }),
+            }
+          );
+
+          if (!resp.ok) throw new Error("Error al actualizar publicación");
+          const data = await resp.json();
+
+          const store = getStore();
+          setStore({
+            videos: (store.videos || []).map((v) =>
+              v.id === recordingId ? { ...v, is_published: isPublished } : v
+            ),
+          });
+
+          return data;
+        } catch (err) {
+          console.error("❌ Error en togglePublishRecording:", err);
+          return null;
+        }
+      },
+      updateRecording: async (recordingId, updatedData) => {
+        try {
+          const token = localStorage.getItem("token");
+          const resp = await fetch(
+            `http://localhost:3001/api/recordings/${recordingId}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+              body: JSON.stringify(updatedData),
+            }
+          );
+
+          if (!resp.ok) throw new Error("Error al actualizar grabación");
+
+          const data = await resp.json();
+
+          // 🆕 Actualiza el store local
+          const store = getStore();
+          setStore({
+            videos: (store.videos || []).map((v) =>
+              v.id === recordingId ? { ...v, ...data.recording } : v
+            ),
+          });
+
+          return true;
+        } catch (err) {
+          console.error("❌ Error en updateRecording:", err);
+          return false;
+        }
+      },
+      showNotification: (type, message) => {
+        setStore({
+          notification: {
+            show: true,
+            type,
+            message,
+          },
+        });
+        setTimeout(() => {
+          setStore({
+            notification: {
+              show: false,
+              type: "",
+              message: "",
+            },
+          });
+        }, 4000);
+      },
+      closeNotification: () => {
+        setStore({
+          notification: {
+            show: false,
+            type: "",
+            message: "",
+          },
+        });
       },
     },
   };

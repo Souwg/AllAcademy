@@ -188,3 +188,105 @@
     overflow-y: visible;
   }
 }
+
+/**********************************************section recordings student
+***********************************************/
+/* 📚 Sección por curso */
+.course-section {
+  margin-bottom: 3rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease;
+}
+
+.course-section:hover {
+  transform: translateY(-4px);
+}
+
+.course-title {
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: #222;
+  margin-bottom: 1rem;
+}
+
+/* 👥 Título de grupo */
+.group-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #001933;
+  margin-bottom: 0.8rem;
+}
+
+/* 🧾 Lista de grabaciones */
+.recordings-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+/* 🎧 Tarjeta individual */
+.recording-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 1rem 1.2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.recording-card:hover {
+  background: #fafafa;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.recording-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.recording-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.recording-date {
+  font-size: 0.85rem;
+  color: #777;
+}
+
+/* ▶️ Botón Watch */
+.watch-btn {
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background 0.3s ease;
+}
+
+.watch-btn:hover {
+  background: #0052cc;
+  text-decoration: none;
+  color: #fff;
+}
+
+/* 📭 Cuando no hay cursos */
+.no-courses {
+  padding: 5rem 0;
+  color: #999;
+  font-size: 1rem;
+}

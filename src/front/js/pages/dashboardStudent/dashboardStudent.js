@@ -84,6 +84,18 @@ export const DashboardStudent = () => {
     }
   }, [user, myEnrollments]);
 
+  useEffect(() => {
+    if (myEnrollments.length > 0) {
+      myEnrollments.forEach((enroll) => {
+        const courseId = enroll.course?.id;
+        const scheduleId = enroll.schedule?.id;
+        if (courseId && scheduleId) {
+          actions.getRecordingsByCourse(courseId, scheduleId);
+        }
+      });
+    }
+  }, [myEnrollments]);
+
   const openChat = async (course) => {
     const enrollment = myEnrollments.find((e) => e.course.id === course.id);
     const initialScheduleId = enrollment?.schedule?.id || null;
@@ -441,12 +453,160 @@ export const DashboardStudent = () => {
 
       case "my-courses":
         return (
-          <div className="container">
-            <div className="student-banner">
-              <h3 className="fw-bold m-0">
-                <i className="fa-solid fa-book me-2"></i> My Courses
-              </h3>
+          <div className="container-fluid">
+            <div className="teacher-students-banner-modern mb-4">
+              <div className="banner-icon">
+                <i class="fa-solid fa-chalkboard-user"></i>
+              </div>
+              <div className="banner-content">
+                <h2 className="banner-title">My Class Recordings</h2>
+                <p className="banner-subtitle">
+                  Watch the recordings published by your teachers.
+                </p>
+              </div>
             </div>
+            {myEnrollments.length > 0 ? (
+              myEnrollments.map((enroll) => {
+                const course = enroll.course;
+                const courseVideos =
+                  (store.videos || []).filter(
+                    (v) => v.course_id === course.id && v.is_published
+                  ) || [];
+
+                if (courseVideos.length === 0) return null;
+
+                const grouped = courseVideos.reduce((acc, video) => {
+                  const groupName = video.group_name || "General";
+                  if (!acc[groupName]) acc[groupName] = [];
+                  acc[groupName].push(video);
+                  return acc;
+                }, {});
+
+                return (
+                  <div
+                    key={course.id}
+                    className="course-card-video mb-5"
+                    style={{
+                      background: "#fff",
+                      borderRadius: "15px",
+                      padding: "1.5rem",
+                      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
+                    }}
+                  >
+                    <h4
+                      className="fw-bold mb-3"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #2d3078 0%, #3f42a0 100%)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                      }}
+                    >
+                      {course.title}
+                    </h4>
+
+                    {Object.entries(grouped).map(([groupName, groupVideos]) => (
+                      <div key={groupName} className="mb-4">
+                        <h6
+                          className="fw-bold mb-2"
+                          style={{ color: "#001933" }}
+                        >
+                          {groupName}
+                        </h6>
+                        <ul className="list-group list-group-flush">
+                          {groupVideos.map((video) => (
+                            <li
+                              key={video.id}
+                              className="list-group-item d-flex justify-content-between align-items-center video-item"
+                              style={{
+                                background: "#f9fafc",
+                                borderRadius: "8px",
+                                marginTop: "0.5rem",
+                                transition: "background 0.2s ease",
+                              }}
+                              onMouseOver={(e) =>
+                                (e.currentTarget.style.background = "#eef2ff")
+                              }
+                              onMouseOut={(e) =>
+                                (e.currentTarget.style.background = "#f9fafc")
+                              }
+                            >
+                              <div>
+                                <strong
+                                  style={{
+                                    fontSize: "1rem",
+                                    fontWeight: "700",
+                                    background:
+                                      "linear-gradient(135deg, #2d3078 0%, #3f42a0 100%)",
+                                    WebkitBackgroundClip: "text",
+                                    WebkitTextFillColor: "transparent",
+                                    letterSpacing: "0.5px",
+                                    display: "inline-block",
+                                  }}
+                                >
+                                  {video.title}
+                                </strong>
+
+                                <div
+                                  className="small text-muted"
+                                  style={{ fontSize: "0.85rem" }}
+                                >
+                                  {video.created_at
+                                    ? new Date(
+                                        video.created_at
+                                      ).toLocaleDateString()
+                                    : "No date"}
+                                </div>
+                              </div>
+
+                              <a
+                                href={video.url || video.recording_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                  background:
+                                    "linear-gradient(135deg, #2d3078 0%, #3f42a0 100%)",
+                                  color: "white",
+                                  padding: "8px 16px",
+                                  borderRadius: "10px",
+                                  fontWeight: "600",
+                                  fontSize: "0.9rem",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "6px",
+                                  textDecoration: "none",
+                                  boxShadow:
+                                    "0 4px 10px rgba(45, 48, 120, 0.25)",
+                                  transition: "all 0.3s ease",
+                                }}
+                                onMouseOver={(e) => {
+                                  e.currentTarget.style.transform =
+                                    "translateY(-2px)";
+                                  e.currentTarget.style.boxShadow =
+                                    "0 6px 14px rgba(45, 48, 120, 0.35)";
+                                }}
+                                onMouseOut={(e) => {
+                                  e.currentTarget.style.transform =
+                                    "translateY(0)";
+                                  e.currentTarget.style.boxShadow =
+                                    "0 4px 10px rgba(45, 48, 120, 0.25)";
+                                }}
+                              >
+                                <i className="fa-solid fa-play"></i> Watch
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center text-muted py-5">
+                <p>You haven't enrolled in any courses yet.</p>
+              </div>
+            )}
           </div>
         );
 

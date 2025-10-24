@@ -5,6 +5,8 @@ import "../../../styles/dashboardTeacher.css";
 import noImage from "../../../img/noImage.jpg";
 import { CourseChatModal } from "../dashboardStudent/courseChatModal";
 import { PrivateChatModal } from "../dashboardStudent/privateChatModal";
+import Swal from "sweetalert2";
+import { FiCheckCircle, FiXCircle, FiX } from "react-icons/fi";
 
 export const DashboardTeacher = () => {
   const { store, actions } = useContext(Context);
@@ -24,6 +26,85 @@ export const DashboardTeacher = () => {
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [groupStudents, setGroupStudents] = useState([]);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [recordingTitle, setRecordingTitle] = useState("");
+  const [recordingUrl, setRecordingUrl] = useState("");
+  const [selectedLessons, setSelectedLessons] = useState([]);
+  const [selectedGroupId, setSelectedGroupId] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingVideo, setEditingVideo] = useState(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editUrl, setEditUrl] = useState("");
+
+  const openEditModal = (video) => {
+    setEditingVideo(video);
+    setEditTitle(video.title);
+    setEditUrl(video.recording_url);
+    setShowEditModal(true);
+  };
+  const handleUpdateVideo = async () => {
+    if (!editTitle || !editUrl) {
+      actions.showNotification(
+        "warning",
+        "Please complete all fields before saving."
+      );
+
+      return;
+    }
+
+    const updatedData = {
+      title: editTitle,
+      recording_url: editUrl,
+    };
+
+    const success = await actions.updateRecording(editingVideo.id, updatedData);
+    if (success) {
+      actions.showNotification(
+        "success",
+        "The recording has been successfully updated."
+      );
+      setShowEditModal(false);
+      setEditingVideo(null);
+    } else {
+      actions.showNotification(
+        "error",
+        "Something went wrong while updating the recording."
+      );
+    }
+  };
+
+  const handleUploadVideo = async () => {
+    if (!recordingTitle || !recordingUrl) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    const recordingData = {
+      course_id: selectedCourse.id,
+      title: recordingTitle,
+      recording_url: recordingUrl,
+      lesson_ids: selectedLessons,
+      schedule_id: selectedGroupId ? Number(selectedGroupId) : null,
+    };
+
+    const result = await actions.createRecording(recordingData);
+    if (result) {
+      setRecordingTitle("");
+      setRecordingUrl("");
+      setSelectedLessons([]);
+      setSelectedGroupId(null); // 🧽 limpiar selección
+      setShowUploadModal(false);
+    }
+  };
+
+  useEffect(() => {
+    actions.getTeacherCourses().then((courses) => {
+      // 📽 Después de cargar cursos, cargamos las grabaciones de cada uno
+      courses.forEach((course) => {
+        actions.getRecordingsByCourse(course.id);
+      });
+    });
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -504,9 +585,11 @@ export const DashboardTeacher = () => {
 
             {/* 🧑‍🎓 Tabla o estado vacío */}
             {filteredStudents.length === 0 ? (
-              <div className="empty-state-modern text-center">
-                <i className="fa-regular fa-face-frown mb-2"></i>
-                <p>No students found.</p>
+              <div className="wrapper text-center">
+                <div className="blue ball"></div>
+                <div className="red ball"></div>
+                <div className="yellow ball"></div>
+                <div className="green ball"></div>
               </div>
             ) : (
               <div className="students-table-wrapper">
@@ -591,7 +674,7 @@ export const DashboardTeacher = () => {
               <div className="banner-content">
                 <h2 className="banner-title">My Class Videos</h2>
                 <p className="banner-subtitle">
-                  View and manage the recordings of your classes 📹
+                  View and manage the recordings of your classes
                 </p>
               </div>
             </div>
@@ -601,63 +684,322 @@ export const DashboardTeacher = () => {
               store.courses.map((course) => {
                 const videos =
                   store.videos?.filter((v) => v.course_id === course.id) || [];
+
+                // 📌 Agrupar por nombre de grupo
+                const groupedVideos = videos.reduce((acc, video) => {
+                  const groupName = video.group_name || "General recording";
+                  if (!acc[groupName]) acc[groupName] = [];
+                  acc[groupName].push(video);
+                  return acc;
+                }, {});
+
                 return (
                   <div key={course.id} className="course-card-video mb-5">
                     <div className="d-flex align-items-center mb-3 gap-3">
-                      <img
-                        src={course.image_url || noImage}
-                        alt={course.title}
-                        className="course-img-thumbnail"
-                      />
                       <h4 className="fw-bold">{course.title}</h4>
+                      <button
+                        onClick={() => {
+                          setSelectedCourse(course);
+                          setShowUploadModal(true);
+                        }}
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                          color: "white",
+                          padding: "10px 18px",
+                          border: "none",
+                          borderRadius: "10px",
+                          fontWeight: "600",
+                          fontSize: "0.95rem",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          cursor: "pointer",
+                          boxShadow: "0 4px 10px rgba(16, 185, 129, 0.25)",
+                          transition: "all 0.3s ease",
+                          marginLeft: "auto",
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                          e.currentTarget.style.boxShadow =
+                            "0 6px 14px rgba(16, 185, 129, 0.35)";
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.transform = "translateY(0)";
+                          e.currentTarget.style.boxShadow =
+                            "0 4px 10px rgba(16, 185, 129, 0.25)";
+                        }}
+                      >
+                        <i className="fa-solid fa-upload"></i> Upload Video
+                      </button>
                     </div>
 
-                    {videos.length > 0 ? (
-                      <ul className="list-group list-group-flush">
-                        {videos.map((video) => (
-                          <li
-                            key={video.id}
-                            className="list-group-item d-flex justify-content-between align-items-center video-item"
-                          >
-                            <div>
-                              <i className="fa-solid fa-video me-2 text-primary"></i>
-                              <strong>{video.title}</strong>
-                              <div className="small text-muted">
-                                {video.group_name} •{" "}
-                                {new Date(video.date).toLocaleDateString()} •{" "}
-                                {video.duration} min
-                              </div>
-                            </div>
-                            <div className="d-flex gap-2">
-                              <a
-                                href={video.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="btn btn-sm btn-primary"
-                              >
-                                <i className="fa-solid fa-play me-1"></i> Watch
-                              </a>
-                              <button
-                                className="btn btn-sm btn-danger"
-                                onClick={() => actions.deleteVideo(video.id)}
-                              >
-                                <i className="fa-solid fa-trash"></i>
-                              </button>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
+                    {Object.keys(groupedVideos).length > 0 ? (
+                      Object.entries(groupedVideos)
+                        .sort(([a], [b]) => a.localeCompare(b)) // 📌 Ordena alfabéticamente por grupo
+                        .map(([groupName, groupVideos]) => (
+                          <div key={groupName} className="mb-4">
+                            <h6
+                              className="fw-bold mb-2"
+                              style={{ color: "#001933" }}
+                            >
+                              {groupName}
+                            </h6>
+                            <ul className="list-group list-group-flush">
+                              {groupVideos.map((video) => (
+                                <li
+                                  key={video.id}
+                                  className="list-group-item d-flex justify-content-between align-items-center video-item"
+                                >
+                                  <div>
+                                    <strong
+                                      style={{
+                                        fontSize: "1rem",
+                                        fontWeight: "700",
+                                        background:
+                                          "linear-gradient(135deg, #2d3078 0%, #3f42a0 100%)",
+                                        WebkitBackgroundClip: "text",
+                                        WebkitTextFillColor: "transparent",
+                                        letterSpacing: "0.5px",
+                                        display: "inline-block",
+                                      }}
+                                    >
+                                      {video.title}
+                                    </strong>
+                                    {video.is_published && (
+                                      <span className="badge bg-success ms-2">
+                                        Published
+                                      </span>
+                                    )}
+
+                                    <div className="small text-muted">
+                                      {video.created_at
+                                        ? new Date(
+                                            video.created_at
+                                          ).toLocaleDateString()
+                                        : "No date"}
+                                    </div>
+
+                                    {video.lessons && video.lessons.length > 0 && (
+                                      <ul className="mt-1 mb-0 ps-3">
+                                        {video.lessons.map((lesson) => (
+                                          <li
+                                            key={lesson.id}
+                                            className="text-muted"
+                                            style={{ fontSize: "0.85rem" }}
+                                          >
+                                            <strong>
+                                              Module {lesson.module_order}:{" "}
+                                              {lesson.module_title}
+                                            </strong>{" "}
+                                            — Lesson {lesson.order}:{" "}
+                                            {lesson.title}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    )}
+                                  </div>
+                                  <div className="d-flex gap-2">
+                                    {/* Botón Watch */}
+                                    <a
+                                      href={video.url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      style={{
+                                        background:
+                                          "linear-gradient(135deg, #2d3078 0%, #3f42a0 100%)",
+                                        color: "white",
+                                        padding: "8px 16px",
+                                        borderRadius: "10px",
+                                        fontWeight: "600",
+                                        fontSize: "0.9rem",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "6px",
+                                        textDecoration: "none",
+                                        boxShadow:
+                                          "0 4px 10px rgba(45, 48, 120, 0.25)",
+                                        transition: "all 0.3s ease",
+                                      }}
+                                      onMouseOver={(e) => {
+                                        e.currentTarget.style.transform =
+                                          "translateY(-2px)";
+                                        e.currentTarget.style.boxShadow =
+                                          "0 6px 14px rgba(45, 48, 120, 0.35)";
+                                      }}
+                                      onMouseOut={(e) => {
+                                        e.currentTarget.style.transform =
+                                          "translateY(0)";
+                                        e.currentTarget.style.boxShadow =
+                                          "0 4px 10px rgba(45, 48, 120, 0.25)";
+                                      }}
+                                    >
+                                      <i className="fa-solid fa-play"></i> Watch
+                                    </a>
+                                    {/* Botón Publish/Unpublish */}
+                                    <button
+                                      onClick={async () => {
+                                        const newStatus = !video.is_published;
+                                        const result =
+                                          await actions.togglePublishRecording(
+                                            video.id,
+                                            newStatus
+                                          );
+                                        if (result) {
+                                          Swal.fire({
+                                            icon: "success",
+                                            title: newStatus
+                                              ? "Recording published!"
+                                              : "Recording unpublished!",
+                                            text: newStatus
+                                              ? "Students can now watch this recording."
+                                              : "The recording is no longer visible to students.",
+                                            confirmButtonColor: "#2d3078",
+                                          });
+                                        }
+                                      }}
+                                      style={{
+                                        background: video.is_published
+                                          ? "linear-gradient(135deg, #eab308 0%, #ca8a04 100%)"
+                                          : "linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%)",
+                                        color: "white",
+                                        padding: "8px 14px",
+                                        border: "none",
+                                        borderRadius: "10px",
+                                        fontWeight: "600",
+                                        fontSize: "0.9rem",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        cursor: "pointer",
+                                        boxShadow:
+                                          "0 4px 10px rgba(0,0,0,0.15)",
+                                        transition: "all 0.3s ease",
+                                      }}
+                                    >
+                                      <i
+                                        className={`fa-solid ${
+                                          video.is_published
+                                            ? "fa-eye-slash"
+                                            : "fa-eye"
+                                        } me-2`}
+                                      ></i>
+                                      {video.is_published
+                                        ? "Unpublish"
+                                        : "Publish"}
+                                    </button>
+                                    <button
+                                      onClick={() => openEditModal(video)}
+                                      style={{
+                                        background:
+                                          "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)",
+                                        color: "white",
+                                        padding: "8px 14px",
+                                        border: "none",
+                                        borderRadius: "10px",
+                                        fontWeight: "600",
+                                        fontSize: "0.9rem",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        cursor: "pointer",
+                                        boxShadow:
+                                          "0 4px 10px rgba(99, 102, 241, 0.25)",
+                                        transition: "all 0.3s ease",
+                                      }}
+                                      onMouseOver={(e) => {
+                                        e.currentTarget.style.transform =
+                                          "translateY(-2px)";
+                                        e.currentTarget.style.boxShadow =
+                                          "0 6px 14px rgba(99, 102, 241, 0.35)";
+                                      }}
+                                      onMouseOut={(e) => {
+                                        e.currentTarget.style.transform =
+                                          "translateY(0)";
+                                        e.currentTarget.style.boxShadow =
+                                          "0 4px 10px rgba(99, 102, 241, 0.25)";
+                                      }}
+                                    >
+                                      <i className="fa-solid fa-pen"></i>
+                                    </button>
+
+                                    {/* Botón Delete */}
+                                    <button
+                                      onClick={() => {
+                                        Swal.fire({
+                                          title: "Are you sure?",
+                                          text: "This action will permanently delete the recording.",
+                                          icon: "warning",
+                                          showCancelButton: true,
+                                          confirmButtonColor: "#e4263c",
+                                          cancelButtonColor: "#6c757d",
+                                          confirmButtonText: "Yes, delete it",
+                                          cancelButtonText: "Cancel",
+                                          reverseButtons: true,
+                                        }).then((result) => {
+                                          if (result.isConfirmed) {
+                                            actions.deleteVideo(video.id);
+                                            Swal.fire({
+                                              title: "Deleted!",
+                                              text: "The recording has been successfully deleted.",
+                                              icon: "success",
+                                              confirmButtonColor: "#2d3078",
+                                            });
+                                          }
+                                        });
+                                      }}
+                                      style={{
+                                        background:
+                                          "linear-gradient(135deg, #e4263c 0%, #c11e32 100%)",
+                                        color: "white",
+                                        padding: "8px 14px",
+                                        border: "none",
+                                        borderRadius: "10px",
+                                        fontWeight: "600",
+                                        fontSize: "0.9rem",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        cursor: "pointer",
+                                        boxShadow:
+                                          "0 4px 10px rgba(228, 38, 60, 0.25)",
+                                        transition: "all 0.3s ease",
+                                      }}
+                                      onMouseOver={(e) => {
+                                        e.currentTarget.style.transform =
+                                          "translateY(-2px)";
+                                        e.currentTarget.style.boxShadow =
+                                          "0 6px 14px rgba(228, 38, 60, 0.35)";
+                                      }}
+                                      onMouseOut={(e) => {
+                                        e.currentTarget.style.transform =
+                                          "translateY(0)";
+                                        e.currentTarget.style.boxShadow =
+                                          "0 4px 10px rgba(228, 38, 60, 0.25)";
+                                      }}
+                                    >
+                                      <i className="fa-solid fa-trash"></i>
+                                    </button>
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))
                     ) : (
                       <p className="text-muted ps-2">
-                        No videos uploaded yet 🎥
+                        <strong>No videos uploaded yet...</strong>
                       </p>
                     )}
                   </div>
                 );
               })
             ) : (
-              <div className="text-muted text-center py-5">
-                No courses available.
+              <div className="wrapper text-center">
+                <div className="blue ball"></div>
+                <div className="red ball"></div>
+                <div className="yellow ball"></div>
+                <div className="green ball"></div>
               </div>
             )}
           </div>
@@ -712,7 +1054,7 @@ export const DashboardTeacher = () => {
                       return acc;
                     }, {})
                   )
-                    .sort(([a], [b]) => a.localeCompare(b)) // opcional para ordenar Grupo A, B, etc.
+                    .sort(([a], [b]) => a.localeCompare(b))
                     .map(([groupName, students]) => (
                       <div key={groupName} className="mb-4">
                         <h6 className="fw-bold text-primary mb-3">
@@ -922,6 +1264,213 @@ export const DashboardTeacher = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {showUploadModal && selectedCourse && (
+        <div
+          className="modal fade show d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-lg modal-dialog-centered">
+            <div className="modal-content rounded-4 border-0 shadow-lg">
+              <div className="modal-header">
+                <h2>
+                  <i className="fa-solid fa-upload modal-icon"></i>
+                  Upload Recording — {selectedCourse.title}
+                </h2>
+                <button
+                  className="close-modal"
+                  onClick={() => setShowUploadModal(false)}
+                  aria-label="Close Modal"
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+
+              <div className="modal-body">
+                {/* 📄 Título */}
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Title</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={recordingTitle}
+                    onChange={(e) => setRecordingTitle(e.target.value)}
+                    placeholder="Class 1 - Introduction"
+                  />
+                </div>
+
+                {/* 🔗 URL */}
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Recording URL</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={recordingUrl}
+                    onChange={(e) => setRecordingUrl(e.target.value)}
+                    placeholder="https://..."
+                  />
+                </div>
+                {/* 🧭 Grupo asociado */}
+                {selectedCourse.schedules?.length > 0 && (
+                  <div className="mb-3">
+                    <label className="form-label fw-bold">Select Group</label>
+                    <select
+                      className="form-select"
+                      value={selectedGroupId || ""}
+                      onChange={(e) => setSelectedGroupId(e.target.value)}
+                    >
+                      <option value="">-- Select a group --</option>
+                      {selectedCourse.schedules.map((group) => (
+                        <option key={group.id} value={group.id}>
+                          {group.group_name} — {group.day_of_week} (
+                          {group.start_time} - {group.end_time})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Related Lessons</label>
+                  <div className="lessons-checkboxes">
+                    {selectedCourse.modules?.map((module) => (
+                      <div key={module.id} className="mb-2">
+                        {/* Nombre del módulo */}
+                        <div className="fw-bold text-primary mb-1">
+                          <i className="fa-solid fa-layer-group me-2"></i>
+                          {module.title}
+                        </div>
+
+                        {/* Lecciones del módulo */}
+                        {module.lessons.map((lesson, index) => (
+                          <div key={lesson.id} className="form-check ms-3 mb-1">
+                            <input
+                              type="checkbox"
+                              className="form-check-input"
+                              value={lesson.id}
+                              checked={selectedLessons.includes(lesson.id)}
+                              onChange={(e) => {
+                                const id = Number(e.target.value);
+                                setSelectedLessons((prev) =>
+                                  prev.includes(id)
+                                    ? prev.filter((l) => l !== id)
+                                    : [...prev, id]
+                                );
+                              }}
+                            />
+                            <label className="form-check-label">
+                              Lesson {lesson.order || index + 1}: {lesson.title}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="d-flex justify-content-end">
+                  <button
+                    className="btn btn-secondary me-2"
+                    onClick={() => setShowUploadModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="btn btn-success"
+                    onClick={handleUploadVideo}
+                  >
+                    <i className="fa-solid fa-upload me-1"></i> Upload
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showEditModal && editingVideo && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>
+                <i className="fa-solid fa-pen modal-icon"></i>
+                Edit Recording — {editingVideo.title}
+              </h2>
+              <button
+                className="close-modal"
+                onClick={() => setShowEditModal(false)}
+                aria-label="Close Modal"
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Title</label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="Enter new title"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Recording URL</label>
+                <input
+                  type="text"
+                  value={editUrl}
+                  onChange={(e) => setEditUrl(e.target.value)}
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn-cancel"
+                  onClick={() => setShowEditModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleUpdateVideo}
+                >
+                  <i className="fa-solid fa-save me-2"></i> Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {store.notification.show && (
+        <div
+          className={`notification ${store.notification.type}`}
+          aria-live="polite"
+          role="status"
+        >
+          <div className="notification-content">
+            {store.notification.type === "success" ? (
+              <FiCheckCircle className="notification-icon" />
+            ) : (
+              <FiXCircle className="notification-icon" />
+            )}
+            <span>{store.notification.message}</span>
+            <button
+              className="close-notification"
+              onClick={() => actions.closeNotification()}
+              aria-label="Close Notification"
+            >
+              <FiX size={16} />
+            </button>
           </div>
         </div>
       )}

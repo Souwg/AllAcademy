@@ -98,11 +98,12 @@ class Recording(db.Model):
     __tablename__ = "recordings"
     id = db.Column(db.Integer, primary_key=True)
     course_id = db.Column(db.Integer, db.ForeignKey("course.id"), nullable=False)
-    schedule_id = db.Column(db.Integer, db.ForeignKey("course_schedule.id"), nullable=True)  # grupo opcional
+    schedule_id = db.Column(db.Integer, db.ForeignKey("course_schedule.id"), nullable=True) 
     teacher_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     title = db.Column(db.String(255), nullable=False)
     recording_url = db.Column(db.String(500), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_published = db.Column(db.Boolean, default=False)
 
     course = db.relationship("Course", backref="recordings")
     schedule = db.relationship("CourseSchedule", backref="recordings")
@@ -116,7 +117,18 @@ class Recording(db.Model):
             "title": self.title,
             "recording_url": self.recording_url,
             "created_at": self.created_at.isoformat(),
-            "lessons": [link.lesson.serialize() for link in self.linked_lessons]  
+            "is_published": self.is_published, 
+            "group_name": self.schedule.group_name if self.schedule else None,
+            "lessons": [
+                {
+                    "id": link.lesson.id,
+                    "title": link.lesson.title,
+                    "order": link.lesson.order,
+                    "module_title": link.lesson.module.title if link.lesson.module else None,
+                    "module_order": link.lesson.module.order if link.lesson.module else None
+                }
+                for link in self.linked_lessons
+            ]
         }
     
 class RecordingLesson(db.Model):
@@ -257,7 +269,6 @@ class Lesson(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     content = db.Column(db.Text)
-    video_url = db.Column(db.String(500))
     order = db.Column(db.Integer, nullable=False)
     
  
@@ -271,7 +282,6 @@ class Lesson(db.Model):
             "id": self.id,
             "title": self.title,
             "description": self.description,
-            "video_url": self.video_url,
             "order": self.order,
         }
 

@@ -4,7 +4,7 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 from flask import Flask, request, jsonify, url_for, Blueprint
 from sqlalchemy import extract, func
 from psycopg2 import IntegrityError
-from api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment, CourseChatMessage, PrivateChatMessage, CourseSchedule
+from api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment, CourseChatMessage, PrivateChatMessage, CourseSchedule, Recording, RecordingLesson 
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -36,9 +36,9 @@ api = Blueprint('api', __name__)
 @api.route('/signup', methods=['POST'])
 def register_user():
     """
-    Endpoint para registro de nuevos usuarios.
-    Valida campos obligatorios, contraseñas coincidentes y términos aceptados.
-    Crea un nuevo usuario en la base de datos.
+   📌 Endpoint to register new users.
+    Validates required fields, checks password match and terms acceptance,
+    and creates a new user in the database.
     """
     print("=== REGISTER USER ENDPOINT CALLED ===")
     print(f"Request method: {request.method}")
@@ -47,24 +47,24 @@ def register_user():
     body = request.get_json()
     print(f"Request body: {body}")
     
-    # Validación de campos obligatorios
+    
     required_fields = ['email', 'password', 'confirm_password', 'first_name', 'last_name', 'country', 'id_number']
     for field in required_fields:
         if not body.get(field):
             print(f"Missing required field: {field}")
             return jsonify({'msg': f'El campo {field} es requerido'}), 400
 
-    # Validación de contraseña
+    
     if body['password'] != body['confirm_password']:
         print("Passwords don't match")
         return jsonify({'msg': 'Las contraseñas no coinciden'}), 400
 
-    # Validación de términos
+    
     if not body.get('accept_terms'):
         print("Terms not accepted")
         return jsonify({'msg': 'Debes aceptar los términos y condiciones'}), 400
 
-    # Verificar si el usuario ya existe
+    
     if User.query.filter_by(email=body['email']).first():
         print("Email already registered")
         return jsonify({"msg": "El email ya está registrado"}), 409
@@ -73,7 +73,7 @@ def register_user():
         print("ID already registered for this country")
         return jsonify({"msg": "Esta identificación ya está registrada para el país seleccionado"}), 409
 
-    # Crear usuario
+    
     hashed_password = bcrypt.generate_password_hash(body['password']).decode('utf-8')
     new_user = User(
         email=body['email'],
@@ -104,8 +104,8 @@ def register_user():
 @api.route('/login', methods=['POST'])
 def user_login():
     """
-    Endpoint para autenticación de usuarios.
-    Verifica credenciales y genera un token JWT si son válidas.
+    📌 Endpoint to authenticate users.
+    Checks credentials and generates a JWT token if valid.
     """
     print("=== LOGIN ENDPOINT CALLED ===")
     print(f"Request method: {request.method}")
@@ -131,7 +131,7 @@ def user_login():
         print(f"Invalid password for user: {body['email']}")
         return jsonify({"msg": "Incorrect password"}), 401
     
-    # Actualizar el último inicio de sesión
+    
     user.last_login = datetime.utcnow()
     db.session.commit()
     print(f"Last login updated for user: {body['email']}")
@@ -158,8 +158,8 @@ def user_login():
 @jwt_required()
 def user_logout():
     """
-    Endpoint para cerrar sesión.
-    Invalida el token JWT actual agregándolo a la lista de tokens bloqueados.
+     📌 Endpoint to log out a user.
+    Invalidates the current JWT token by adding it to the blocked tokens list.
     """
     print("=== LOGOUT ENDPOINT CALLED ===")
     current_user = get_jwt_identity()
@@ -178,8 +178,8 @@ def user_logout():
 @jwt_required()
 def get_all_users():
     """
-    Endpoint para obtener todos los usuarios (solo administradores).
-    Devuelve una lista de todos los usuarios en el sistema.
+    📌 Endpoint to retrieve all users (admin only).
+    Returns a list of all users in the system.
     """
     print("=== GET ALL USERS ENDPOINT CALLED ===")
     claims = get_jwt()
@@ -191,7 +191,7 @@ def get_all_users():
         print("Unauthorized access attempt to admin endpoint")
         return jsonify({"msg": "Acceso no autorizado: Se requieren privilegios de administrador"}), 403
     
-    # Usa el método serialize() que ya definiste en el modelo para consistencia
+    
     users = User.query.all()
     print(f"Returning {len(users)} users")
     
@@ -201,8 +201,8 @@ def get_all_users():
 @jwt_required()
 def update_user_role(user_id):
     """
-    Endpoint para actualizar el rol de un usuario (solo administradores).
-    Permite cambiar el rol de cualquier usuario excepto el propio.
+    📌 Endpoint to update a user's role (admin only).
+    Allows changing the role of any user except their own.
     """
     print("=== UPDATE USER ROLE ENDPOINT CALLED ===")
     claims = get_jwt()
@@ -229,8 +229,8 @@ def update_user_role(user_id):
     if not user:
         print(f"User not found: {user_id}")
         return jsonify({"msg": "Usuario no encontrado"}), 404
+
     
-    # No permitir que un admin se quite sus propios privilegios
     if str(user.id) == current_user and body['role'] != 'admin':
         print("Admin attempted to remove their own admin privileges")
         return jsonify({"msg": "No puedes quitarte tus propios privilegios de administrador"}), 400
@@ -245,6 +245,9 @@ def update_user_role(user_id):
 @api.route('/admin/users/<int:user_id>', methods=['PUT'])
 @jwt_required()
 def update_user(user_id):
+    """
+    📌 Endpoint to update user details (admin only).
+    """
     claims = get_jwt()
     if claims.get('role') != "admin":
         return jsonify({"msg": "Acceso no autorizado"}), 403
@@ -255,7 +258,7 @@ def update_user(user_id):
 
     body = request.get_json()
 
-    # Campos editables
+    
     user.first_name = body.get("first_name", user.first_name)
     user.last_name = body.get("last_name", user.last_name)
     user.email = body.get("email", user.email)
@@ -274,8 +277,8 @@ def update_user(user_id):
 @jwt_required()
 def delete_user(user_id):
     """
-    Endpoint para eliminar un usuario (solo administradores).
-    No permite eliminar otros administradores o a sí mismo.
+    📌 Endpoint to delete a user (admin only).
+    Does not allow deleting other admins or oneself.
     """
     print("=== DELETE USER ENDPOINT CALLED ===")
     claims = get_jwt()
@@ -291,12 +294,12 @@ def delete_user(user_id):
         print(f"User not found: {user_id}")
         return jsonify({"msg": "Usuario no encontrado"}), 404
     
-    # No permitir eliminar otros administradores
+    
     if user.role == 'admin':
         print("Attempt to delete another admin user")
         return jsonify({"msg": "No puedes eliminar a otro administrador"}), 400
     
-    # No permitir auto-eliminación
+    
     if str(user.id) == current_user:
         print("Attempt to delete self")
         return jsonify({"msg": "No puedes eliminarte a ti mismo"}), 400
@@ -312,12 +315,13 @@ def delete_user(user_id):
 @jwt_required()
 def block_user(user_id):
     """
-    Endpoint para bloquear un usuario (solo administradores).
-    Permite bloquear usuarios y especificar una razón.
+        📌 Endpoint to block a user (admin only).
+    Allows blocking a user and adding a reason for the block.
+
     """
     print("=== BLOCK USER ENDPOINT CALLED ===")
     try:
-        # Verificar autenticación y permisos
+        
         claims = get_jwt()
         current_user = get_jwt_identity()
         print(f"Request by user: {current_user} to block user: {user_id}")
@@ -326,7 +330,7 @@ def block_user(user_id):
             print("Unauthorized access attempt to admin endpoint")
             return jsonify({"msg": "No autorizado"}), 403
 
-        # Obtener datos
+        
         data = request.get_json()
         print(f"Block reason: {data.get('reason', 'No reason provided')}")
         
@@ -334,13 +338,13 @@ def block_user(user_id):
             print("No reason provided for block")
             return jsonify({"msg": "Razón de bloqueo requerida"}), 400
 
-        # Buscar usuario
+        
         user = User.query.get(user_id)
         if not user:
             print(f"User not found: {user_id}")
             return jsonify({"msg": "Usuario no encontrado"}), 404
 
-        # Aplicar bloqueo
+        
         print(f"Blocking user: {user_id} ({user.email})")
         user.is_blocked = True
         user.block_reason = data['reason']
@@ -362,8 +366,8 @@ def block_user(user_id):
 @jwt_required()
 def unblock_user(user_id):
     """
-    Endpoint para desbloquear un usuario (solo administradores).
-    Permite desbloquear usuarios previamente bloqueados.
+    📌 Endpoint to unblock a user (admin only).
+    Allows unblocking previously blocked users.
     """
     print("=== UNBLOCK USER ENDPOINT CALLED ===")
     claims = get_jwt()
@@ -399,13 +403,13 @@ def unblock_user(user_id):
 @jwt_required()
 def create_course():
     """
-    Endpoint para crear un nuevo curso con módulos y lecciones.
-    Solo disponible para administradores y profesores.
+    📌 Endpoint to create a new course with modules and lessons.
+    Only administrators and teachers can use this.
     """
     try:
         print("=== CREATE COURSE ENDPOINT CALLED ===")
 
-        # Verificar autenticación
+        
         claims = get_jwt()
         user_id = get_jwt_identity()
         user = User.query.get(user_id)
@@ -413,29 +417,29 @@ def create_course():
         if not user or user.role not in ['admin', 'teacher']:
             return jsonify({"msg": "Only administrators and teachers can create courses"}), 403
 
-        # Obtener datos del curso
+        
         data = request.get_json()
         print(f"📩 Datos recibidos: {data}")
 
         if not data:
             return jsonify({"msg": "Required JSON data"}), 400
 
-        # Validaciones básicas
+        
         required_fields = ['title', 'description', 'price']
         for field in required_fields:
             if not data.get(field):
                 return jsonify({"msg": f"The {field} is required"}), 400
 
-        # Crear slug a partir del título
+        
         slug = slugify(data['title'])
 
-        # Verificar si el slug ya existe
+        
         existing_course = Course.query.filter_by(slug=slug).first()
         if existing_course:
             import time
             slug = f"{slug}-{int(time.time())}"
 
-        # ✅ Asignar correctamente el teacher_id
+        
         if user.role == "teacher":
             teacher_id = user.id
         elif user.role == "admin":
@@ -446,7 +450,7 @@ def create_course():
         else:
             teacher_id = None
 
-        # Crear el curso
+        
         new_course = Course(
             title=data['title'],
             slug=slug,
@@ -476,10 +480,10 @@ def create_course():
                     timezone = sched.get("timezone", "GMT-5")
                     group_name = sched.get("group_name", None)
 
-                    # ✅ Guarda todos los días juntos en un solo registro
+                    
                     new_schedule = CourseSchedule(
                         course_id=new_course.id,
-                        day_of_week=",".join(days),  # 👈 cambio clave aquí
+                        day_of_week=",".join(days), 
                         start_time=start_time,
                         end_time=end_time,
                         timezone=timezone,
@@ -490,7 +494,7 @@ def create_course():
                 except Exception as e:
                     print(f"⚠️ Error al procesar horario: {e}")
 
-        # Agregar objetivos de aprendizaje
+        
         if 'what_you_learn' in data and isinstance(data['what_you_learn'], list):
             for objective in data['what_you_learn']:
                 if objective and objective.strip():
@@ -500,7 +504,7 @@ def create_course():
                     )
                     db.session.add(learning_obj)
 
-        # Agregar requisitos
+        
         if 'requirements' in data and isinstance(data['requirements'], list):
             for requirement in data['requirements']:
                 if requirement and requirement.strip():
@@ -510,7 +514,7 @@ def create_course():
                     )
                     db.session.add(req)
 
-        # Agregar módulos y lecciones
+       
         if 'modules' in data and isinstance(data['modules'], list):
             for module_index, module_data in enumerate(data['modules']):
                 if not module_data.get('title'):
@@ -523,7 +527,7 @@ def create_course():
                     course_id=new_course.id
                 )
                 db.session.add(new_module)
-                db.session.flush()  # Para obtener el ID del módulo
+                db.session.flush() 
 
                 if 'lessons' in module_data and isinstance(module_data['lessons'], list):
                     for lesson_index, lesson_data in enumerate(module_data['lessons']):
@@ -558,7 +562,7 @@ def create_course():
 @jwt_required()
 def add_module(course_id):
     """
-    Endpoint para agregar un módulo a un curso existente.
+    📌 Endpoint to add a new module to an existing course.
     """
     try:
         claims = get_jwt()
@@ -568,7 +572,7 @@ def add_module(course_id):
         if not course:
             return jsonify({"msg": "Curso no encontrado"}), 404
         
-        # Verificar permisos
+        
         if claims.get('role') != 'admin' and str(course.teacher_id) != user_id:
             return jsonify({"msg": "No tienes permisos para modificar este curso"}), 403
         
@@ -576,7 +580,7 @@ def add_module(course_id):
         if not data.get('title'):
             return jsonify({"msg": "El título del módulo es requerido"}), 400
         
-        # Determinar el orden
+        
         last_module = Module.query.filter_by(course_id=course_id).order_by(Module.order.desc()).first()
         new_order = last_module.order + 1 if last_module else 1
         
@@ -603,7 +607,7 @@ def add_module(course_id):
 @jwt_required()
 def add_lesson(module_id):
     """
-    Endpoint para agregar una lección a un módulo existente.
+    📌 Endpoint to add a lesson to an existing module.
     """
     try:
         module = Module.query.get(module_id)
@@ -613,7 +617,7 @@ def add_lesson(module_id):
         claims = get_jwt()
         user_id = get_jwt_identity()
         
-        # Verificar permisos
+        
         if claims.get('role') != 'admin' and str(module.course.teacher_id) != user_id:
             return jsonify({"msg": "No tienes permisos para modificar este curso"}), 403
         
@@ -621,7 +625,7 @@ def add_lesson(module_id):
         if not data.get('title'):
             return jsonify({"msg": "El título de la lección es requerido"}), 400
         
-        # Determinar el orden
+        
         last_lesson = Lesson.query.filter_by(module_id=module_id).order_by(Lesson.order.desc()).first()
         new_order = last_lesson.order + 1 if last_lesson else 1
         
@@ -650,20 +654,20 @@ def add_lesson(module_id):
 @jwt_required()
 def get_teachers():
     """
-    Endpoint para obtener todos los profesores (solo administradores).
+    📌 Endpoint to get all teachers (admin only).
     """
     print("=== GET TEACHERS ENDPOINT CALLED ===")
     
-    # Verificar que es admin
+    
     claims = get_jwt()
     if claims.get('role') != 'admin':
         print("Unauthorized access attempt to teachers endpoint")
         return jsonify({"msg": "No autorizado"}), 403
     
-    # Obtener todos los usuarios con rol de profesor
+    
     teachers = User.query.filter_by(role='teacher').all()
     
-    # Serializar solo los datos necesarios
+    
     teachers_data = [{
         'id': teacher.id,
         'first_name': teacher.first_name,
@@ -679,11 +683,11 @@ def get_teachers():
 @jwt_required()
 def get_all_courses():
     """
-    Endpoint para obtener todos los cursos, incluyendo no publicados (solo administradores).
+    📌 Endpoint to get all courses including unpublished ones (admin only).
     """
     print("=== GET ALL COURSES (ADMIN) ENDPOINT CALLED ===")
     try:
-        # Verificar que es admin
+        
         claims = get_jwt()
         user_id = get_jwt_identity()
         print(f"Request by user: {user_id}")
@@ -693,10 +697,10 @@ def get_all_courses():
             print("Unauthorized access attempt to admin endpoint")
             return jsonify({"msg": "No autorizado"}), 403
         
-        # DEBUG: Imprimir antes de cargar cursos
+        
         print("DEBUG: Before querying courses")
         
-        # Cargar cursos con relaciones básicas
+        
         courses = Course.query.options(
             db.joinedload(Course.modules).joinedload(Module.lessons),
             db.joinedload(Course.what_you_learn),
@@ -705,7 +709,7 @@ def get_all_courses():
         
         print(f"DEBUG: Found {len(courses)} courses")
         
-        # DEBUG: Verificar cada curso y sus relaciones
+        
         serialized_courses = []
         for i, course in enumerate(courses):
             print(f"DEBUG: Course {i+1}: {course.title} (ID: {course.id})")
@@ -713,7 +717,7 @@ def get_all_courses():
             print(f"DEBUG: - What you learn count: {len(course.what_you_learn)}")
             print(f"DEBUG: - Requirements count: {len(course.requirements)}")
             
-            # Verificar módulos individualmente
+            
             for j, module in enumerate(course.modules):
                 print(f"DEBUG:   Module {j+1}: {module.title} (Order: {module.order})")
                 print(f"DEBUG:   - Lessons count: {len(module.lessons)}")
@@ -721,11 +725,11 @@ def get_all_courses():
                 for k, lesson in enumerate(module.lessons):
                     print(f"DEBUG:     Lesson {k+1}: {lesson.title} (Order: {lesson.order})")
             
-            # Serializar el curso
+            
             course_data = course.serialize()
             serialized_courses.append(course_data)
             
-            # DEBUG: Verificar datos serializados
+            
             print(f"DEBUG: Serialized course modules: {len(course_data.get('modules', []))}")
         
         print(f"DEBUG: Returning {len(serialized_courses)} serialized courses")
@@ -737,12 +741,12 @@ def get_all_courses():
         traceback.print_exc()
         return jsonify({"msg": "Error al obtener cursos", "error": str(e)}), 500
     
-    # Obtener todos los cursos
+    
 @api.route('/courses', methods=['GET'])
 def get_courses():
     """
-    Endpoint público para obtener todos los cursos publicados.
-    No requiere autenticación.
+    📌 Public endpoint to get all published courses.
+    No authentication required.
     """
     print("=== GET COURSES (PUBLIC) ENDPOINT CALLED ===")
     try:
@@ -753,12 +757,12 @@ def get_courses():
         print(f"Error getting published courses: {str(e)}")
         return jsonify({"msg": "Error al obtener cursos", "error": str(e)}), 500
 
-# Obtener un curso específico
+
 @api.route('/courses/<int:course_id>', methods=['GET'])
 def get_course(course_id):
     """
-    Endpoint público para obtener un curso específico por ID.
-    No requiere autenticación.
+    📌 Public endpoint to get a specific course by ID.
+    No authentication required.
     """
     print(f"=== GET COURSE {course_id} ENDPOINT CALLED ===")
     try:
@@ -777,18 +781,14 @@ def get_course(course_id):
 @jwt_required()
 def update_course(course_id):
     """
-    📝 Actualiza toda la información del curso: 
-    - Datos básicos
-    - Objetivos
-    - Requisitos
-    - Módulos y lecciones
-    - Horarios (schedules)
+📌 Endpoint to update an entire course.
+    Updates basic info, objectives, requirements, modules, lessons, and schedules.
     """
     try:
         claims = get_jwt()
         user_id = get_jwt_identity()
 
-        # Solo admin o el profesor dueño puede editar
+        
         user = User.query.get(user_id)
         if not user or (user.role not in ["admin", "teacher"]):
             return jsonify({"msg": "Unauthorized"}), 403
@@ -802,9 +802,7 @@ def update_course(course_id):
         if not data:
             return jsonify({"msg": "Required JSON data"}), 400
 
-        # =======================
-        # 📌 Información básica
-        # =======================
+      
         course.title = data.get("title", course.title)
         course.description = data.get("description", course.description)
         course.short_description = data.get("short_description", course.short_description)
@@ -826,27 +824,21 @@ def update_course(course_id):
                 course.published_at = None
             course.is_published = new_status
 
-        # =======================
-        # 🧠 Objetivos de aprendizaje
-        # =======================
+       
         if "what_you_learn" in data and isinstance(data["what_you_learn"], list):
             LearningObjective.query.filter_by(course_id=course.id).delete()
             for obj in data["what_you_learn"]:
                 if obj.strip():
                     db.session.add(LearningObjective(objective=obj.strip(), course_id=course.id))
 
-        # =======================
-        # 📋 Requisitos
-        # =======================
+       
         if "requirements" in data and isinstance(data["requirements"], list):
             Requirement.query.filter_by(course_id=course.id).delete()
             for req in data["requirements"]:
                 if req.strip():
                     db.session.add(Requirement(requirement=req.strip(), course_id=course.id))
 
-        # =======================
-        # 📚 Módulos y lecciones
-        # =======================
+     
         if "modules" in data and isinstance(data["modules"], list):
             for module in course.modules:
                 db.session.delete(module)
@@ -873,14 +865,11 @@ def update_course(course_id):
                     )
                     db.session.add(new_lesson)
 
-        # =======================
-        # ⏰ Horarios (schedules)
-        # =======================
+       
         if "schedules" in data and isinstance(data["schedules"], list):
-            # ✅ Obtenemos los horarios existentes para este curso
             existing_schedules = {s.id: s for s in course.schedules}
 
-            # ✅ Guardamos IDs recibidos para detectar cuáles borrar (si es necesario)
+           
             received_ids = set()
 
             for sched_data in data["schedules"]:
@@ -899,7 +888,7 @@ def update_course(course_id):
                 end_time = datetime.strptime(end, "%H:%M").time()
 
                 if sched_id and sched_id in existing_schedules:
-                    # 🛠️ Actualizar horario existente
+                    
                     sched_obj = existing_schedules[sched_id]
                     sched_obj.day_of_week = day_of_week
                     sched_obj.start_time = start_time
@@ -908,7 +897,7 @@ def update_course(course_id):
                     sched_obj.group_name = group_name
                     received_ids.add(sched_id)
                 else:
-                    # ➕ Crear nuevo horario
+                    
                     new_schedule = CourseSchedule(
                         course_id=course.id,
                         day_of_week=day_of_week,
@@ -919,10 +908,10 @@ def update_course(course_id):
                     )
                     db.session.add(new_schedule)
 
-            # 🧹 Si quisieras borrar horarios sin estudiantes (opcional)
+           
             for sched_id, sched_obj in existing_schedules.items():
                 if sched_id not in received_ids:
-                    # Verificamos si hay estudiantes inscritos
+                    
                     if not sched_obj.students or len(sched_obj.students) == 0:
                         db.session.delete(sched_obj)
                     else:
@@ -931,9 +920,7 @@ def update_course(course_id):
         else:
             print("⚠️ No se recibieron horarios — se mantienen los existentes.")
 
-        # =======================
-        # 💾 Guardar cambios
-        # =======================
+       
         db.session.commit()
         return jsonify({"msg": "Course updated successfully", "course": course.serialize()}), 200
 
@@ -944,13 +931,13 @@ def update_course(course_id):
 
     
 
-# Eliminar un curso
+
 @api.route('/courses/<int:course_id>', methods=['DELETE'])
 @jwt_required()
 def delete_course(course_id):
     """
-    Endpoint para eliminar un curso.
-    Solo disponible para el profesor dueño del curso o administradores.
+    📌 Endpoint to delete a course.
+    Only the course teacher or admins can delete it.
     """
     print(f"=== DELETE COURSE {course_id} ENDPOINT CALLED ===")
     try:
@@ -963,7 +950,7 @@ def delete_course(course_id):
             print(f"Course not found: {course_id}")
             return jsonify({"msg": "Curso no encontrado"}), 404
         
-        # Verificar permisos (solo el profesor dueño o admin puede eliminar)
+        
         if claims.get('role') != 'admin' and str(course.teacher_id) != user_id:
             print("Unauthorized attempt to delete course")
             return jsonify({"msg": "No tienes permisos para eliminar este curso"}), 403
@@ -982,6 +969,10 @@ def delete_course(course_id):
 
 @api.route('/stats/users-per-month', methods=['GET'])
 def users_per_month():
+    """
+    📌 Endpoint to get user registration statistics per month.
+    """
+
     try:
         results = (
             db.session.query(
@@ -1013,8 +1004,8 @@ def users_per_month():
 @api.route('/courses/slug/<string:slug>', methods=['GET'])
 def get_course_by_slug(slug):
     """
-    Endpoint público para obtener un curso específico por slug.
-    No requiere autenticación.
+    📌 Public endpoint to get a specific course by its slug.
+    No authentication required.
     """
     print(f"=== GET COURSE BY SLUG {slug} ENDPOINT CALLED ===")
     try:
@@ -1029,9 +1020,16 @@ def get_course_by_slug(slug):
         print(f"Error getting course by slug {slug}: {str(e)}")
         return jsonify({"msg": "Error al obtener el curso", "error": str(e)}), 500
     
+# ============================
+# ENROLLMENTS
+# ============================
+    
 @api.route('/enroll/<int:course_id>', methods=['POST'])
 @jwt_required()
 def enroll_course(course_id):
+    """
+    📌 Endpoint to enroll the authenticated user in a course.
+    """
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
     course = Course.query.get(course_id)
@@ -1044,12 +1042,12 @@ def enroll_course(course_id):
     if not course.is_published:
         return jsonify({"msg": "Course is not published"}), 400
 
-    # Evitar inscripción duplicada
+    
     existing = Enrollment.query.filter_by(student_id=user.id, course_id=course.id).first()
     if existing:
         return jsonify({"msg": "Already enrolled"}), 400
 
-    # 🆕 Validar que el horario exista para este curso
+    
     if schedule_id:
         schedule = CourseSchedule.query.filter_by(id=schedule_id, course_id=course_id).first()
         if not schedule:
@@ -1075,8 +1073,7 @@ def enroll_course(course_id):
 @jwt_required()
 def get_my_enrollments():
     """
-    Devuelve los cursos en los que el usuario actual está inscrito,
-    incluyendo la información completa del curso y su progreso.
+    📌 Endpoint to get all courses in which the current user is enrolled.
     """
     try:
         user_id = get_jwt_identity()
@@ -1099,6 +1096,9 @@ def get_my_enrollments():
 @api.route('/enrollments', methods=['GET'])
 @jwt_required()
 def get_all_enrollments():
+    """
+    📌 Endpoint to get all enrollments (admin only).
+    """
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
 
@@ -1109,14 +1109,14 @@ def get_all_enrollments():
     return jsonify([e.serialize() for e in enrollments]), 200
 
 # ============================
-# 🗨️ CHAT DEL CURSO
+# COURSE CHAT
 # ============================
 
 @api.route('/course/<int:course_id>/chat', methods=['GET'])
 @jwt_required()
 def get_course_chat(course_id):
     """
-    Obtiene mensajes de chat por curso y opcionalmente por grupo (schedule_id).
+    📌 Endpoint to get chat messages from a course (and optionally by group).
     """
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
@@ -1125,13 +1125,13 @@ def get_course_chat(course_id):
     if not course:
         return jsonify({"msg": "Course not found"}), 404
 
-    # Verificar si pertenece al curso
+    
     is_teacher = course.teacher_id == user.id
     is_student = Enrollment.query.filter_by(student_id=user.id, course_id=course_id).first()
     if not is_teacher and not is_student:
         return jsonify({"msg": "Unauthorized: not enrolled"}), 403
 
-    # 👇 Nuevo: Filtrar por grupo si se pasa schedule_id en la URL
+    
     schedule_id = request.args.get("schedule_id", type=int)
     query = CourseChatMessage.query.filter_by(course_id=course_id)
 
@@ -1150,7 +1150,7 @@ def get_course_chat(course_id):
 @jwt_required()
 def post_course_chat(course_id):
     """
-    Envía un nuevo mensaje al chat de un curso o grupo.
+    📌 Endpoint to send a new message in a course chat.
     """
     user_id = get_jwt_identity()
     data = request.get_json()
@@ -1163,13 +1163,13 @@ def post_course_chat(course_id):
     if not course:
         return jsonify({"msg": "Course not found"}), 404
 
-    # Verificar si pertenece al curso
+    
     is_teacher = course.teacher_id == user.id
     is_student = Enrollment.query.filter_by(student_id=user.id, course_id=course_id).first()
     if not is_teacher and not is_student:
         return jsonify({"msg": "Unauthorized"}), 403
 
-    # 👇 Nuevo: si viene un schedule_id lo guardamos
+    
     schedule_id = data.get("schedule_id")
 
     if schedule_id:
@@ -1192,7 +1192,7 @@ def post_course_chat(course_id):
 @jwt_required()
 def get_private_chat(student_id):
     """
-    Obtiene todos los mensajes entre el profesor actual y un estudiante.
+    📌 Endpoint to get all private messages between the teacher and a specific student.
     """
 
     teacher_id = get_jwt_identity()
@@ -1212,7 +1212,7 @@ def get_private_chat(student_id):
 @jwt_required()
 def send_private_message(student_id):
     """
-    Envía un mensaje privado entre profesor y estudiante.
+    📌 Endpoint to send a private message between teacher and student.
     """
 
     sender_id = get_jwt_identity()
@@ -1232,12 +1232,14 @@ def send_private_message(student_id):
 
     return jsonify(new_msg.serialize()), 201
 
+# ============================
+# TEACHER DASHBOARD
+# ============================
 
 @api.route('/teacher/courses', methods=['GET'])
 @jwt_required()
 def get_teacher_courses():
-    """Devuelve todos los cursos creados por un profesor junto con
-    el total de estudiantes inscritos en cada uno."""
+    """📌 Endpoint to get all courses created by a teacher, including total student count."""
     try:
         teacher_id = get_jwt_identity()
         user = User.query.get(teacher_id)
@@ -1265,8 +1267,7 @@ def get_teacher_courses():
 @jwt_required()
 def get_teacher_students():
     """
-    Devuelve todos los estudiantes inscritos en los cursos de un profesor.
-    Incluye información del estudiante, curso, progreso y fecha de inscripción.
+    📌 Endpoint to get all students enrolled in a teacher’s courses.
     """
     try:
         teacher_id = get_jwt_identity()
@@ -1275,14 +1276,14 @@ def get_teacher_students():
         if not user or user.role != "teacher":
             return jsonify({"msg": "Unauthorized"}), 403
 
-        # Buscar cursos del profesor
+        
         courses = Course.query.filter_by(teacher_id=teacher_id).all()
         course_ids = [c.id for c in courses]
 
         if not course_ids:
             return jsonify([]), 200
 
-        # Buscar inscripciones de esos cursos
+        
         enrollments = (
             db.session.query(Enrollment, User, Course)
             .join(User, Enrollment.student_id == User.id)
@@ -1318,8 +1319,7 @@ def get_teacher_students():
 @jwt_required()
 def get_students_by_course(course_id):
     """
-    Devuelve los estudiantes inscritos en un curso específico del profesor
-    e incluye información del grupo/horario si existe.
+    📌 Endpoint to get all students enrolled in a specific course of the teacher, including group/timetable information if it exists.
     """
     try:
         teacher_id = get_jwt_identity()
@@ -1328,7 +1328,7 @@ def get_students_by_course(course_id):
         if not user:
             return jsonify({"msg": "Usuario no encontrado"}), 404
 
-        # Permitir tanto teachers como admins
+        
         if user.role not in ["teacher", "admin"]:
             return jsonify({"msg": "No autorizado"}), 403
 
@@ -1336,11 +1336,11 @@ def get_students_by_course(course_id):
         if not course:
             return jsonify({"msg": "Curso no encontrado"}), 404
 
-        # Si es teacher, verificar que sea el dueño del curso
+        
         if user.role == "teacher" and course.teacher_id != user.id:
             return jsonify({"msg": "No tienes acceso a este curso"}), 403
 
-        # 👇 Hacemos JOIN también con CourseSchedule
+        
         enrollments = (
             db.session.query(Enrollment, User, CourseSchedule)
             .join(User, Enrollment.student_id == User.id)
@@ -1382,4 +1382,171 @@ def get_students_by_course(course_id):
 from api.models import Recording, RecordingLesson, Lesson
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
+# ============================
+# RECORDINGS
+# ============================
+@api.route('/recordings', methods=['POST'])
+@jwt_required()
+def create_recording():
+    """
+    📌 Endpoint to create a new class recording and link it to lessons.
+    """
+    try:
+        data = request.get_json()
+        teacher_id = get_jwt_identity()
 
+        
+        required_fields = ['course_id', 'title', 'recording_url']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({"msg": f"{field} es requerido"}), 400
+
+        
+        new_recording = Recording(
+            course_id=data['course_id'],
+            schedule_id=data.get('schedule_id'),
+            teacher_id=teacher_id,
+            title=data['title'],
+            recording_url=data['recording_url']
+        )
+        db.session.add(new_recording)
+        db.session.flush()  
+
+        
+        lesson_ids = data.get('lesson_ids', [])
+        if lesson_ids and isinstance(lesson_ids, list):
+            for lesson_id in lesson_ids:
+                if Lesson.query.get(lesson_id):
+                    db.session.add(RecordingLesson(
+                        recording_id=new_recording.id,
+                        lesson_id=lesson_id
+                    ))
+
+        db.session.commit()
+        return jsonify({
+            "msg": "Grabación creada con éxito",
+            "recording": new_recording.serialize()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error al crear grabación: {str(e)}")
+        return jsonify({"msg": "Error al crear grabación", "error": str(e)}), 500
+    
+@api.route('/recordings/<int:course_id>', methods=['GET'])
+@jwt_required()
+def get_recordings(course_id):
+    """
+    📌 Endpoint to get all recordings for a specific course.
+    """
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    schedule_id = request.args.get('schedule_id', type=int)
+
+    query = Recording.query.filter_by(course_id=course_id)
+    if schedule_id:
+        query = query.filter_by(schedule_id=schedule_id)
+
+    
+    if user.role == "student":
+        query = query.filter_by(is_published=True)
+
+    recordings = query.order_by(Recording.created_at.desc()).all()
+    return jsonify([r.serialize() for r in recordings]), 200
+
+@api.route('/recordings/<int:recording_id>/publish', methods=['PUT'])
+@jwt_required()
+def publish_recording(recording_id):
+    """
+    📌 Endpoint to publish or unpublish a recording (teacher or admin).
+    """
+    try:
+        user_id = get_jwt_identity()
+        recording = Recording.query.get(recording_id)
+        if not recording:
+            return jsonify({"msg": "Grabación no encontrada"}), 404
+
+        user = User.query.get(user_id)
+        if user.role != "admin" and recording.teacher_id != user.id:
+            return jsonify({"msg": "No autorizado"}), 403
+
+        data = request.get_json()
+        recording.is_published = data.get('is_published', True)
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Estado de publicación actualizado",
+            "recording": recording.serialize()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": "Error al publicar grabación", "error": str(e)}), 500
+    
+@api.route('/recordings/<int:recording_id>', methods=['PUT'])
+@jwt_required()
+def update_recording(recording_id):
+    """
+    📌 Endpoint to update a recording's title or URL.
+    Only the owner teacher or admin can update it.
+    """
+    try:
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+        recording = Recording.query.get(recording_id)
+
+        if not recording:
+            return jsonify({"msg": "Grabación no encontrada"}), 404
+
+        
+        if user.role != "admin" and recording.teacher_id != int(user_id):
+            return jsonify({"msg": "No autorizado"}), 403
+
+        data = request.get_json()
+
+        
+        if "title" in data and data["title"]:
+            recording.title = data["title"]
+
+        if "recording_url" in data and data["recording_url"]:
+            recording.recording_url = data["recording_url"]
+
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Grabación actualizada exitosamente",
+            "recording": recording.serialize()
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error al actualizar grabación: {str(e)}")
+        return jsonify({"msg": "Error al actualizar grabación", "error": str(e)}), 500
+
+
+@api.route('/recordings/<int:recording_id>', methods=['DELETE'])
+@jwt_required()
+def delete_recording(recording_id):
+    """
+    📌 Endpoint to delete a recording and its associations.
+    Only the owner teacher or admin can delete it.
+    """
+    try:
+        user_id = get_jwt_identity()
+        recording = Recording.query.get(recording_id)
+
+        if not recording:
+            return jsonify({"msg": "Grabación no encontrada"}), 404
+
+        
+        user = User.query.get(user_id)
+        if user.role != "admin" and recording.teacher_id != int(user_id):
+            return jsonify({"msg": "No tienes permisos para eliminar esta grabación"}), 403
+
+        db.session.delete(recording)
+        db.session.commit()
+        return jsonify({"msg": "Grabación eliminada exitosamente"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error al eliminar grabación: {str(e)}")
+        return jsonify({"msg": "Error al eliminar grabación", "error": str(e)}), 500
