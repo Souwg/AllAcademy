@@ -10,8 +10,45 @@ export const CourseDetails = () => {
   const { store, actions } = useContext(Context);
   const { courses, coursesLoading, coursesError } = store;
   const [selectedSchedule, setSelectedSchedule] = useState("");
-  const [loadingPayment, setLoadingPayment] = useState(false); // 🆕 Añade este estado
+  const [loadingPayment, setLoadingPayment] = useState(false);
+  const [loadingPayPal, setLoadingPayPal] = useState(false);
   const user = JSON.parse(localStorage.getItem("user"));
+
+  const handlePayPal = async () => {
+    if (!user) return navigate("/login");
+
+    // 🛑 👉 Aquí agregamos la validación del horario seleccionado
+    if (!selectedSchedule || isNaN(selectedSchedule)) {
+      actions.showNotification("error", "Por favor selecciona un horario");
+      return;
+    }
+
+    try {
+      setLoadingPayPal(true);
+      const order = await actions.createPaypalOrder(
+        course.id,
+        selectedSchedule
+      );
+      if (!order || !order.links) {
+        actions.showNotification("error", "No se pudo iniciar PayPal");
+        return;
+      }
+
+      const approve = order.links.find((l) => l.rel === "approve");
+      if (approve?.href) {
+        localStorage.setItem("pp_course_id", course.id);
+        localStorage.setItem("pp_schedule_id", selectedSchedule);
+        window.location.href = approve.href; // 👉 Redirección al checkout de PayPal
+      } else {
+        actions.showNotification("error", "No se obtuvo link de aprobación");
+      }
+    } catch (e) {
+      console.error(e);
+      actions.showNotification("error", "Error iniciando PayPal");
+    } finally {
+      setLoadingPayPal(false);
+    }
+  };
 
   useEffect(() => {
     if (courses.length === 0) {
@@ -44,7 +81,6 @@ export const CourseDetails = () => {
     );
   }
 
-  // En CourseDetails.js - mantén el navigate normal
   const handleBuyNow = async () => {
     if (!user) {
       navigate("/login");
@@ -361,7 +397,6 @@ export const CourseDetails = () => {
                     )}
                   </div>
                   {/* 📅 Selector de horario solo si es estudiante */}
-                  {/* 📅 Solo si es estudiante */}
                   {user && user.role === "student" ? (
                     <>
                       {course.schedules && course.schedules.length > 0 && (
@@ -374,7 +409,7 @@ export const CourseDetails = () => {
                             className="form-select"
                             value={selectedSchedule}
                             onChange={(e) =>
-                              setSelectedSchedule(e.target.value)
+                              setSelectedSchedule(Number(e.target.value))
                             }
                           >
                             <option value="">Choose a group...</option>
@@ -391,7 +426,7 @@ export const CourseDetails = () => {
                         <button
                           className="btn btn-primary"
                           onClick={handleBuyNow}
-                          disabled={loadingPayment}
+                          disabled={loadingPayment || loadingPayPal}
                         >
                           {loadingPayment ? (
                             <>
@@ -402,7 +437,23 @@ export const CourseDetails = () => {
                             "Buy Now"
                           )}
                         </button>
-
+                        <button
+                          className="btn btn-warning"
+                          onClick={handlePayPal}
+                          disabled={loadingPayment || loadingPayPal}
+                        >
+                          {loadingPayPal ? (
+                            <>
+                              <span className="spinner-border spinner-border-sm me-2" />
+                              Connecting to PayPal...
+                            </>
+                          ) : (
+                            <>
+                              <i className="fa-brands fa-paypal me-2"></i>
+                              Pay with PayPal
+                            </>
+                          )}
+                        </button>
                         <button className="btn btn-outline-secondary py-3">
                           Add to Wishlist
                         </button>

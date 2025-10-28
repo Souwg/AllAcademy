@@ -2,10 +2,11 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 import os
-from flask import Flask, request, jsonify, url_for, Blueprint
+import requests
+from flask import Flask, json, request, jsonify, url_for, Blueprint
 from sqlalchemy import extract, func
 from psycopg2 import IntegrityError
-from api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment, CourseChatMessage, PrivateChatMessage, CourseSchedule, Recording, RecordingLesson, Purchase
+from api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment, CourseChatMessage, PrivateChatMessage, CourseSchedule, Recording, RecordingLesson, Purchase   
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -23,6 +24,23 @@ api = Blueprint('api', __name__)
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 print("🔑 Stripe key loaded (first 10 chars):", stripe.api_key[:10] if stripe.api_key else "❌ No key loaded")
 print("🔒 Webhook secret loaded:", (os.getenv("STRIPE_WEBHOOK_SECRET") or "❌")[:10])
+PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID")
+PAYPAL_SECRET = os.getenv("PAYPAL_SECRET")
+PAYPAL_API_BASE = os.getenv("PAYPAL_API_BASE", "https://api-m.sandbox.paypal.com")
+
+# ============================
+# PAYPAL HELPER
+# ============================
+def get_paypal_access_token():
+    """Obtener un access token de PayPal (Client Credentials)."""
+    r = requests.post(
+        f"{PAYPAL_API_BASE}/v1/oauth2/token",
+        headers={"Accept": "application/json"},
+        data={"grant_type": "client_credentials"},
+        auth=(PAYPAL_CLIENT_ID, PAYPAL_SECRET)
+    )
+    r.raise_for_status()
+    return r.json()["access_token"]
 
 # Allow CORS requests to this API
 #CORS(api, resources={
@@ -1555,6 +1573,172 @@ def delete_recording(recording_id):
         db.session.rollback()
         print(f"❌ Error al eliminar grabación: {str(e)}")
         return jsonify({"msg": "Error al eliminar grabación", "error": str(e)}), 500
+    
+# ============================
+# PAYPAL INTEGRATION (simple)
+# ============================
+
+@api.route("/paypal/create-order", methods=["POST"])
+@jwt_required()
+def create_paypal_order():
+    """
+    Crea una orden de PayPal para un curso y devuelve el objeto de PayPal.
+    FRONTEND: toma el link de aprobación (links[x].rel == 'approve') para redirigir al usuario.
+    """
+    user_id = get_jwt_identity()
+    data = request.get_json() or {}
+    print("🛰️ DEBUG /paypal/create-order — datos recibidos:", data)
+
+    course_id = data.get("course_id")
+    schedule_id = data.get("schedule_id")  # opcional
+
+    # 1) Validaciones básicas
+    course = Course.query.get(course_id)
+    if not course:
+        return jsonify({"msg": "Course not found"}), 404
+
+    amount = float(course.discount_price or course.price)
+
+    custom_id_value = f"{user_id}|{schedule_id or ''}"
+    print(f"🧾 DEBUG custom_id que se enviará a PayPal: {custom_id_value}")
+
+    # 2) Token de PayPal
+    access_token = get_paypal_access_token()
+
+    # 3) Construir orden (Checkout v2)
+    # - reference_id: course_id para recuperarlo al capturar
+    # - custom_id: guardamos user_id|schedule_id para reconstruir la inscripción
+    body = {
+        "intent": "CAPTURE",
+        "purchase_units": [
+            {
+                "reference_id": str(course_id),
+                "custom_id": f"{user_id}|{schedule_id or ''}",
+                "amount": {
+                    "currency_code": "USD",
+                    "value": f"{amount:.2f}"
+                }
+            }
+        ],
+        "application_context": {
+            "brand_name": "AllAcademy",
+            "shipping_preference": "NO_SHIPPING",
+            # Si usas approve link en frontend, estas urls sólo aplican si usaras el "classic redirect"
+            "return_url": "http://localhost:3000/checkout-success",
+            "cancel_url": "http://localhost:3000/checkout-cancel"
+        }
+    }
+
+    r = requests.post(
+        f"{PAYPAL_API_BASE}/v2/checkout/orders",
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        },
+        json=body,
+        timeout=30
+    )
+
+    # Retorna tal cual la respuesta de PayPal (incluye links de aprobación)
+    return jsonify(r.json()), r.status_code
+
+
+@api.route("/paypal/capture-order/<order_id>", methods=["POST"])
+@jwt_required()
+def capture_paypal_order(order_id):
+    """
+    Captura la orden aprobada en PayPal y, si es exitoso:
+      - crea un Purchase
+      - crea Enrollment si no existe (respetando schedule_id si venía en custom_id)
+    """
+    user_id = int(get_jwt_identity())
+    access_token = get_paypal_access_token()
+
+    r = requests.post(
+        f"{PAYPAL_API_BASE}/v2/checkout/orders/{order_id}/capture",
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        },
+        timeout=30
+    )
+
+    if r.status_code >= 400:
+        return jsonify({"msg": "Error capturing order", "error": r.text}), 400
+
+    data = r.json()
+    print("🪙 RAW PAYPAL CAPTURE RESPONSE:")
+    print(json.dumps(data, indent=2))   
+    try:
+        # 🧾 Estructura de PayPal (orden capturada)
+        pu = data["purchase_units"][0]
+        course_id = int(pu["reference_id"])
+
+        # 🧠 custom_id venía como "user_id|schedule_id"
+        capture = pu["payments"]["captures"][0]
+        custom_id = capture.get("custom_id") or ""
+        schedule_id = None
+        if "|" in custom_id:
+            _, raw_sched = custom_id.split("|", 1)
+            schedule_id = int(raw_sched) if raw_sched.strip() else None
+
+        # 🪵 DEBUG PRINTS ————————
+        print("========== PAYPAL CAPTURE DEBUG ==========")
+        print(f"🧍 User ID: {user_id}")
+        print(f"📘 Course ID: {course_id}")
+        print(f"📦 custom_id recibido: '{custom_id}'")
+        print(f"📅 schedule_id final parseado: {schedule_id}")
+        print("==========================================")
+
+        # Primera captura (éxito)
+        capture = pu["payments"]["captures"][0]
+        capture_id = capture["id"]
+        status = capture["status"].lower()
+        total_value = float(capture["amount"]["value"])
+        currency_code = capture["amount"]["currency_code"].lower()
+
+        # Guardar Purchase (si no existe por id de captura)
+        existing = Purchase.query.filter_by(payment_intent_id=capture_id).first()
+        if not existing:
+            db.session.add(Purchase(
+                user_id=user_id,
+                course_id=course_id,
+                payment_intent_id=capture_id,
+                amount=int(total_value * 100),
+                currency=currency_code,
+                status=status
+            ))
+
+        # Crear Enrollment si no existe
+        already_enrolled = Enrollment.query.filter_by(
+            student_id=user_id,
+            course_id=course_id
+        ).first()
+
+        if not already_enrolled:
+            print(f"📝 Creando Enrollment con schedule_id = {schedule_id}")  # 🪵 DEBUG extra
+            db.session.add(Enrollment(
+                student_id=user_id,
+                course_id=course_id,
+                schedule_id=schedule_id,
+                enrolled_at=datetime.utcnow()
+            ))
+        else:
+            print("⚠️ El usuario ya estaba inscrito en el curso")
+
+        db.session.commit()
+        print("✅ Commit exitoso — Enrollment guardado")
+
+        return jsonify({"msg": "Payment captured", "order": data}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print("❌ ERROR al persistir la captura:", str(e))  # 🪵 DEBUG extra
+        return jsonify({"msg": "Error persisting capture", "error": str(e), "raw": data}), 500
+
+
+
+
 # ============================
 # STRIPE INTEGRATION
 # ============================

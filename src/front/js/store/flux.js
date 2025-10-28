@@ -874,6 +874,72 @@ const getState = ({ getStore, getActions, setStore }) => {
           return null;
         }
       },
+      createPaypalOrder: async (course_id, schedule_id) => {
+        try {
+          const token = localStorage.getItem("token"); // 👈 SIN JSON.parse
+          if (!token) {
+            console.error("No JWT token in localStorage");
+            return null;
+          }
+          // 🧭 AGREGA AQUÍ LOS CONSOLE.LOG
+          console.log("🧭 DEBUG PAYPAL ORDER:");
+          console.log("course_id:", course_id);
+          console.log("schedule_id:", schedule_id);
+
+          const resp = await fetch(
+            "http://localhost:3001/api/paypal/create-order",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`, // 👈 token plano
+              },
+              body: JSON.stringify({ course_id, schedule_id }),
+            }
+          );
+
+          const data = await resp.json().catch(() => null);
+          if (!resp.ok) {
+            console.error("createPaypalOrder failed", resp.status, data);
+            return null;
+          }
+          return data; // { id, links: [...] }
+        } catch (err) {
+          console.error("createPaypalOrder error:", err);
+          return null;
+        }
+      },
+
+      capturePaypalOrder: async (orderId) => {
+        try {
+          const token = localStorage.getItem("token"); // 👈 SIN JSON.parse
+          if (!token) {
+            console.error("No JWT token in localStorage");
+            return { error: true };
+          }
+
+          const resp = await fetch(
+            `http://localhost:3001/api/paypal/capture-order/${orderId}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`, // 👈 token plano
+              },
+            }
+          );
+
+          const data = await resp.json().catch(() => null);
+          if (!resp.ok) {
+            console.error("capturePaypalOrder failed", resp.status, data);
+            return { error: true };
+          }
+          return data;
+        } catch (err) {
+          console.error("capturePaypalOrder error:", err);
+          return { error: true };
+        }
+      },
     },
   };
 };
