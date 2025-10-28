@@ -5,6 +5,8 @@ import { BackendURL } from "./component/backendURL";
 
 import { Home } from "./pages/home/home";
 import { AllCourses } from "./pages/allCourses";
+import { CheckoutWrapper } from "./pages/checkoutWrapper";
+import { PaymentSuccess } from "./pages/paymentSucess";
 import { CourseDetails } from "./pages/courseDetails";
 import { MyEnrollments } from "./pages/myEnrollments";
 import { Signup } from "./pages/signup";
@@ -44,6 +46,8 @@ const Layout = () => {
             <Route element={<DashboardAdmin />} path="/admin/dashboard" />
             <Route element={<DashboardTeacher />} path="/teacher/dashboard" />
             <Route element={<DashboardStudent />} path="/student/dashboard" />
+            <Route element={<CheckoutWrapper />} path="/checkout" />
+            <Route element={<PaymentSuccess />} path="/payment-success" />
             <Route element={<NotFound />} path="iji" />
           </Routes>
           <Footer />

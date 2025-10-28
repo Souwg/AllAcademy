@@ -392,3 +392,31 @@ class PrivateChatMessage(db.Model):
             "content": self.content,
             "timestamp": self.timestamp.isoformat()
         }
+class Purchase(db.Model):
+    __tablename__ = "purchases"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
+    payment_intent_id = db.Column(db.String(255), nullable=False, unique=True)
+    amount = db.Column(db.Integer, nullable=False)  # en centavos 💰
+    currency = db.Column(db.String(10), nullable=False)
+    status = db.Column(db.String(50), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relaciones
+    user = db.relationship("User", backref="purchases")
+    course = db.relationship("Course", backref="purchases")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "course_id": self.course_id,
+            "payment_intent_id": self.payment_intent_id,
+            "amount": self.amount,
+            "currency": self.currency,
+            "status": self.status,
+            "created_at": self.created_at.isoformat(),
+            "course_title": self.course.title if self.course else None,
+            "user_email": self.user.email if self.user else None
+        }

@@ -10,6 +10,7 @@ export const CourseDetails = () => {
   const { store, actions } = useContext(Context);
   const { courses, coursesLoading, coursesError } = store;
   const [selectedSchedule, setSelectedSchedule] = useState("");
+  const [loadingPayment, setLoadingPayment] = useState(false); // 🆕 Añade este estado
   const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
@@ -42,6 +43,50 @@ export const CourseDetails = () => {
       </div>
     );
   }
+
+  // En CourseDetails.js - mantén el navigate normal
+  const handleBuyNow = async () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    if (!selectedSchedule) {
+      actions.showNotification("error", "Por favor selecciona un horario");
+      return;
+    }
+
+    try {
+      setLoadingPayment(true);
+      console.log("🔄 Creando PaymentIntent...");
+
+      const payment = await actions.createPaymentIntent(
+        course.id,
+        selectedSchedule
+      );
+
+      if (payment && payment.clientSecret) {
+        console.log("✅ PaymentIntent creado, guardando datos...");
+
+        localStorage.removeItem("clientSecret");
+        localStorage.removeItem("selectedCourseId");
+
+        localStorage.setItem("selectedCourseId", course.id);
+        localStorage.setItem("clientSecret", payment.clientSecret);
+
+        console.log("🧭 Redirigiendo a checkout...");
+        navigate("/checkout");
+      } else {
+        console.error("❌ Error: No se recibió clientSecret");
+        actions.showNotification("error", "Error al iniciar el pago");
+      }
+    } catch (error) {
+      console.error("❌ Error en handleBuyNow:", error);
+      actions.showNotification("error", "Error al procesar la compra");
+    } finally {
+      setLoadingPayment(false);
+    }
+  };
 
   return (
     <div className="course-details-page" style={{ backgroundColor: "#f8f9fa" }}>
@@ -315,55 +360,69 @@ export const CourseDetails = () => {
                       </span>
                     )}
                   </div>
-                  {user &&
-                    user.role === "student" &&
-                    course.schedules &&
-                    course.schedules.length > 0 && (
-                      <div className="mb-3">
-                        <label htmlFor="scheduleSelect" className="fw-bold">
-                          Select your schedule
-                        </label>
-                        <select
-                          id="scheduleSelect"
-                          className="form-select"
-                          value={selectedSchedule}
-                          onChange={(e) => setSelectedSchedule(e.target.value)}
+                  {/* 📅 Selector de horario solo si es estudiante */}
+                  {/* 📅 Solo si es estudiante */}
+                  {user && user.role === "student" ? (
+                    <>
+                      {course.schedules && course.schedules.length > 0 && (
+                        <div className="mb-3">
+                          <label htmlFor="scheduleSelect" className="fw-bold">
+                            Select your schedule
+                          </label>
+                          <select
+                            id="scheduleSelect"
+                            className="form-select"
+                            value={selectedSchedule}
+                            onChange={(e) =>
+                              setSelectedSchedule(e.target.value)
+                            }
+                          >
+                            <option value="">Choose a group...</option>
+                            {course.schedules.map((schedule) => (
+                              <option key={schedule.id} value={schedule.id}>
+                                {schedule.group_name || "Group"}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      <div className="d-grid gap-2 mb-4">
+                        <button
+                          className="btn btn-primary"
+                          onClick={handleBuyNow}
+                          disabled={loadingPayment}
                         >
-                          <option value="">Choose a group...</option>
-                          {course.schedules.map((schedule) => (
-                            <option key={schedule.id} value={schedule.id}>
-                              {schedule.group_name || "Group"}
-                            </option>
-                          ))}
-                        </select>
+                          {loadingPayment ? (
+                            <>
+                              <span className="spinner-border spinner-border-sm me-2" />
+                              Processing...
+                            </>
+                          ) : (
+                            "Buy Now"
+                          )}
+                        </button>
+
+                        <button className="btn btn-outline-secondary py-3">
+                          Add to Wishlist
+                        </button>
                       </div>
-                    )}
-
-                  <div className="d-grid gap-2 mb-4">
-                    <button
-                      className="btn btn-primary"
-                      onClick={async () => {
-                        if (!user) {
-                          navigate("/login");
-                          return;
-                        }
-
-                        const result = await actions.enrollCourse(
-                          course.id,
-                          selectedSchedule
-                        );
-                        if (result) {
-                          navigate("/my-enrollments");
-                        }
-                      }}
-                    >
-                      Enroll Now
-                    </button>
-
-                    <button className="btn btn-outline-secondary py-3">
-                      Add to Wishlist
-                    </button>
-                  </div>
+                    </>
+                  ) : (
+                    <div className="d-grid gap-2 mb-4">
+                      <button className="btn btn-secondary" disabled>
+                        Only students can enroll
+                      </button>
+                      {!user && (
+                        <button
+                          className="btn btn-outline-primary"
+                          onClick={() => navigate("/login")}
+                        >
+                          Log in to enroll
+                        </button>
+                      )}
+                    </div>
+                  )}
 
                   <h5 className="fw-bold mb-3">This course includes:</h5>
                   <ul className="list-unstyled">

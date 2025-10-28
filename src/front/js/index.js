@@ -1,20 +1,17 @@
-// index.js
+// index.js - VERSIÓN SIMPLIFICADA
 import React from "react";
 import ReactDOM from "react-dom";
-import Layout from "./layout"; // tu componente principal
+import Layout from "./layout";
+import { loadStripe } from "@stripe/stripe-js";
 
-const rootElement = document.querySelector("#app");
+import "../styles/index.css";
 
-const render = (Component) => {
-  ReactDOM.render(<Component />, rootElement);
+const stripePromise = loadStripe(
+  "pk_test_51SEDdyLxJdjDhzqNZoyoCG0PYioqRVmaTIK5LRUAsk0GfhxzYKxKnFx4Zt9lj8J0NYoe7Yzq6ZbO6zX6PDl6cX6200USUJHrBN"
+);
+
+const Root = () => {
+  return <Layout />;
 };
 
-render(Layout);
-
-// HMR setup
-if (module.hot) {
-  module.hot.accept("./layout", () => {
-    const NextLayout = require("./layout").default;
-    render(NextLayout);
-  });
-}
+ReactDOM.render(<Root />, document.querySelector("#app"));

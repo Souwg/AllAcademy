@@ -844,6 +844,36 @@ const getState = ({ getStore, getActions, setStore }) => {
           },
         });
       },
+      // 🎯 Crear PaymentIntent en Stripe
+      createPaymentIntent: async (courseId, scheduleId = null) => {
+        try {
+          const token = localStorage.getItem("token");
+          const resp = await fetch(
+            "http://localhost:3001/api/create-checkout-session",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+              body: JSON.stringify({
+                course_id: courseId,
+                schedule_id: scheduleId,
+                currency: "usd",
+              }),
+            }
+          );
+
+          if (!resp.ok) throw new Error("Error al crear PaymentIntent");
+          const data = await resp.json();
+
+          console.log("💳 PaymentIntent creado:", data);
+          return data;
+        } catch (err) {
+          console.error("❌ Error en createPaymentIntent:", err);
+          return null;
+        }
+      },
     },
   };
 };

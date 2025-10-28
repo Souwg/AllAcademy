@@ -892,7 +892,7 @@
 }
 
 .grid-course-title {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
@@ -1164,7 +1164,7 @@ Contenedor de la gráfica
 
 /* 🔹 Mantiene tamaño de textos y tarjetas */
 .grid-course-title {
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #001933;
 }

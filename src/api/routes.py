@@ -1,10 +1,11 @@
 """
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
+import os
 from flask import Flask, request, jsonify, url_for, Blueprint
 from sqlalchemy import extract, func
 from psycopg2 import IntegrityError
-from api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment, CourseChatMessage, PrivateChatMessage, CourseSchedule, Recording, RecordingLesson 
+from api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment, CourseChatMessage, PrivateChatMessage, CourseSchedule, Recording, RecordingLesson, Purchase
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -18,6 +19,10 @@ app = Flask(__name__)
 bcrypt = Bcrypt(app)
 
 api = Blueprint('api', __name__)
+
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+print("🔑 Stripe key loaded (first 10 chars):", stripe.api_key[:10] if stripe.api_key else "❌ No key loaded")
+print("🔒 Webhook secret loaded:", (os.getenv("STRIPE_WEBHOOK_SECRET") or "❌")[:10])
 
 # Allow CORS requests to this API
 #CORS(api, resources={
@@ -1550,3 +1555,212 @@ def delete_recording(recording_id):
         db.session.rollback()
         print(f"❌ Error al eliminar grabación: {str(e)}")
         return jsonify({"msg": "Error al eliminar grabación", "error": str(e)}), 500
+# ============================
+# STRIPE INTEGRATION
+# ============================
+
+@api.route('/create-checkout-session', methods=['POST'])
+@jwt_required()
+def create_checkout_session():
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    course_id = data.get("course_id")
+    schedule_id = data.get("schedule_id")
+    currency = data.get("currency", "usd")
+
+    # 🧭 Buscar el curso en la base de datos
+    course = Course.query.get(course_id)
+    if not course:
+        print("❌ Curso no encontrado:", course_id)
+        return jsonify({"error": "Curso no encontrado"}), 404
+
+    amount = int((course.discount_price or course.price) * 100)
+
+    # 🖨️ Print detallado del request
+    print("\n========== 💳 STRIPE PAYMENT DEBUG ==========")
+    print(f"🧑 USER ID: {user_id} (tipo: {type(user_id)})")
+    print(f"📘 COURSE ID: {course_id} (tipo: {type(course_id)})")
+    print(f"📚 Nombre del curso: {course.title}")
+    print(f"💲 Monto a cobrar: {amount} {currency}")
+    print(f"🕐 Fecha y hora: {datetime.utcnow()}")
+    print("=============================================\n")
+
+    try:
+        # 🪙 Crear PaymentIntent en Stripe
+        intent = stripe.PaymentIntent.create(
+            amount=amount,
+            currency=currency,
+            payment_method_types=["card"],
+            metadata={
+                "user_id": user_id,
+                "course_id": course_id,
+                "schedule_id": schedule_id or ""   # 👈 AÑADIDO
+            }
+        )
+
+        # 🖨️ Print detallado de la respuesta de Stripe
+        print("========== 📦 STRIPE RESPONSE ==========")
+        print(f"🪪 ID del PaymentIntent: {intent.id}")
+        print(f"🔐 Client Secret: {intent.client_secret}")
+        print(f"💰 Estado: {intent.status}")
+        print(f"📄 Objeto completo: {intent}")
+        print("========================================\n")
+
+        return jsonify({"clientSecret": intent.client_secret})
+
+    except Exception as e:
+        print("❌ Error creando PaymentIntent:", str(e))
+        return jsonify({"error": str(e)}), 400
+
+
+@api.route('/webhook', methods=['POST'])
+def stripe_webhook():
+    payload = request.get_data(as_text=True)
+    sig_header = request.headers.get('Stripe-Signature')
+    endpoint_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
+    
+    print("🪙 ========== WEBHOOK RECIBIDO ==========")
+    print(f"📧 Event type from header: {request.headers.get('Stripe-Event-Type', 'Not provided')}")
+    print(f"🔐 Signature present: {bool(sig_header)}")
+    print(f"📦 Payload length: {len(payload)} chars")
+    print(f"🕐 Timestamp: {datetime.utcnow()}")
+
+    try:
+        # ✅ Verificar la firma del webhook
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, endpoint_secret
+        )
+        print(f"✅ Evento verificado: {event['type']} (ID: {event['id']})")
+        
+    except ValueError as e:
+        print(f"❌ Error de payload inválido: {e}")
+        return jsonify({"error": "Invalid payload"}), 400
+    except stripe.error.SignatureVerificationError as e:
+        print(f"❌ Error de firma inválida: {e}")
+        return jsonify({"error": "Invalid signature"}), 400
+    except Exception as e:
+        print(f"❌ Error inesperado en verificación: {e}")
+        return jsonify({"error": "Webhook verification failed"}), 400
+
+    # 🧭 Manejar solo el evento exitoso
+    if event['type'] == 'payment_intent.succeeded':
+        return handle_payment_success(event)
+    else:
+        print(f"ℹ️ Evento no manejado: {event['type']}")
+        return jsonify({"status": "ignored"}), 200
+
+
+def handle_payment_success(event):
+    """Maneja el evento de pago exitoso"""
+    try:
+        payment_intent = event['data']['object']
+        metadata = payment_intent.get('metadata', {})
+        
+        # ==========================
+        # 📥 Extraer y validar datos
+        # ==========================
+        user_id = metadata.get('user_id')
+        course_id = metadata.get('course_id')
+        schedule_id = metadata.get('schedule_id')  # 👈 Nuevo campo
+
+        payment_intent_id = payment_intent['id']
+        amount = payment_intent['amount']
+        currency = payment_intent['currency']
+        status = payment_intent['status']
+
+        print(f"🎯 Procesando pago exitoso:")
+        print(f"   👤 User ID: {user_id} (tipo: {type(user_id)})")
+        print(f"   📘 Course ID: {course_id} (tipo: {type(course_id)})")
+        print(f"   📅 Schedule ID: {schedule_id} (tipo: {type(schedule_id)})")
+        print(f"   💰 Amount: {amount} {currency}")
+        print(f"   🆔 Payment Intent: {payment_intent_id}")
+
+        # 🛑 Validar que haya metadata mínima
+        if not user_id or not course_id:
+            print("❌ Metadata incompleta - faltan user_id o course_id")
+            return jsonify({"error": "Missing metadata"}), 400
+
+        # 🔄 Convertir a enteros
+        try:
+            user_id = int(user_id)
+            course_id = int(course_id)
+            schedule_id = int(schedule_id) if schedule_id and schedule_id.strip() else None
+        except (ValueError, TypeError) as e:
+            print(f"❌ Error convirtiendo IDs: {e}")
+            return jsonify({"error": "Invalid metadata types"}), 400
+
+        # ✅ Verificar que usuario y curso existan
+        user = User.query.get(user_id)
+        course = Course.query.get(course_id)
+        if not user:
+            print(f"❌ Usuario no encontrado: {user_id}")
+            return jsonify({"error": "User not found"}), 404
+        if not course:
+            print(f"❌ Curso no encontrado: {course_id}")
+            return jsonify({"error": "Course not found"}), 404
+        print(f"✅ Usuario y curso validados: {user.email} - {course.title}")
+
+        # 📝 Verificar que el schedule pertenezca al curso
+        if schedule_id:
+            schedule = CourseSchedule.query.filter_by(id=schedule_id, course_id=course_id).first()
+            if not schedule:
+                print(f"⚠️ Schedule {schedule_id} no pertenece al curso {course_id}, se ignora.")
+                schedule_id = None
+
+        # 🧾 CREAR REGISTRO DE COMPRA (Purchase)
+        existing_purchase = Purchase.query.filter_by(payment_intent_id=payment_intent_id).first()
+        if existing_purchase:
+            print(f"⚠️ Compra ya existe en DB: {existing_purchase.id}")
+        else:
+            new_purchase = Purchase(
+                user_id=user_id,
+                course_id=course_id,
+                payment_intent_id=payment_intent_id,
+                amount=amount,
+                currency=currency,
+                status=status
+            )
+            db.session.add(new_purchase)
+            print("🧾 NUEVA COMPRA CREADA EN DB")
+
+        # 📚 CREAR INSCRIPCIÓN (Enrollment)
+        existing_enrollment = Enrollment.query.filter_by(
+            student_id=user_id,
+            course_id=course_id
+        ).first()
+
+        if existing_enrollment:
+            print(f"⚠️ Inscripción ya existe en DB: {existing_enrollment.student_id} - {existing_enrollment.course_id}")
+        else:
+            new_enrollment = Enrollment(
+                student_id=user_id,
+                course_id=course_id,
+                schedule_id=schedule_id,  # 👈 Se guarda el grupo si existe
+                enrolled_at=datetime.utcnow()
+            )
+            db.session.add(new_enrollment)
+            print("📝 NUEVA INSCRIPCIÓN CREADA EN DB")
+
+        # 💾 GUARDAR EN DB
+        db.session.commit()
+        print("✅ COMMIT EXITOSO - Base de datos actualizada")
+
+        # 🔍 VERIFICACIÓN POST-COMMIT
+        purchase_check = Purchase.query.filter_by(payment_intent_id=payment_intent_id).first()
+        enrollment_check = Enrollment.query.filter_by(
+            student_id=user_id,
+            course_id=course_id
+        ).first()
+
+        print("🔍 VERIFICACIÓN FINAL:")
+        print(f"   Compra en DB: {'✅' if purchase_check else '❌'}")
+        print(f"   Inscripción en DB: {'✅' if enrollment_check else '❌'}")
+
+        return jsonify({"status": "success"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ ERROR CRÍTICO en handle_payment_success: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "Processing failed"}), 500
