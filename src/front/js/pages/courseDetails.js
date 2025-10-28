@@ -13,6 +13,7 @@ export const CourseDetails = () => {
   const [loadingPayment, setLoadingPayment] = useState(false);
   const [loadingPayPal, setLoadingPayPal] = useState(false);
   const user = JSON.parse(localStorage.getItem("user"));
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const handlePayPal = async () => {
     if (!user) return navigate("/login");
@@ -59,7 +60,17 @@ export const CourseDetails = () => {
   const course = courses.find((c) => c.slug === slug);
 
   if (coursesLoading) {
-    return <div className="container py-5 text-center">Loading course...</div>;
+    return (
+      <div className="container py-5 text-center">
+        {" "}
+        <div className="wrapper">
+          <div className="blue ball"></div>
+          <div className="red ball"></div>
+          <div className="yellow ball"></div>
+          <div className="green ball"></div>
+        </div>
+      </div>
+    );
   }
 
   if (coursesError) {
@@ -425,35 +436,12 @@ export const CourseDetails = () => {
                       <div className="d-grid gap-2 mb-4">
                         <button
                           className="btn btn-primary"
-                          onClick={handleBuyNow}
+                          onClick={() => setShowPaymentModal(true)}
                           disabled={loadingPayment || loadingPayPal}
                         >
-                          {loadingPayment ? (
-                            <>
-                              <span className="spinner-border spinner-border-sm me-2" />
-                              Processing...
-                            </>
-                          ) : (
-                            "Buy Now"
-                          )}
+                          Buy Now
                         </button>
-                        <button
-                          className="btn btn-warning"
-                          onClick={handlePayPal}
-                          disabled={loadingPayment || loadingPayPal}
-                        >
-                          {loadingPayPal ? (
-                            <>
-                              <span className="spinner-border spinner-border-sm me-2" />
-                              Connecting to PayPal...
-                            </>
-                          ) : (
-                            <>
-                              <i className="fa-brands fa-paypal me-2"></i>
-                              Pay with PayPal
-                            </>
-                          )}
-                        </button>
+
                         <button className="btn btn-outline-secondary py-3">
                           Add to Wishlist
                         </button>
@@ -569,6 +557,53 @@ export const CourseDetails = () => {
           </div>
         </div>
       </div>
+      {/* 💳 Modal único de selección de método de pago (Moderno) */}
+      {showPaymentModal && (
+        <div className="payment-method-modal-overlay-modern">
+          <div className="payment-method-modal-modern p-4 shadow-lg">
+            {/* 🪙 Título */}
+            <div className="payment-method-header-modern text-center mb-4">
+              <i className="fa-solid fa-wallet fa-2x text-success mb-2"></i>
+              <h5 className="fw-bold mb-0">Select a payment method</h5>
+              <p className="text-muted small mt-1">
+                Choose how you want to securely make your payment
+              </p>
+            </div>
+
+            {/* 🔘 Botones */}
+            <div className="d-grid gap-3">
+              <button
+                className="payment-method-option-modern stripe"
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  handleBuyNow();
+                }}
+              >
+                <i className="fa-brands fa-stripe"></i>
+                <span>Pay with Stripe</span>
+              </button>
+
+              <button
+                className="payment-method-option-modern paypal"
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  handlePayPal();
+                }}
+              >
+                <i className="fa-brands fa-paypal"></i>
+                <span>Pay with PayPal</span>
+              </button>
+
+              <button
+                className="payment-method-option-modern cancel"
+                onClick={() => setShowPaymentModal(false)}
+              >
+                <span>Cancel</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

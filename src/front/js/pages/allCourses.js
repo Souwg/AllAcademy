@@ -38,7 +38,17 @@ export const AllCourses = () => {
   };
 
   if (coursesLoading) {
-    return <p className="text-center my-5">Loading courses...</p>;
+    return (
+      <div className="text-center my-5">
+        {" "}
+        <div className="wrapper">
+          <div className="blue ball"></div>
+          <div className="red ball"></div>
+          <div className="yellow ball"></div>
+          <div className="green ball"></div>
+        </div>
+      </div>
+    );
   }
 
   if (coursesError) {

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { Context } from "../store/appContext";
 import man from "../../img/man.png";
 import "../../styles/signup.css";
 import Swal from "sweetalert2";
@@ -89,6 +90,7 @@ const countries = [
 
 export const Signup = () => {
   const navigate = useNavigate();
+  const { actions } = useContext(Context);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -113,7 +115,6 @@ export const Signup = () => {
     e.preventDefault();
     setError("");
 
-    // Validaciones básicas
     if (formData.password !== formData.confirmPassword) {
       Swal.fire({
         icon: "error",
@@ -133,6 +134,7 @@ export const Signup = () => {
       });
       return;
     }
+
     if (!formData.country) {
       Swal.fire({
         icon: "error",
@@ -153,51 +155,23 @@ export const Signup = () => {
       return;
     }
 
-    try {
-      const response = await fetch("http://localhost:3001/api/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          email: formData.email,
-          password: formData.password,
-          confirm_password: formData.confirmPassword,
-          country: formData.country,
-          id_number: formData.idNumber,
-          accept_terms: formData.acceptTerms,
-        }),
-      });
+    // 🧠 Llamamos a la acción de Flux
+    const result = await actions.signupUser(formData);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.msg || "Error en el registro");
-        return;
-      }
-
-      // Registro exitoso
-      console.log("Usuario registrado:", data.user);
-      Swal.fire({
-        position: "center",
-        icon: "success",
-        title: "Registration successful",
-        showConfirmButton: false,
-        timer: 1500,
-        backdrop: true,
-      });
-      navigate("/login"); // Redirige al login después del registro
-    } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Connection Error",
-        text: "There was a problem connecting to the server. Please try again later.",
-        confirmButtonColor: "#3085d6",
-      });
-      console.error("Error:", err);
+    if (!result.success) {
+      setError(result.message);
+      return;
     }
+
+    Swal.fire({
+      position: "center",
+      icon: "success",
+      title: "Registration successful",
+      showConfirmButton: false,
+      timer: 1500,
+      backdrop: true,
+    });
+    navigate("/login");
   };
 
   return (

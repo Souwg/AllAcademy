@@ -61,6 +61,41 @@ const getState = ({ getStore, getActions, setStore }) => {
         ) || {},
     },
     actions: {
+      signupUser: async (formData) => {
+        try {
+          const resp = await fetch("http://localhost:3001/api/signup", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              first_name: formData.firstName,
+              last_name: formData.lastName,
+              email: formData.email,
+              password: formData.password,
+              confirm_password: formData.confirmPassword,
+              country: formData.country,
+              id_number: formData.idNumber,
+              accept_terms: formData.acceptTerms,
+            }),
+          });
+
+          const data = await resp.json();
+
+          if (!resp.ok) {
+            return {
+              success: false,
+              message: data.msg || "Registration failed",
+            };
+          }
+
+          return { success: true, user: data.user };
+        } catch (err) {
+          console.error("❌ Error in signupUser:", err);
+          return { success: false, message: "Connection error" };
+        }
+      },
+
       loginUser: async (email, password) => {
         try {
           const resp = await fetch("http://localhost:3001/api/login", {

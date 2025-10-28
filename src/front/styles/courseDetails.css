@@ -104,3 +104,169 @@
   margin-top: 0.25rem;
   display: inline-block;
 }
+/* ============================
+   BOTÓN DE ENROLL (destacar botón principal)
+   ============================ */
+/* === 🌐 Overlay moderno con blur === */
+.payment-method-modal-overlay-modern {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 3000;
+  animation: paymentModalFadeIn 0.3s ease;
+}
+
+/* === 🪟 Caja moderna === */
+.payment-method-modal-modern {
+  position: relative;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  color: #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  transform: translateY(-20px);
+  animation: paymentModalSlideIn 0.4s ease forwards;
+}
+
+/* === ❌ Botón de cierre === */
+.payment-method-close-modern {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.4rem;
+  border-radius: 50%;
+  padding: 6px 10px;
+  transition: background 0.2s ease;
+}
+
+/* === 🪙 Header del modal === */
+.payment-method-header-modern h5 {
+  font-size: 1.25rem;
+}
+
+.payment-method-header-modern p {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* === 🔘 Botones de opciones === */
+.payment-method-option-modern {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  border: none;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.payment-method-option-modern i {
+  font-size: 1.4rem;
+}
+
+.payment-method-option-modern.stripe {
+  background: linear-gradient(135deg, #6772e5, #5469d4);
+  color: white;
+}
+
+.payment-method-option-modern.stripe:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 12px rgba(103, 114, 229, 0.6);
+}
+
+.payment-method-option-modern.paypal {
+  background: linear-gradient(135deg, #009cde, #003087);
+  color: white;
+}
+
+.payment-method-option-modern.paypal:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 12px rgba(0, 156, 222, 0.6);
+}
+
+.payment-method-option-modern.cancel {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+.payment-method-option-modern.cancel:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.02);
+}
+
+/* === ✨ Animaciones suaves === */
+@keyframes paymentModalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes paymentModalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/*******************Spinner de carga************************/
+/* From Uiverse.io by SteveBloX */
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.ball {
+  --size: 16px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 11px;
+  margin: 0 10px;
+
+  animation: 2s bounce ease infinite;
+}
+
+.blue {
+  background-color: #4285f5;
+}
+
+.red {
+  background-color: #ea4436;
+  animation-delay: 0.25s;
+}
+
+.yellow {
+  background-color: #fbbd06;
+  animation-delay: 0.5s;
+}
+
+.green {
+  background-color: #34a952;
+  animation-delay: 0.75s;
+}
+
+@keyframes bounce {
+  50% {
+    transform: translateY(25px);
+  }
+}

@@ -270,6 +270,7 @@ class Lesson(db.Model):
     description = db.Column(db.Text)
     content = db.Column(db.Text)
     order = db.Column(db.Integer, nullable=False)
+    video_url = db.Column(db.String(500), nullable=True) 
     
  
     module_id = db.Column(db.Integer, db.ForeignKey('module.id'), nullable=False)
@@ -283,6 +284,7 @@ class Lesson(db.Model):
             "title": self.title,
             "description": self.description,
             "order": self.order,
+            "video_url": self.video_url
         }
 
 class LearningObjective(db.Model):
