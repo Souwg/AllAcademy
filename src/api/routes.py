@@ -1737,6 +1737,141 @@ def capture_paypal_order(order_id):
         return jsonify({"msg": "Error persisting capture", "error": str(e), "raw": data}), 500
 
 
+# ============================
+# PAYPAL WEBHOOK
+# ============================
+# ============================
+# PAYPAL WEBHOOK (mejorado)
+# ============================
+@api.route("/paypal/webhook", methods=["POST"])
+def paypal_webhook():
+    try:
+        event = request.get_json()
+        print("📡 PAYPAL WEBHOOK EVENTO RECIBIDO:")
+        print(json.dumps(event, indent=2))
+
+        event_type = event.get("event_type")
+        resource = event.get("resource", {})
+
+        if event_type != "PAYMENT.CAPTURE.COMPLETED":
+            print(f"ℹ️ Evento ignorado: {event_type}")
+            return jsonify({"msg": "Ignored event"}), 200
+
+        # 🔹 Datos básicos
+        capture_id = resource.get("id")
+        amount = float(resource["amount"]["value"])
+        currency = resource["amount"]["currency_code"].lower()
+        custom_id = resource.get("custom_id", "")
+        user_id, schedule_id = None, None
+
+        if "|" in custom_id:
+            user_part, sched_part = custom_id.split("|", 1)
+            user_id = int(user_part)
+            schedule_id = int(sched_part) if sched_part else None
+
+        # 🔹 Intentamos obtener order_id del recurso
+        order_id = (
+            resource.get("supplementary_data", {})
+            .get("related_ids", {})
+            .get("order_id")
+        )
+        print(f"🔹 Order ID recibido: {order_id}")
+
+        # 🔹 Intentar obtener el course_id (reference_id)
+        course_id = None
+        if order_id:
+            access_token = get_paypal_access_token()
+            r = requests.get(
+                f"{PAYPAL_API_BASE}/v2/checkout/orders/{order_id}",
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=30,
+            )
+            if r.ok:
+                order_data = r.json()
+                purchase_units = order_data.get("purchase_units", [])
+                if purchase_units:
+                    # ✅ Intento 1: reference_id directo
+                    course_id = purchase_units[0].get("reference_id")
+                    if course_id:
+                        print(f"✅ reference_id obtenido vía API: {course_id}")
+                    else:
+                        # ✅ Intento 2: Fallback a custom_id dentro de captures
+                        captures = (
+                            purchase_units[0]
+                            .get("payments", {})
+                            .get("captures", [])
+                        )
+                        if captures:
+                            custom_fallback = captures[0].get("custom_id")
+                            if custom_fallback and "|" in custom_fallback:
+                                print("🔄 Recuperando course_id desde custom_id fallback")
+                                user_part, sched_part = custom_fallback.split("|", 1)
+                                user_id = int(user_part)
+                                schedule_id = int(sched_part) if sched_part else None
+                                # No se puede obtener el course_id directamente, pero mantenemos la relación
+            else:
+                print(f"⚠️ Error al consultar la orden {order_id}: {r.status_code} {r.text}")
+
+        # Si sigue sin aparecer el course_id
+        if not course_id:
+            print("⚠️ No se pudo obtener course_id desde PayPal, se ignora evento.")
+            return jsonify({"msg": "No course reference"}), 200
+
+        # 🧠 Convertimos y validamos
+        try:
+            course_id = int(course_id)
+        except ValueError:
+            print(f"⚠️ course_id inválido recibido: {course_id}")
+            return jsonify({"msg": "Invalid course_id"}), 200
+
+        print(f"✅ Pago completado por usuario {user_id}, curso ID {course_id}")
+
+        # 🧾 Validaciones y guardado
+        course = Course.query.get(course_id)
+        if not course:
+            print(f"⚠️ No se encontró el curso con ID {course_id}")
+            return jsonify({"msg": "Course not found"}), 404
+
+        existing = Purchase.query.filter_by(payment_intent_id=capture_id).first()
+        if existing:
+            print("⚠️ Captura ya registrada:", capture_id)
+            return jsonify({"msg": "Already processed"}), 200
+
+        # 💾 Guardar compra
+        new_purchase = Purchase(
+            user_id=user_id,
+            course_id=course.id,
+            payment_intent_id=capture_id,
+            amount=int(amount * 100),
+            currency=currency,
+            status="completed",
+        )
+        db.session.add(new_purchase)
+
+        # 💾 Crear inscripción si no existe
+        already = Enrollment.query.filter_by(
+            student_id=user_id, course_id=course.id
+        ).first()
+        if not already:
+            db.session.add(
+                Enrollment(
+                    student_id=user_id,
+                    course_id=course.id,
+                    schedule_id=schedule_id,
+                    enrolled_at=datetime.utcnow(),
+                )
+            )
+
+        db.session.commit()
+        print("🎉 Webhook procesado correctamente")
+        return jsonify({"msg": "Processed"}), 200
+
+    except Exception as e:
+        print("❌ Error en webhook PayPal:", str(e))
+        db.session.rollback()
+        return jsonify({"msg": "Error processing webhook", "error": str(e)}), 500
+
+
 
 
 # ============================
