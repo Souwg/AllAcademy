@@ -1,17 +1,14 @@
-// components/checkoutForm.js
 import React, { useState, useEffect } from "react";
 import {
   PaymentElement,
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import { useNavigate } from "react-router-dom";
-import "../../styles/checkoutForm.css"; // 👈 hoja de estilos separada
+import "../../styles/checkoutForm.css";
 
-export const CheckoutForm = () => {
+export const CheckoutForm = ({ onClose, onSuccess }) => {
   const stripe = useStripe();
   const elements = useElements();
-  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
@@ -19,7 +16,7 @@ export const CheckoutForm = () => {
 
   useEffect(() => {
     if (!stripe || !elements) {
-      setMessage("Stripe no está inicializado todavía...");
+      setMessage("Stripe is not initialized yet...");
     } else {
       setMessage(null);
     }
@@ -29,7 +26,7 @@ export const CheckoutForm = () => {
     e.preventDefault();
 
     if (!stripe || !elements) {
-      setMessage("El sistema de pago no está listo. Por favor espera.");
+      setMessage("The payment system is not ready yet. Please wait.");
       return;
     }
 
@@ -37,25 +34,24 @@ export const CheckoutForm = () => {
     setMessage(null);
 
     try {
-      const { error } = await stripe.confirmPayment({
+      const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
-        confirmParams: {
-          return_url: `${window.location.origin}/payment-success`,
-        },
-        redirect: "always",
+        redirect: "if_required",
       });
 
       if (error) {
-        if (error.type === "card_error" || error.type === "validation_error") {
-          setMessage(error.message);
-        } else {
-          setMessage(
-            "Ocurrió un error inesperado. Por favor intenta nuevamente."
-          );
-        }
+        setMessage(error.message || "Payment failed. Please try again.");
+        console.error("❌ Payment failed:", error);
+      } else if (paymentIntent && paymentIntent.status === "succeeded") {
+        console.log("✅ Payment succeeded:", paymentIntent);
+        if (onSuccess) onSuccess(); // 👉 avisa al padre para mostrar el modal de éxito
+        if (onClose) onClose(); // 👉 cierra el modal de Stripe
+      } else {
+        setMessage("Payment could not be completed. Please try again.");
       }
     } catch (err) {
-      setMessage("Ocurrió un error inesperado al procesar el pago.");
+      console.error("❌ Error processing payment:", err);
+      setMessage("An unexpected error occurred while processing the payment.");
     }
 
     setLoading(false);
@@ -65,7 +61,7 @@ export const CheckoutForm = () => {
     return (
       <div className="checkout-loader">
         <div className="spinner"></div>
-        <p>Inicializando pago seguro...</p>
+        <p>Initializing secure payment...</p>
       </div>
     );
   }
@@ -77,7 +73,7 @@ export const CheckoutForm = () => {
           onReady={() => setPaymentElementReady(true)}
           onLoadError={() =>
             setMessage(
-              "Error al cargar el formulario de pago. Recarga la página."
+              "Error loading the payment form. Please refresh the page."
             )
           }
           options={{
@@ -99,39 +95,23 @@ export const CheckoutForm = () => {
         {loading ? (
           <>
             <span className="button-spinner"></span>
-            Procesando pago...
+            Processing payment...
           </>
         ) : (
           <>
             <i className="fa-solid fa-lock me-2"></i>
-            Pagar ahora
+            Pay now
           </>
         )}
       </button>
 
       {message && (
-        <div
-          className={`checkout-alert ${
-            message.includes("éxito") || message.includes("exitosamente")
-              ? "alert-success"
-              : "alert-error"
-          }`}
-          role="alert"
-        >
-          <i
-            className={`fa-solid ${
-              message.includes("éxito") || message.includes("exitosamente")
-                ? "fa-check-circle"
-                : "fa-exclamation-triangle"
-            } me-2`}
-          ></i>
-          {message}
-        </div>
+        <div className="checkout-error-message text-danger mt-3">{message}</div>
       )}
 
-      <div className="checkout-security-note">
+      <div className="checkout-security-note mt-3">
         <i className="fa-solid fa-shield-alt me-1"></i>
-        Tus datos de pago están protegidos y encriptados
+        Your payment data is protected and encrypted
       </div>
     </form>
   );

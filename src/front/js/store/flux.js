@@ -45,6 +45,8 @@ const getState = ({ getStore, getActions, setStore }) => {
       coursesLoading: false,
       notification: { show: false, type: "", message: "" },
       coursesError: null,
+      lastPaymentId: null,
+
       selectedCourse: null,
       selectedCourseLoading: false,
       selectedCourseError: null,
@@ -870,6 +872,10 @@ const getState = ({ getStore, getActions, setStore }) => {
           });
         }, 4000);
       },
+      setLastPaymentId: (id) => {
+        setStore({ lastPaymentId: id });
+      },
+
       closeNotification: () => {
         setStore({
           notification: {

@@ -1,0 +1,114 @@
+/* === Overlay === */
+.stripe-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 8000; /* dejamos espacio para popups de Stripe */
+  animation: stripeFadeIn 0.3s ease;
+}
+
+/* === Caja del modal === */
+.stripe-modal {
+  background: #fff;
+  border-radius: 18px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 85vh; /* 🟢 alto máximo relativo al viewport */
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+  animation: stripeSlideIn 0.35s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* evita que se salga el contenido */
+  position: relative;
+}
+
+/* === Header estilo AllAcademy === */
+.stripe-header {
+  background: #2d3078;
+  color: #fff;
+  padding: 18px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stripe-header h5 {
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stripe-header h5 i {
+  font-size: 1.6rem;
+  color: #fff;
+  padding: 6px;
+  border-radius: 8px;
+}
+.stripe-close {
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 1.25rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.22s ease;
+}
+
+.stripe-close:hover {
+  transform: rotate(90deg);
+}
+
+/* === Cuerpo scrollable === */
+.stripe-body {
+  padding: 25px 25px 30px;
+  overflow-y: auto; /* 🟢 solo el cuerpo hace scroll */
+  scrollbar-width: auto;
+}
+
+/* === Scrollbar personalizado (opcional) === */
+.stripe-body::-webkit-scrollbar {
+  width: 6px;
+}
+/* === Texto de carga === */
+.stripe-loading {
+  text-align: center;
+  color: #6c757d;
+  padding: 40px 0;
+}
+
+/* === Animaciones === */
+@keyframes stripeFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes stripeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

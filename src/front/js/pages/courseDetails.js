@@ -3,6 +3,9 @@ import { Context } from "../store/appContext";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import noImage from "../../img/noImage.jpg";
 import "../../styles/courseDetails.css";
+import { StripeModal } from "./stripeModal";
+import { ConfettiCanvas } from "../component/confettiCanvas";
+import { useSearchParams } from "react-router-dom";
 
 export const CourseDetails = () => {
   const navigate = useNavigate();
@@ -14,6 +17,41 @@ export const CourseDetails = () => {
   const [loadingPayPal, setLoadingPayPal] = useState(false);
   const user = JSON.parse(localStorage.getItem("user"));
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showStripeModal, setShowStripeModal] = useState(false);
+  const [clientSecret, setClientSecret] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [searchParams] = useSearchParams(); // ✅ esto crea la variable correctamente
+
+  useEffect(() => {
+    const paypalSuccess = searchParams.get("paypal_success");
+    const paypalCancel = searchParams.get("paypal_cancel");
+
+    if (paypalSuccess === "true") {
+      const token = searchParams.get("token"); // PayPal nos devuelve el orderId o token en la URL
+      if (token) {
+        actions
+          .capturePaypalOrder(token)
+          .then((res) => {
+            if (!res.error) {
+              console.log("✅ Pago capturado correctamente:", res);
+              actions.setLastPaymentId(res?.order?.id || token);
+              setShowSuccessModal(true);
+            } else {
+              actions.showNotification("error", "Error capturando el pago");
+            }
+          })
+          .catch((err) => {
+            console.error("❌ Error en captura PayPal:", err);
+          });
+      } else {
+        console.warn("⚠️ No se encontró token de PayPal en la URL");
+      }
+    }
+
+    if (paypalCancel === "true") {
+      actions.showNotification("error", "Payment was cancelled");
+    }
+  }, [searchParams]);
 
   const handlePayPal = async () => {
     if (!user) return navigate("/login");
@@ -59,16 +97,12 @@ export const CourseDetails = () => {
 
   const course = courses.find((c) => c.slug === slug);
 
-  if (coursesLoading) {
+  // 🧭 Evita mostrar "Course not found" antes de que los cursos carguen
+  if (coursesLoading || courses.length === 0) {
     return (
       <div className="container py-5 text-center">
-        {" "}
-        <div className="wrapper">
-          <div className="blue ball"></div>
-          <div className="red ball"></div>
-          <div className="yellow ball"></div>
-          <div className="green ball"></div>
-        </div>
+        <div className="spinner-border text-primary" role="status"></div>
+        <p className="mt-3 text-muted">Loading course...</p>
       </div>
     );
   }
@@ -105,26 +139,15 @@ export const CourseDetails = () => {
 
     try {
       setLoadingPayment(true);
-      console.log("🔄 Creando PaymentIntent...");
-
       const payment = await actions.createPaymentIntent(
         course.id,
         selectedSchedule
       );
 
       if (payment && payment.clientSecret) {
-        console.log("✅ PaymentIntent creado, guardando datos...");
-
-        localStorage.removeItem("clientSecret");
-        localStorage.removeItem("selectedCourseId");
-
-        localStorage.setItem("selectedCourseId", course.id);
-        localStorage.setItem("clientSecret", payment.clientSecret);
-
-        console.log("🧭 Redirigiendo a checkout...");
-        navigate("/checkout");
+        setClientSecret(payment.clientSecret);
+        setShowStripeModal(true); // 👈 ABRIMOS EL MODAL
       } else {
-        console.error("❌ Error: No se recibió clientSecret");
         actions.showNotification("error", "Error al iniciar el pago");
       }
     } catch (error) {
@@ -575,8 +598,13 @@ export const CourseDetails = () => {
               <button
                 className="payment-method-option-modern stripe"
                 onClick={() => {
+                  // Cerramos el modal de método de pago
                   setShowPaymentModal(false);
-                  handleBuyNow();
+
+                  // Esperamos a que se desmonte el DOM (300ms)
+                  setTimeout(() => {
+                    handleBuyNow(); // luego abrimos Stripe
+                  }, 350);
                 }}
               >
                 <i className="fa-brands fa-stripe"></i>
@@ -599,6 +627,67 @@ export const CourseDetails = () => {
                 onClick={() => setShowPaymentModal(false)}
               >
                 <span>Cancel</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <StripeModal
+        show={showStripeModal}
+        onClose={() => setShowStripeModal(false)}
+        clientSecret={clientSecret}
+        onSuccess={() => setShowSuccessModal(true)}
+      />
+      {showSuccessModal && (
+        <div className="stripe-overlay">
+          <ConfettiCanvas />
+          <div className="stripe-modal">
+            <div className="stripe-header bg-success">
+              <h5>
+                <i className="fa-solid fa-check-circle me-2"></i>
+                Payment Successful
+              </h5>
+            </div>
+
+            <div className="stripe-body text-center">
+              <p className="text-muted mb-3">
+                Your payment has been processed successfully.
+              </p>
+
+              {/* 🧾 Mini Recibo */}
+              <div
+                className="receipt-card text-start mx-auto p-3 border rounded-3 shadow-sm"
+                style={{ maxWidth: "320px", background: "#fff" }}
+              >
+                <h6 className="text-center mb-3 fw-bold text-success">
+                  Payment Receipt
+                </h6>
+                <p className="mb-1">
+                  <strong>Course:</strong> {course.title}
+                </p>
+                <p className="mb-1">
+                  <strong>Amount:</strong> $
+                  {course.discount_price || course.price}
+                </p>
+                <p className="mb-1">
+                  <strong>Transaction ID:</strong>{" "}
+                  <span className="text-muted small">
+                    {store.lastPaymentId || "pi_8A2bXk12demo"}
+                  </span>
+                </p>
+                <p className="mb-1">
+                  <strong>Date:</strong> {new Date().toLocaleDateString()}
+                </p>
+                <p className="mb-0">
+                  <strong>User:</strong> {user?.email}
+                </p>
+              </div>
+
+              <button
+                className="btn btn-primary mt-4"
+                onClick={() => setShowSuccessModal(false)}
+              >
+                Close
               </button>
             </div>
           </div>

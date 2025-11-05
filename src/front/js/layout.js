@@ -5,10 +5,6 @@ import { BackendURL } from "./component/backendURL";
 
 import { Home } from "./pages/home/home";
 import { AllCourses } from "./pages/allCourses";
-import { CheckoutWrapper } from "./pages/checkoutWrapper";
-import { PaymentSuccess } from "./pages/paymentSucess";
-import { PayPalSuccess } from "./pages/paypalSucess";
-import { PayPalCancel } from "./pages/paypalCancel";
 import { CourseDetails } from "./pages/courseDetails";
 import { MyEnrollments } from "./pages/myEnrollments";
 import { Signup } from "./pages/signup";
@@ -16,7 +12,6 @@ import { Login } from "./pages/login";
 import { DashboardAdmin } from "./pages/dashboardAdmin/dashboardAdmin";
 import { DashboardTeacher } from "./pages/dashboardTeacher/dashboardTeacher";
 import { DashboardStudent } from "./pages/dashboardStudent/dashboardStudent";
-import { NotFound } from "./pages/notFound";
 import injectContext from "./store/appContext";
 
 import { ContactMeNavbar } from "./component/contactMeNavbar";
@@ -48,11 +43,6 @@ const Layout = () => {
             <Route element={<DashboardAdmin />} path="/admin/dashboard" />
             <Route element={<DashboardTeacher />} path="/teacher/dashboard" />
             <Route element={<DashboardStudent />} path="/student/dashboard" />
-            <Route element={<CheckoutWrapper />} path="/checkout" />
-            <Route element={<PaymentSuccess />} path="/payment-success" />
-            <Route element={<PayPalSuccess />} path="/checkout-success" />
-            <Route element={<PayPalCancel />} path="/checkout-cancel" />
-            <Route element={<NotFound />} path="iji" />
           </Routes>
           <Footer />
         </ScrollToTop>

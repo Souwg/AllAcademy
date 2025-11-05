@@ -1624,8 +1624,8 @@ def create_paypal_order():
             "brand_name": "AllAcademy",
             "shipping_preference": "NO_SHIPPING",
             # Si usas approve link en frontend, estas urls sólo aplican si usaras el "classic redirect"
-            "return_url": "http://localhost:3000/checkout-success",
-            "cancel_url": "http://localhost:3000/checkout-cancel"
+            "return_url": f"http://localhost:3000/courses/{course.slug}?paypal_success=true",
+            "cancel_url": f"http://localhost:3000/courses/{course.slug}?paypal_cancel=true",
         }
     }
 

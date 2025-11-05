@@ -120,50 +120,59 @@
   animation: paymentModalFadeIn 0.3s ease;
 }
 
-/* === 🪟 Caja moderna === */
+/* === Overlay general (coherente con Stripe) === */
+.payment-method-modal-overlay-modern {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 8000;
+  animation: stripeFadeIn 0.3s ease;
+}
+
+/* === Caja del modal (estilo AllAcademy) === */
 .payment-method-modal-modern {
-  position: relative;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 2rem;
-  max-width: 400px;
+  background: linear-gradient(145deg, #2d3078, #3b3fa3);
+  color: #fff;
+  border-radius: 18px;
   width: 90%;
-  color: #fff;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-  transform: translateY(-20px);
-  animation: paymentModalSlideIn 0.4s ease forwards;
+  max-width: 420px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+  padding: 2rem 1.5rem;
+  animation: stripeSlideIn 0.35s ease;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
 }
 
-/* === ❌ Botón de cierre === */
-.payment-method-close-modern {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 1.4rem;
-  border-radius: 50%;
-  padding: 6px 10px;
-  transition: background 0.2s ease;
+/* === Header (similar al de StripeModal) === */
+.payment-method-header-modern {
+  margin-bottom: 1.5rem;
 }
-
-/* === 🪙 Header del modal === */
+.payment-method-header-modern i {
+  font-size: 2rem;
+  color: #ffc83d;
+  margin-bottom: 0.5rem;
+}
 .payment-method-header-modern h5 {
   font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
 }
-
 .payment-method-header-modern p {
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.75);
 }
 
-/* === 🔘 Botones de opciones === */
+/* === Botones de opciones coherentes con AllAcademy Stripe === */
 .payment-method-option-modern {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   padding: 14px;
   font-size: 1rem;
   font-weight: 600;
@@ -177,38 +186,41 @@
   font-size: 1.4rem;
 }
 
+/* 🟣 Stripe */
 .payment-method-option-modern.stripe {
   background: linear-gradient(135deg, #6772e5, #5469d4);
   color: white;
+  box-shadow: 0 0 10px rgba(103, 114, 229, 0.4);
 }
-
 .payment-method-option-modern.stripe:hover {
   transform: scale(1.03);
-  box-shadow: 0 0 12px rgba(103, 114, 229, 0.6);
+  box-shadow: 0 0 14px rgba(103, 114, 229, 0.7);
 }
 
+/* 💙 PayPal */
 .payment-method-option-modern.paypal {
   background: linear-gradient(135deg, #009cde, #003087);
   color: white;
+  box-shadow: 0 0 10px rgba(0, 156, 222, 0.4);
 }
-
 .payment-method-option-modern.paypal:hover {
   transform: scale(1.03);
-  box-shadow: 0 0 12px rgba(0, 156, 222, 0.6);
+  box-shadow: 0 0 14px rgba(0, 156, 222, 0.7);
 }
 
+/* 🔘 Cancelar */
 .payment-method-option-modern.cancel {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.15);
   color: white;
+  font-weight: 500;
 }
-
 .payment-method-option-modern.cancel:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
   transform: scale(1.02);
 }
 
-/* === ✨ Animaciones suaves === */
-@keyframes paymentModalFadeIn {
+/* ✨ Animaciones coherentes */
+@keyframes stripeFadeIn {
   from {
     opacity: 0;
   }
@@ -216,11 +228,10 @@
     opacity: 1;
   }
 }
-
-@keyframes paymentModalSlideIn {
+@keyframes stripeSlideIn {
   from {
     opacity: 0;
-    transform: translateY(-30px);
+    transform: translateY(-20px);
   }
   to {
     opacity: 1;
@@ -269,4 +280,11 @@
   50% {
     transform: translateY(25px);
   }
+}
+.payment-method-modal-overlay-modern {
+  pointer-events: auto;
+}
+
+.modal-overlay {
+  pointer-events: all;
 }
