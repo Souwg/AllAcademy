@@ -981,6 +981,44 @@ const getState = ({ getStore, getActions, setStore }) => {
           return { error: true };
         }
       },
+      uploadVideoToCloudinary: async (
+        file,
+        title,
+        course_id,
+        schedule_id = null
+      ) => {
+        try {
+          const token = localStorage.getItem("token");
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("title", title);
+          formData.append("course_id", course_id);
+          if (schedule_id) formData.append("schedule_id", schedule_id);
+
+          const resp = await fetch("http://localhost:3001/api/upload-video", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+          });
+
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(data.msg || "Error al subir el video");
+
+          // 🧠 Actualiza el store de videos
+          const store = getStore();
+          setStore({
+            videos: [...(store.videos || []), data.recording],
+          });
+
+          return data.recording;
+        } catch (err) {
+          console.error("❌ Error en uploadVideoToCloudinary:", err);
+          getActions().showNotification("error", "Error al subir el video");
+          return null;
+        }
+      },
     },
   };
 };

@@ -35,6 +35,9 @@ export const DashboardTeacher = () => {
   const [editingVideo, setEditingVideo] = useState(null);
   const [editTitle, setEditTitle] = useState("");
   const [editUrl, setEditUrl] = useState("");
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState("");
+  const [selectedVideoTitle, setSelectedVideoTitle] = useState("");
 
   const openEditModal = (video) => {
     setEditingVideo(video);
@@ -75,25 +78,56 @@ export const DashboardTeacher = () => {
 
   const handleUploadVideo = async () => {
     if (!recordingTitle || !recordingUrl) {
-      alert("Please fill in all fields.");
+      Swal.fire({
+        icon: "warning",
+        title: "Missing information",
+        text: "Please add a title and choose a video file.",
+      });
       return;
     }
 
-    const recordingData = {
-      course_id: selectedCourse.id,
-      title: recordingTitle,
-      recording_url: recordingUrl,
-      lesson_ids: selectedLessons,
-      schedule_id: selectedGroupId ? Number(selectedGroupId) : null,
-    };
+    try {
+      Swal.fire({
+        title: "Uploading...",
+        text: "Please wait while your video is uploaded.",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+      });
 
-    const result = await actions.createRecording(recordingData);
-    if (result) {
-      setRecordingTitle("");
-      setRecordingUrl("");
-      setSelectedLessons([]);
-      setSelectedGroupId(null); // 🧽 limpiar selección
-      setShowUploadModal(false);
+      const uploaded = await actions.uploadVideoToCloudinary(
+        recordingUrl, // el archivo
+        recordingTitle,
+        selectedCourse.id,
+        selectedGroupId ? Number(selectedGroupId) : null
+      );
+
+      Swal.close();
+
+      if (uploaded) {
+        Swal.fire({
+          icon: "success",
+          title: "Video uploaded successfully!",
+          confirmButtonColor: "#10b981",
+        });
+        setRecordingTitle("");
+        setRecordingUrl("");
+        setSelectedGroupId(null);
+        setShowUploadModal(false);
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Upload failed",
+          text: "There was a problem uploading the video.",
+        });
+      }
+    } catch (err) {
+      Swal.close();
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Unexpected error during upload.",
+      });
+      console.error(err);
     }
   };
 
@@ -801,10 +835,14 @@ export const DashboardTeacher = () => {
                                   </div>
                                   <div className="d-flex gap-2">
                                     {/* Botón Watch */}
-                                    <a
-                                      href={video.url}
-                                      target="_blank"
-                                      rel="noreferrer"
+                                    <button
+                                      onClick={() => {
+                                        setSelectedVideoUrl(
+                                          video.recording_url
+                                        );
+                                        setSelectedVideoTitle(video.title);
+                                        setShowVideoModal(true);
+                                      }}
                                       style={{
                                         background:
                                           "linear-gradient(135deg, #2d3078 0%, #3f42a0 100%)",
@@ -816,7 +854,7 @@ export const DashboardTeacher = () => {
                                         display: "flex",
                                         alignItems: "center",
                                         gap: "6px",
-                                        textDecoration: "none",
+                                        cursor: "pointer",
                                         boxShadow:
                                           "0 4px 10px rgba(45, 48, 120, 0.25)",
                                         transition: "all 0.3s ease",
@@ -835,7 +873,7 @@ export const DashboardTeacher = () => {
                                       }}
                                     >
                                       <i className="fa-solid fa-play"></i> Watch
-                                    </a>
+                                    </button>
                                     {/* Botón Publish/Unpublish */}
                                     <button
                                       onClick={async () => {
@@ -1306,17 +1344,19 @@ export const DashboardTeacher = () => {
                   />
                 </div>
 
-                {/* 🔗 URL */}
+                {/* 🎥 Subir archivo */}
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Recording URL</label>
+                  <label className="form-label fw-bold">
+                    Upload Video File
+                  </label>
                   <input
-                    type="text"
+                    type="file"
+                    accept="video/*"
                     className="form-control"
-                    value={recordingUrl}
-                    onChange={(e) => setRecordingUrl(e.target.value)}
-                    placeholder="https://..."
+                    onChange={(e) => setRecordingUrl(e.target.files[0])}
                   />
                 </div>
+
                 {/* 🧭 Grupo asociado */}
                 {selectedCourse.schedules?.length > 0 && (
                   <div className="mb-3">
@@ -1336,6 +1376,8 @@ export const DashboardTeacher = () => {
                     </select>
                   </div>
                 )}
+
+                {/* 📚 Lecciones relacionadas */}
                 <div className="mb-3">
                   <label className="form-label fw-bold">Related Lessons</label>
                   <div className="lessons-checkboxes">
@@ -1374,6 +1416,7 @@ export const DashboardTeacher = () => {
                   </div>
                 </div>
 
+                {/* 🟢 Botones de acción */}
                 <div className="d-flex justify-content-end">
                   <button
                     className="btn btn-secondary me-2"
@@ -1481,6 +1524,105 @@ export const DashboardTeacher = () => {
           initialMessages={privateMessages}
           onClose={() => setShowPrivateChatModal(false)}
         />
+      )}
+      {/* 🎬 Modal para ver video */}
+      {/* 🎬 Modal para ver video centrado */}
+      {showVideoModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowVideoModal(false)} // cerrar al hacer clic fuera
+        >
+          <div
+            className="modal-content"
+            style={{
+              width: "90%",
+              maxWidth: "1000px",
+              background: "#fff",
+              borderRadius: "16px",
+              overflow: "hidden",
+              padding: 0,
+            }}
+            onClick={(e) => e.stopPropagation()} // evitar cierre al hacer clic dentro
+          >
+            {/* HEADER IGUAL QUE TUS OTROS MODALES */}
+            <div
+              className="modal-header"
+              style={{ borderBottom: "none", position: "relative" }}
+            >
+              <div>
+                <h2
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.75rem",
+                  }}
+                >
+                  <i className="fa-solid fa-video modal-icon"></i>
+                  {selectedVideoTitle}
+                  <span
+                    style={{
+                      background: "#e2e8f0",
+                      color: "#001933",
+                      fontSize: "0.85rem",
+                      padding: "4px 10px",
+                      borderRadius: "50px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    0:58
+                  </span>
+                </h2>
+                <p
+                  style={{
+                    fontSize: "0.9rem",
+                    color: "#6c757d",
+                    marginTop: "4px",
+                  }}
+                >
+                  Full-Stack Web — Evening Cohort A
+                </p>
+              </div>
+
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+              >
+                <button
+                  className="close-modal"
+                  onClick={() => setShowVideoModal(false)}
+                  aria-label="Close Modal"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </div>
+
+            {/* CUERPO DEL MODAL */}
+            <div
+              className="modal-body"
+              style={{
+                padding: 0,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                background: "#000",
+                borderRadius: "0 0 16px 16px",
+              }}
+            >
+              <video
+                src={selectedVideoUrl}
+                controls
+                autoPlay
+                style={{
+                  width: "100%",
+                  height: "70vh",
+                  objectFit: "contain",
+                  borderRadius: "0 0 16px 16px",
+                  backgroundColor: "black",
+                }}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

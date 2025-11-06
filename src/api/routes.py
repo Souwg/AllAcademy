@@ -15,6 +15,7 @@ from datetime import datetime
 from slugify import slugify
 import calendar
 import stripe
+import cloudinary.uploader
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
@@ -2083,3 +2084,55 @@ def handle_payment_success(event):
         import traceback
         traceback.print_exc()
         return jsonify({"error": "Processing failed"}), 500
+    
+@api.route("/upload-video", methods=["POST"])
+@jwt_required()
+def upload_video():
+    """
+    🎥 Subir un video a Cloudinary y guardar el registro como una grabación.
+    """
+    try:
+        # Validar que haya un archivo en la solicitud
+        if "file" not in request.files:
+            return jsonify({"msg": "No se encontró ningún archivo"}), 400
+
+        file = request.files["file"]
+        title = request.form.get("title")
+        course_id = request.form.get("course_id")
+        schedule_id = request.form.get("schedule_id")
+
+        if not course_id or not title:
+            return jsonify({"msg": "Faltan datos: título o curso"}), 400
+
+        # 🧠 Obtener el usuario (profesor)
+        teacher_id = get_jwt_identity()
+
+        # 📤 Subir video a Cloudinary (como recurso de tipo "video")
+        upload_result = cloudinary.uploader.upload(
+            file,
+            resource_type="video",
+            folder=f"allacademy/courses/{course_id}/recordings"
+        )
+
+        # 💾 Crear el registro en la base de datos
+        new_recording = Recording(
+            course_id=course_id,
+            schedule_id=schedule_id,
+            teacher_id=teacher_id,
+            title=title,
+            recording_url=upload_result["secure_url"],
+            is_published=False
+        )
+
+        db.session.add(new_recording)
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Video subido y guardado correctamente",
+            "recording": new_recording.serialize()
+        }), 200
+
+    except Exception as e:
+        print("❌ Error al subir video:", str(e))
+        db.session.rollback()
+        return jsonify({"msg": "Error al subir video", "error": str(e)}), 500

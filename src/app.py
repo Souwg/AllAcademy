@@ -3,7 +3,18 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 """
 import os
 from dotenv import load_dotenv
-load_dotenv() 
+load_dotenv()
+
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
+print("☁️ Cloudinary conectado al cloud:", os.getenv("CLOUDINARY_CLOUD_NAME"))
 from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
