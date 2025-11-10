@@ -38,6 +38,17 @@ export const DashboardTeacher = () => {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState("");
   const [selectedVideoTitle, setSelectedVideoTitle] = useState("");
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileData, setProfileData] = useState({
+    first_name: user?.first_name || "",
+    last_name: user?.last_name || "",
+    country: user?.country || "",
+    id_number: user?.id_number || "",
+    bio: user?.bio || "",
+    image_url: user?.image_url || "",
+    image: null, // 👈 archivo real
+    preview: null,
+  });
 
   const openEditModal = (video) => {
     setEditingVideo(video);
@@ -94,8 +105,8 @@ export const DashboardTeacher = () => {
         didOpen: () => Swal.showLoading(),
       });
 
-      const uploaded = await actions.uploadVideoToCloudinary(
-        recordingUrl, // el archivo
+      const uploaded = await actions.uploadVideoToBackend(
+        recordingUrl,
         recordingTitle,
         selectedCourse.id,
         selectedGroupId ? Number(selectedGroupId) : null
@@ -250,6 +261,27 @@ export const DashboardTeacher = () => {
       messages: msgs,
     }));
   };
+  // ✨ Abre el modal del perfil con datos actualizados del localStorage
+  const handleOpenProfileModal = () => {
+    const localUser = JSON.parse(localStorage.getItem("user"));
+
+    // Verifica que existe y muestra un log temporal
+    console.log("🧩 Usuario local con imagen:", localUser?.image_url);
+
+    setProfileData({
+      first_name: localUser?.first_name || "",
+      last_name: localUser?.last_name || "",
+      email: localUser?.email || "",
+      country: localUser?.country || "",
+      id_number: localUser?.id_number || "",
+      bio: localUser?.bio || "",
+      image_url: localUser?.image_url || "", // 🧠 viene directo del localStorage
+      image: null,
+      preview: null,
+    });
+
+    setTimeout(() => setShowProfileModal(true), 100);
+  };
 
   const closeChatModal = () => {
     setShowChatModal(false);
@@ -297,6 +329,15 @@ export const DashboardTeacher = () => {
                     today.
                   </p>
                 </div>
+              </div>
+              <div className="dashboard-buttons">
+                <button
+                  className="btn btn-lg btn-outline-light me-2"
+                  onClick={handleOpenProfileModal}
+                >
+                  <i className="fa-solid fa-user-pen me-2"></i>
+                  Edit Profile
+                </button>
               </div>
             </div>
 
@@ -1620,6 +1661,212 @@ export const DashboardTeacher = () => {
                   backgroundColor: "black",
                 }}
               />
+            </div>
+          </div>
+        </div>
+      )}
+      {showProfileModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowProfileModal(false)}
+        >
+          <div
+            className="modal-content"
+            style={{ maxWidth: "550px" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 🟣 Header */}
+            <div className="modal-header">
+              <h2>
+                <i className="fa-solid fa-user-pen modal-icon"></i>
+                Edit Profile
+              </h2>
+              <button
+                className="close-modal"
+                onClick={() => setShowProfileModal(false)}
+                aria-label="Close Modal"
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            {/* 🔹 Body */}
+            <div className="modal-body">
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const success = await actions.updateUserProfile(profileData);
+                  if (success) {
+                    setShowProfileModal(false);
+                  }
+                }}
+                className="user-edit-form"
+              >
+                {/* 🖼️ Imagen de perfil */}
+                <div className="text-center mb-3">
+                  <img
+                    src={
+                      profileData.preview
+                        ? profileData.preview
+                        : profileData.image_url &&
+                          profileData.image_url.trim() !== ""
+                        ? profileData.image_url
+                        : noImage // 👈 Usa la imagen por defecto al eliminar
+                    }
+                    alt="Profile"
+                    className="rounded-circle shadow-sm"
+                    style={{
+                      width: "110px",
+                      height: "110px",
+                      objectFit: "cover",
+                      objectPosition: "top",
+                      transition: "all 0.3s ease-in-out",
+                    }}
+                  />
+
+                  <div className="mt-2">
+                    <div className="modern-file-upload mt-3">
+                      <label htmlFor="file-upload" className="upload-btn">
+                        <i className="fa-solid fa-cloud-arrow-up me-2"></i>
+                        Choose Image
+                      </label>
+                      <input
+                        id="file-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            setProfileData({
+                              ...profileData,
+                              image: file,
+                              preview: URL.createObjectURL(file),
+                            });
+                          }
+                        }}
+                      />
+                      {profileData.image && (
+                        <span className="selected-file">
+                          {profileData.image.name}
+                        </span>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger mt-3"
+                      style={{
+                        borderRadius: "8px",
+                        fontWeight: "500",
+                        opacity:
+                          profileData.image_url || profileData.preview
+                            ? "1"
+                            : "0.6",
+                      }}
+                      disabled={!profileData.image_url && !profileData.preview}
+                      onClick={() => {
+                        setProfileData({
+                          ...profileData,
+                          image: null,
+                          image_url: "",
+                          preview: null,
+                        });
+
+                        // 👇 Limpia también la versión de localStorage para forzar el rerender
+                        const storedUser = JSON.parse(
+                          localStorage.getItem("user")
+                        );
+                        if (storedUser) {
+                          storedUser.image_url = "";
+                          localStorage.setItem(
+                            "user",
+                            JSON.stringify(storedUser)
+                          );
+                        }
+                      }}
+                    >
+                      <i className="fa-solid fa-trash me-2"></i>
+                      Remove Image
+                    </button>
+                  </div>
+                </div>
+
+                {/* 🟠 Campos editables */}
+                <div className="form-group">
+                  <label>First Name</label>
+                  <input
+                    type="text"
+                    value={profileData.first_name || ""}
+                    onChange={(e) =>
+                      setProfileData({
+                        ...profileData,
+                        first_name: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Last Name</label>
+                  <input
+                    type="text"
+                    value={profileData.last_name || ""}
+                    onChange={(e) =>
+                      setProfileData({
+                        ...profileData,
+                        last_name: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                {/* 🔒 Datos informativos */}
+                <div className="form-group">
+                  <label>Email</label>
+                  <p className="text-muted">
+                    {profileData.email || "Not provided"}
+                  </p>
+                </div>
+
+                <div className="form-group">
+                  <label>Country</label>
+                  <p className="text-muted">{profileData.country || "—"}</p>
+                </div>
+
+                <div className="form-group">
+                  <label>ID / Document</label>
+                  <p className="text-muted">{profileData.id_number || "—"}</p>
+                </div>
+
+                <div className="form-group">
+                  <label>Bio</label>
+                  <p
+                    className="text-muted"
+                    style={{
+                      background: "#f8f9fa",
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      whiteSpace: "pre-line",
+                    }}
+                  >
+                    {profileData.bio || "No bio provided"}
+                  </p>
+                </div>
+
+                {/* Footer buttons */}
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    className="btn-cancel"
+                    onClick={() => setShowProfileModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn-primary">
+                    <i className="fa-solid fa-save me-2"></i> Save Changes
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

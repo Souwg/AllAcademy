@@ -59,6 +59,16 @@ body {
   margin: 0;
 }
 
+.dashboard-buttons .btn {
+  background: #10b981;
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
 @media (max-width: 768px) {
   .modern-banner {
     flex-direction: column;
@@ -805,3 +815,39 @@ body {
   }
 }
 /***********************************************Modal showupload**********************************/
+/* 🌈 File upload moderno */
+.modern-file-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.upload-btn {
+  background: linear-gradient(135deg, #2d3078 0%, #3f42a0 100%);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(45, 48, 120, 0.25);
+  transition: all 0.3s ease;
+}
+
+.upload-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(45, 48, 120, 0.35);
+}
+
+.modern-file-upload input[type="file"] {
+  display: none;
+}
+
+.selected-file {
+  font-size: 0.85rem;
+  color: #555;
+  background: #f5f5f5;
+  padding: 4px 10px;
+  border-radius: 8px;
+}

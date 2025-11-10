@@ -47,7 +47,7 @@ class User(db.Model):
         return {
             "id": self.id,
             "email": self.email,
-            "image": self.image_url,
+            "image_url": self.image_url,
             "first_name": self.first_name,
             "last_name": self.last_name,
             "bio": self.bio,
@@ -202,6 +202,7 @@ class Course(db.Model):
             "schedules": schedules_data,
             "instructor": self.teacher.first_name + " " + self.teacher.last_name,
             "instructorBio": self.teacher.bio if self.teacher else "",
+            "instructorImage": self.teacher.image_url if self.teacher and self.teacher.image_url else None, 
             "lessons": sum(len(module.lessons) for module in self.modules),
             "what_you_learn": [obj.objective for obj in self.what_you_learn],
             "requirements": [req.requirement for req in self.requirements],

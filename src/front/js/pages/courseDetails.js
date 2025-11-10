@@ -27,7 +27,7 @@ export const CourseDetails = () => {
     const paypalCancel = searchParams.get("paypal_cancel");
 
     if (paypalSuccess === "true") {
-      const token = searchParams.get("token"); // PayPal nos devuelve el orderId o token en la URL
+      const token = searchParams.get("token");
       if (token) {
         actions
           .capturePaypalOrder(token)
@@ -146,7 +146,7 @@ export const CourseDetails = () => {
 
       if (payment && payment.clientSecret) {
         setClientSecret(payment.clientSecret);
-        setShowStripeModal(true); // 👈 ABRIMOS EL MODAL
+        setShowStripeModal(true);
       } else {
         actions.showNotification("error", "Error al iniciar el pago");
       }

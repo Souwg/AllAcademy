@@ -97,6 +97,48 @@ const getState = ({ getStore, getActions, setStore }) => {
           return { success: false, message: "Connection error" };
         }
       },
+      updateUserProfile: async (updatedData) => {
+        try {
+          const token = localStorage.getItem("token");
+          const formData = new FormData();
+
+          // Agregar todos los campos al FormData
+          for (const key in updatedData) {
+            if (updatedData[key] !== undefined && updatedData[key] !== null) {
+              formData.append(key, updatedData[key]);
+            }
+          }
+          if (updatedData.image_url === "") {
+            formData.append("remove_image", "true");
+          }
+
+          const resp = await fetch("http://localhost:3001/api/user/profile", {
+            method: "PUT",
+            headers: {
+              Authorization: "Bearer " + token,
+            },
+            body: formData, // 👈 Importante: ya no es JSON
+          });
+
+          const data = await resp.json();
+          if (!resp.ok)
+            throw new Error(data.msg || "Error al actualizar perfil");
+
+          // Guardar en localStorage y en el store
+          localStorage.setItem("user", JSON.stringify(data.user));
+          setStore({ user: data.user });
+
+          getActions().showNotification(
+            "success",
+            "Profile updated successfully!"
+          );
+          return true;
+        } catch (err) {
+          console.error("❌ Error en updateUserProfile:", err);
+          getActions().showNotification("error", err.message);
+          return false;
+        }
+      },
 
       loginUser: async (email, password) => {
         try {
@@ -981,7 +1023,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           return { error: true };
         }
       },
-      uploadVideoToCloudinary: async (
+      uploadVideoToBackend: async (
         file,
         title,
         course_id,
@@ -989,33 +1031,31 @@ const getState = ({ getStore, getActions, setStore }) => {
       ) => {
         try {
           const token = localStorage.getItem("token");
-          const formData = new FormData();
-          formData.append("file", file);
-          formData.append("title", title);
-          formData.append("course_id", course_id);
-          if (schedule_id) formData.append("schedule_id", schedule_id);
+          if (!token) throw new Error("No estás autenticado");
+
+          const fd = new FormData();
+          fd.append("file", file);
+          fd.append("title", title);
+          fd.append("course_id", course_id);
+          if (schedule_id) fd.append("schedule_id", schedule_id);
 
           const resp = await fetch("http://localhost:3001/api/upload-video", {
             method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            body: formData,
+            headers: { Authorization: "Bearer " + token },
+            body: fd,
           });
 
           const data = await resp.json();
           if (!resp.ok) throw new Error(data.msg || "Error al subir el video");
 
-          // 🧠 Actualiza el store de videos
-          const store = getStore();
-          setStore({
-            videos: [...(store.videos || []), data.recording],
-          });
-
+          getActions().showNotification(
+            "success",
+            "🎥 Video subido con éxito!"
+          );
           return data.recording;
         } catch (err) {
-          console.error("❌ Error en uploadVideoToCloudinary:", err);
-          getActions().showNotification("error", "Error al subir el video");
+          console.error("❌ uploadVideoToBackend:", err);
+          getActions().showNotification("error", err.message);
           return null;
         }
       },

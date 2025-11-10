@@ -73,7 +73,6 @@ export const AdminContent = ({
   updateSchedule,
   toggleScheduleDay,
 }) => {
-  // Función para renderizar la tabla de usuarios
   const renderUserTable = (usersToRender) => {
     if (usersToRender.length === 0) {
       return (
@@ -220,7 +219,6 @@ export const AdminContent = ({
     );
   };
 
-  // Función auxiliar para nombres de roles
   const getRoleName = (role) => {
     const roles = {
       admin: "Admin",
@@ -231,14 +229,10 @@ export const AdminContent = ({
     return roles[role] || "User";
   };
 
-  // Renderizado del dashboard
-  // Renderizado del dashboard
-  // Renderizado del dashboard
   const renderDashboard = () => {
     const userStats = getUserStats();
     const courseStats = getCourseStats();
 
-    // Íconos para usuarios
     const userIcons = {
       total: {
         icon: <i className="fa-solid fa-users"></i>,
@@ -258,7 +252,6 @@ export const AdminContent = ({
       },
     };
 
-    // Íconos para cursos
     const courseIcons = {
       total: {
         icon: <i className="fa-solid fa-book"></i>,
@@ -274,7 +267,6 @@ export const AdminContent = ({
       },
     };
 
-    // Labels personalizados
     const userLabels = {
       total: "Total Users",
       admins: "Admins",
@@ -300,7 +292,7 @@ export const AdminContent = ({
               >
                 {userIcons[key].icon}
               </div>
-              <span>{userLabels[key]}</span> {/* Aquí cambiamos el label */}
+              <span>{userLabels[key]}</span>
               <strong>{userStats[key]}</strong>
             </div>
           ))}
@@ -316,7 +308,7 @@ export const AdminContent = ({
               >
                 {courseIcons[key].icon}
               </div>
-              <span>{courseLabels[key]}</span> {/* Aquí también */}
+              <span>{courseLabels[key]}</span>
               <strong>{courseStats[key]}</strong>
             </div>
           ))}

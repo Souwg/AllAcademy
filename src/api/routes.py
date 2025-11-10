@@ -2,6 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 import os
+import traceback
 import requests
 from flask import Flask, json, request, jsonify, url_for, Blueprint
 from sqlalchemy import extract, func
@@ -296,6 +297,64 @@ def update_user(user_id):
     db.session.commit()
 
     return jsonify({"msg": "Usuario actualizado correctamente", "user": user.serialize()}), 200
+
+@api.route('/user/profile', methods=['PUT'])
+@jwt_required()
+def update_profile():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"msg": "Usuario no encontrado"}), 404
+
+    try:
+        if request.content_type and "multipart/form-data" in request.content_type:
+            first_name = request.form.get("first_name", user.first_name)
+            last_name = request.form.get("last_name", user.last_name)
+            bio = request.form.get("bio", user.bio)
+            country = request.form.get("country", user.country)
+            id_number = request.form.get("id_number", user.id_number)
+            email = request.form.get("email", user.email)
+
+            user.first_name = first_name
+            user.last_name = last_name
+            user.bio = bio
+            user.country = country
+            user.id_number = id_number
+            user.email = email
+
+            if request.form.get("remove_image") == "true":
+                user.image_url = None
+
+            # 🖼️ Subida de imagen
+            if "image" in request.files:
+                file = request.files["image"]
+                if file and file.filename != "":
+                    upload_result = cloudinary.uploader.upload(file, folder="profile_images")
+                    user.image_url = upload_result["secure_url"]
+        else:
+            data = request.get_json()
+            user.first_name = data.get("first_name", user.first_name)
+            user.last_name = data.get("last_name", user.last_name)
+            user.email = data.get("email", user.email)
+            user.country = data.get("country", user.country)
+            user.id_number = data.get("id_number", user.id_number)
+            user.bio = data.get("bio", user.bio)
+            if data.get("image_url"):
+                user.image_url = data["image_url"]
+
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Perfil actualizado correctamente",
+            "user": user.serialize()
+        }), 200
+
+    except Exception as e:
+        print("❌ Error al actualizar perfil:")
+        traceback.print_exc()
+        return jsonify({"msg": "Error interno", "error": str(e)}), 500
+
+
 
 @api.route('/admin/users/<int:user_id>', methods=['DELETE'])
 @jwt_required()
@@ -702,6 +761,8 @@ def get_teachers():
     
     print(f"Returning {len(teachers_data)} teachers")
     return jsonify(teachers_data), 200
+
+
 
 @api.route('/admin/courses', methods=['GET'])
 @jwt_required()
@@ -2092,7 +2153,6 @@ def upload_video():
     🎥 Subir un video a Cloudinary y guardar el registro como una grabación.
     """
     try:
-        # Validar que haya un archivo en la solicitud
         if "file" not in request.files:
             return jsonify({"msg": "No se encontró ningún archivo"}), 400
 
@@ -2104,17 +2164,16 @@ def upload_video():
         if not course_id or not title:
             return jsonify({"msg": "Faltan datos: título o curso"}), 400
 
-        # 🧠 Obtener el usuario (profesor)
         teacher_id = get_jwt_identity()
 
-        # 📤 Subir video a Cloudinary (como recurso de tipo "video")
-        upload_result = cloudinary.uploader.upload(
-            file,
+        import io
+        upload_result = cloudinary.uploader.upload_large(
+            io.BytesIO(file.read()),
             resource_type="video",
-            folder=f"allacademy/courses/{course_id}/recordings"
+            folder=f"allacademy/courses/{course_id}/recordings",
+            chunk_size=6_000_000  # 6 MB por fragmento
         )
 
-        # 💾 Crear el registro en la base de datos
         new_recording = Recording(
             course_id=course_id,
             schedule_id=schedule_id,
@@ -2133,6 +2192,37 @@ def upload_video():
         }), 200
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print("❌ Error al subir video:", str(e))
         db.session.rollback()
         return jsonify({"msg": "Error al subir video", "error": str(e)}), 500
+
+
+@api.route("/cloudinary-signature", methods=["GET"])
+@jwt_required()
+def get_cloudinary_signature():
+    import cloudinary.utils
+    import time
+
+    # 📥 leer folder desde query param
+    folder = request.args.get("folder", "allacademy/videos")
+    timestamp = int(time.time())
+
+    params_to_sign = {
+        "timestamp": timestamp,
+        "folder": folder
+    }
+
+    signature = cloudinary.utils.api_sign_request(
+        params_to_sign,
+        os.getenv("CLOUDINARY_API_SECRET")
+    )
+
+    return jsonify({
+        "timestamp": timestamp,
+        "signature": signature,
+        "cloud_name": os.getenv("CLOUDINARY_CLOUD_NAME"),
+        "api_key": os.getenv("CLOUDINARY_API_KEY"),
+        "folder": folder
+    }), 200

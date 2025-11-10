@@ -1,0 +1,49 @@
+[33m99e7050[m[33m ([m[1;36mHEAD -> [m[1;32mFrontend/HomePage[m[33m)[m irtegracion de cloudinary
+[33m475d630[m[33m ([m[1;31morigin/Frontend/HomePage[m[33m)[m integracion del webhook de paypal funcionando
+[33m954bdda[m stripe y paypal con sus modales de pago de proceso de pago y de exito
+[33mfb4e79b[m paypal y stripe funcionando
+[33ma8b6a08[m migracion de la logica del signup al archivo global flux, agregue el video_url al models porque no estaba creando los cursos por error 500
+[33m7464513[m integración de paypal API como metodo de pago
+[33m4da5737[m integracion de stripe como metodo de pago
+[33mce093ed[m mejoras en el routes.py comentarios, etc
+[33m0ac1ddd[m todo funcionando de manera correcta
+[33m4b50a46[m optimizacion de la logica en el flux para el panel de notificaciones del dashboard del teacher
+[33m50c075e[m modificacion de estilos del chat, etc
+[33m5ddc250[m modal de administracion para el dashboard teacher
+[33m15550ff[m cambios varios dentro del dashboard del teacher
+[33m9e2d28c[m funcionamiento del panel de notificaciones del teacher
+[33m48245db[m creacion de diferentes horarios para el mismo curso
+[33mfe24aee[m muchos cambios varios dentro del frontend y backemd pero codigo en funcionamiento
+[33ma04e21e[m cambios tanto en el backend como en el frontend, integracion del dashboard del estudiante y del profesor + funcionalidades
+[33m6241bb6[m muchos cambios en el diseño general e integracion de los detalles del curso
+[33m8027d7c[m migrar estilos de dashboardadmin.css a archivos individuales de css
+[33m7960ec8[m ajuste de colores del login, navbar e funcionamiento del is_publish en el frontend y backend
+[33m0a032db[m integracion del backend con el frontend
+[33m3ba2ff4[m cambios varios en la creacion de cursos y visualizacion del curso en el admin
+[33m41fc295[m correccion de error en los estilos de dashboardadmin
+[33m5246f3a[m modificacion en el models, routes, dashboardadmin y admincontent para crear cursos nuevos con el role de admin
+[33mb13fd1d[m modificacion en el routes y en login para manejo de errores de usuarios bloqueados
+[33m4e1915f[m funcionalidad culminada de ultima conexión del usuario
+[33m5a4e41d[m boton del dashboard en el navbar, funcion del count_block, funcion de last login
+[33m13f53e6[m bloqueo de usuarios en el dashboarAdmin
+[33m8d61395[m descomposicion de componentes en el dashboardAdmin
+[33md3e8014[m Implementacion de las primeras funciones en el DashboarAdmin
+[33m4c26fa1[m mejoras del login, logout y api/GET de los registrados en el dashboard del admin
+[33mab6fe0e[m mejoras del home
+[33m7917288[m top courses/homepage
+[33mb917297[m all courses, migracion de estilos lineales a hoja de estilo, nuevo archivo coursesData
+[33mdea6975[m courseDetails
+[33m993fd45[m not found page
+[33m33142a5[m mejoras del login, logout y pagina de not found
+[33me6e69d7[m login, logout
+[33mc6677d1[m concluded merge
+[33md90297a[m signup countries
+[33md422370[m Merge pull request #2 from Souwg/develop
+[33m29393b1[m[33m ([m[1;31morigin/develop[m[33m, [m[1;32mdevelop[m[33m)[m sweet alerts in Signup
+[33m1070b51[m modificacion en el models
+[33mc8b512c[m signup endpoint, model signup, logic component signup
+[33m685ada6[m optimizacion del codigo login-signup-navbar
+[33m76c8d3a[m login and signup
+[33me291c22[m avances del landing
+[33m94c030a[m contactNavbar-navbar-aboutSearch-cards-footer
+[33m642b171[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m Initial commit

@@ -34,7 +34,6 @@ ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../public/')
 app = Flask(__name__)
-
 CORS(app, resources={
     r"/api/*": {
         "origins": ["http://localhost:3000"],
@@ -63,6 +62,11 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db, compare_type=True)
 db.init_app(app)
+
+# 📦 Aumentar límite de tamaño de solicitudes (para subir videos grandes)
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024 * 1024  # 2 GB
+app.config['UPLOAD_MAX_SIZE'] = 2 * 1024 * 1024 * 1024     # 2 GB
+app.config['MAX_FORM_MEMORY_SIZE'] = 2 * 1024 * 1024 * 1024  # 2 GB
 
 @jwt.token_in_blocklist_loader
 def check_if_token_revoked(jwt_header, jwt_payload):
