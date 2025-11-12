@@ -23,6 +23,7 @@ export const DashboardAdmin = () => {
   const [courses, setCourses] = useState([]);
   const [coursesLoading, setCoursesLoading] = useState(false);
   const [coursesError, setCoursesError] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
 
   // Datos del formulario de creación de cursos
   const [courseFormData, setCourseFormData] = useState({
@@ -168,6 +169,10 @@ export const DashboardAdmin = () => {
   useEffect(() => {
     actions.getUserStatsPerMonth(); // 🚀 carga las stats al montar el dashboard
   }, []);
+  useEffect(() => {
+    actions.getFinancialOverview(); // 💰 carga los KPIs financieros
+  }, []);
+
   // ==============================
   // ACTUALIZAR CURSO
   // ==============================
@@ -175,45 +180,60 @@ export const DashboardAdmin = () => {
     try {
       const token = localStorage.getItem("token");
 
-      // 👇 Convertimos days[] en day_of_week (string)
-      const payload = {
+      // Convertimos días a string
+      const formatted = {
         ...updateData,
         schedules: (updateData.schedules || []).map((s) => ({
           ...s,
-          day_of_week: (s.days || []).join(","), // 🟡 aquí la magia
+          day_of_week: (s.days || []).join(","),
         })),
       };
 
-      console.log("Datos del curso a actualizar:", payload);
-
-      const response = await fetch(
-        `http://localhost:3001/api/admin/courses/${updateData.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
+      let response;
+      if (updateData.imageFile) {
+        // ⚙️ Si hay nueva imagen → enviar como FormData
+        const formData = new FormData();
+        for (const key in formatted) {
+          if (
+            Array.isArray(formatted[key]) ||
+            typeof formatted[key] === "object"
+          ) {
+            formData.append(key, JSON.stringify(formatted[key]));
+          } else {
+            formData.append(key, formatted[key]);
+          }
         }
-      );
+        formData.append("image", updateData.imageFile);
 
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        const text = await response.text();
-        console.error("Respuesta no-JSON del backend:", text);
-        throw new Error("El servidor devolvió HTML en vez de JSON");
+        response = await fetch(
+          `http://localhost:3001/api/admin/courses/${updateData.id}`,
+          {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData,
+          }
+        );
+      } else {
+        // 📦 Sin imagen → enviar JSON
+        response = await fetch(
+          `http://localhost:3001/api/admin/courses/${updateData.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(formatted),
+          }
+        );
       }
 
-      if (!response.ok) {
-        throw new Error(data.msg || "Error al actualizar curso");
-      }
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.msg || "Error updating course");
 
-      // Actualizamos cursos en el estado
-      setCourses(
-        courses.map((c) => (c.id === updateData.id ? data.course : c))
+      // 🔄 Actualizamos el estado local
+      setCourses((prev) =>
+        prev.map((c) => (c.id === updateData.id ? data.course : c))
       );
 
       setNotification({
@@ -221,9 +241,10 @@ export const DashboardAdmin = () => {
         type: "success",
         message: "Course updated successfully",
       });
-      setTimeout(() => {
-        setNotification({ show: false, type: "", message: "" });
-      }, 4000);
+      setTimeout(
+        () => setNotification({ show: false, type: "", message: "" }),
+        3000
+      );
 
       setShowEditCourseModal(false);
     } catch (err) {
@@ -231,7 +252,7 @@ export const DashboardAdmin = () => {
       setNotification({
         show: true,
         type: "error",
-        message: err.message || "Error al actualizar curso",
+        message: err.message || "Error updating course",
       });
     }
   };
@@ -749,13 +770,30 @@ export const DashboardAdmin = () => {
           })),
       };
 
+      // 🔹 Crear FormData para enviar texto + archivo
+      const formData = new FormData();
+      for (const key in finalData) {
+        if (
+          Array.isArray(finalData[key]) ||
+          typeof finalData[key] === "object"
+        ) {
+          formData.append(key, JSON.stringify(finalData[key]));
+        } else {
+          formData.append(key, finalData[key]);
+        }
+      }
+
+      // 🔹 Agregar la imagen si existe
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+
       const response = await fetch("http://localhost:3001/api/courses", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`, // 👈 sin Content-Type manual
         },
-        body: JSON.stringify(finalData),
+        body: formData,
       });
 
       const result = await response.json();
@@ -809,6 +847,7 @@ export const DashboardAdmin = () => {
         });
         setLearningObjectives([""]);
         setRequirements([""]);
+        setImageFile(null);
         setModules([
           {
             title: "",
@@ -1106,6 +1145,8 @@ export const DashboardAdmin = () => {
           addRequirement={addRequirement}
           removeRequirement={removeRequirement}
           handleCreateCourse={handleCreateCourse}
+          imageFile={imageFile}
+          setImageFile={setImageFile}
           courses={courses}
           coursesLoading={coursesLoading}
           coursesError={coursesError}
@@ -1134,6 +1175,7 @@ export const DashboardAdmin = () => {
           removeSchedule={removeSchedule}
           updateSchedule={updateSchedule}
           toggleScheduleDay={toggleScheduleDay}
+          financialOverview={store.financialOverview}
         />
 
         {/* Modales */}

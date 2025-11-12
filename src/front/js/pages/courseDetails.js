@@ -243,10 +243,10 @@ export const CourseDetails = () => {
             <div className="col-lg-4 d-none d-lg-block">
               <div className="ratio ratio-16x9">
                 <img
-                  src={course.image || noImage}
+                  src={course.image_url || noImage}
                   alt={course.alt || "Course image"}
                   className="img-fluid rounded-3 shadow"
-                  style={{ objectFit: "cover" }}
+                  style={{ objectFit: "cover", height: "300px" }}
                 />
               </div>
             </div>

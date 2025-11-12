@@ -298,6 +298,7 @@ def update_user(user_id):
 
     return jsonify({"msg": "Usuario actualizado correctamente", "user": user.serialize()}), 200
 
+
 @api.route('/user/profile', methods=['PUT'])
 @jwt_required()
 def update_profile():
@@ -501,11 +502,21 @@ def create_course():
             return jsonify({"msg": "Only administrators and teachers can create courses"}), 403
 
         
-        data = request.get_json()
+        if request.content_type and "multipart/form-data" in request.content_type:
+            data = request.form.to_dict()
+        else:
+            data = request.get_json()
         print(f"📩 Datos recibidos: {data}")
 
         if not data:
             return jsonify({"msg": "Required JSON data"}), 400
+        
+        image_url = None
+        if "image" in request.files:
+            file = request.files["image"]
+            if file and file.filename != "":
+                upload_result = cloudinary.uploader.upload(file, folder="allacademy/courses/images")
+                image_url = upload_result["secure_url"]
 
         
         required_fields = ['title', 'description', 'price']
@@ -533,6 +544,18 @@ def create_course():
         else:
             teacher_id = None
 
+            # ⚙️ Conversión segura de strings a booleanos
+        def str_to_bool(value):
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, str):
+                return value.lower() in ['true', '1', 'yes', 'on']
+            return False
+
+            # 🧠 Convertir los valores que llegan como texto
+        is_published = str_to_bool(data.get("is_published"))
+        has_live_classes = str_to_bool(data.get("has_live_classes"))
+        has_recorded_videos = str_to_bool(data.get("has_recorded_videos"))
         
         new_course = Course(
             title=data['title'],
@@ -545,10 +568,11 @@ def create_course():
             level=data.get('level', 'BEGINNER'),
             language=data.get('language', 'Spanish'),
             teacher_id=teacher_id,  # ✅ Asignado correctamente
-            is_published=data.get('is_published', False),
-            published_at=datetime.utcnow() if data.get('is_published') else None,
-            has_live_classes=True,
-            has_recorded_videos=True,
+            is_published=is_published,
+            published_at=datetime.utcnow() if is_published else None, 
+            has_live_classes=has_live_classes,
+            has_recorded_videos=has_recorded_videos,
+            image_url=image_url
         )
 
         db.session.add(new_course)
@@ -866,14 +890,13 @@ def get_course(course_id):
 @jwt_required()
 def update_course(course_id):
     """
-📌 Endpoint to update an entire course.
+    📌 Endpoint to update an entire course.
     Updates basic info, objectives, requirements, modules, lessons, and schedules.
     """
     try:
         claims = get_jwt()
         user_id = get_jwt_identity()
 
-        
         user = User.query.get(user_id)
         if not user or (user.role not in ["admin", "teacher"]):
             return jsonify({"msg": "Unauthorized"}), 403
@@ -882,12 +905,43 @@ def update_course(course_id):
         if not course:
             return jsonify({"msg": "Course not found"}), 404
 
-        data = request.get_json()
+        # ============================
+        # 🧩 Conversión segura de string a boolean
+        # ============================
+        def str_to_bool(value):
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, str):
+                return value.lower() in ["true", "1", "yes", "on"]
+            return False
+
+        # ============================
+        # 📥 Leer datos del request
+        # ============================
+        if request.content_type and "multipart/form-data" in request.content_type:
+            data = request.form.to_dict()
+        else:
+            data = request.get_json()
         print("📥 Datos recibidos en update_course:", data)
         if not data:
             return jsonify({"msg": "Required JSON data"}), 400
 
-      
+        # ============================
+        # 📸 Subir imagen si existe
+        # ============================
+        if "image" in request.files:
+            file = request.files["image"]
+            if file and file.filename != "":
+                try:
+                    upload_result = cloudinary.uploader.upload(file, folder="allacademy/courses/images")
+                    course.image_url = upload_result["secure_url"]
+                    print(f"✅ Imagen de curso subida correctamente: {course.image_url}")
+                except Exception as e:
+                    print(f"⚠️ Error subiendo imagen del curso: {str(e)}")
+
+        # ============================
+        # 🔧 Actualizar datos básicos
+        # ============================
         course.title = data.get("title", course.title)
         course.description = data.get("description", course.description)
         course.short_description = data.get("short_description", course.short_description)
@@ -901,29 +955,45 @@ def update_course(course_id):
         if "teacher_id" in data and data["teacher_id"]:
             course.teacher_id = data["teacher_id"]
 
-        if "is_published" in data:
-            new_status = data["is_published"]
-            if new_status and not course.is_published:
-                course.published_at = datetime.utcnow()
-            if not new_status and course.is_published:
-                course.published_at = None
-            course.is_published = new_status
+        # ============================
+        # ✅ Convertir y actualizar booleanos
+        # ============================
+        is_published = str_to_bool(data.get("is_published"))
+        has_live_classes = str_to_bool(data.get("has_live_classes"))
+        has_recorded_videos = str_to_bool(data.get("has_recorded_videos"))
 
-       
+        # Actualizar published_at
+        if "is_published" in data:
+            if is_published and not course.is_published:
+                course.published_at = datetime.utcnow()
+            elif not is_published and course.is_published:
+                course.published_at = None
+            course.is_published = is_published
+
+        course.has_live_classes = has_live_classes
+        course.has_recorded_videos = has_recorded_videos
+
+        # ============================
+        # 🎯 Objetivos de aprendizaje
+        # ============================
         if "what_you_learn" in data and isinstance(data["what_you_learn"], list):
             LearningObjective.query.filter_by(course_id=course.id).delete()
             for obj in data["what_you_learn"]:
                 if obj.strip():
                     db.session.add(LearningObjective(objective=obj.strip(), course_id=course.id))
 
-       
+        # ============================
+        # 📋 Requisitos
+        # ============================
         if "requirements" in data and isinstance(data["requirements"], list):
             Requirement.query.filter_by(course_id=course.id).delete()
             for req in data["requirements"]:
                 if req.strip():
                     db.session.add(Requirement(requirement=req.strip(), course_id=course.id))
 
-     
+        # ============================
+        # 🧱 Módulos y lecciones
+        # ============================
         if "modules" in data and isinstance(data["modules"], list):
             for module in course.modules:
                 db.session.delete(module)
@@ -950,11 +1020,11 @@ def update_course(course_id):
                     )
                     db.session.add(new_lesson)
 
-       
+        # ============================
+        # ⏰ Horarios
+        # ============================
         if "schedules" in data and isinstance(data["schedules"], list):
             existing_schedules = {s.id: s for s in course.schedules}
-
-           
             received_ids = set()
 
             for sched_data in data["schedules"]:
@@ -973,7 +1043,6 @@ def update_course(course_id):
                 end_time = datetime.strptime(end, "%H:%M").time()
 
                 if sched_id and sched_id in existing_schedules:
-                    
                     sched_obj = existing_schedules[sched_id]
                     sched_obj.day_of_week = day_of_week
                     sched_obj.start_time = start_time
@@ -982,7 +1051,6 @@ def update_course(course_id):
                     sched_obj.group_name = group_name
                     received_ids.add(sched_id)
                 else:
-                    
                     new_schedule = CourseSchedule(
                         course_id=course.id,
                         day_of_week=day_of_week,
@@ -993,19 +1061,18 @@ def update_course(course_id):
                     )
                     db.session.add(new_schedule)
 
-           
             for sched_id, sched_obj in existing_schedules.items():
                 if sched_id not in received_ids:
-                    
-                    if not sched_obj.students or len(sched_obj.students) == 0:
+                    if not hasattr(sched_obj, "students") or len(getattr(sched_obj, "students", [])) == 0:
                         db.session.delete(sched_obj)
                     else:
                         print(f"⚠️ No se eliminó horario {sched_id} porque tiene estudiantes inscritos.")
-
         else:
             print("⚠️ No se recibieron horarios — se mantienen los existentes.")
 
-       
+        # ============================
+        # 💾 Guardar cambios
+        # ============================
         db.session.commit()
         return jsonify({"msg": "Course updated successfully", "course": course.serialize()}), 200
 
@@ -1085,6 +1152,46 @@ def users_per_month():
     except Exception as e:
         print("Error en users_per_month:", str(e))
         return jsonify({"msg": "Error obteniendo estadísticas", "error": str(e)}), 500
+    
+# ============================
+# 📊 FINANCIAL STATS (ADMIN)
+# ============================
+
+@api.route('/admin/financial-overview', methods=['GET'])
+@jwt_required()
+def financial_overview():
+    """
+    📊 Endpoint para obtener métricas financieras básicas.
+    - Total Revenue: suma de todas las compras completadas
+    - Total Sales: número total de compras exitosas
+    """
+    try:
+        claims = get_jwt()
+        if claims.get('role') != "admin":
+            return jsonify({"msg": "Acceso no autorizado"}), 403
+
+        # Filtrar compras completadas o exitosas
+        completed_status = ["succeeded", "completed"]
+        purchases = Purchase.query.filter(Purchase.status.in_(completed_status)).all()
+
+        total_revenue = sum(p.amount for p in purchases) / 100  # 💰 Convertir de centavos a dólares
+        total_sales = len(purchases)
+        total_enrollments = Enrollment.query.count()
+
+
+        print(f"✅ FINANCIAL STATS -> Revenue: ${total_revenue}, Sales: {total_sales}")
+
+        return jsonify({
+            "total_revenue": round(total_revenue, 2),
+            "total_sales": total_sales,
+            "total_enrollments": total_enrollments
+        }), 200
+
+    except Exception as e:
+        print("❌ Error en financial_overview:", str(e))
+        import traceback; traceback.print_exc()
+        return jsonify({"msg": "Error obteniendo estadísticas", "error": str(e)}), 500
+
 
 @api.route('/courses/slug/<string:slug>', methods=['GET'])
 def get_course_by_slug(slug):

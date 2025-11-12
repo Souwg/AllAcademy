@@ -72,6 +72,9 @@ export const AdminContent = ({
   removeSchedule,
   updateSchedule,
   toggleScheduleDay,
+  financialOverview,
+  imageFile,
+  setImageFile,
 }) => {
   const renderUserTable = (usersToRender) => {
     if (usersToRender.length === 0) {
@@ -99,6 +102,7 @@ export const AdminContent = ({
               <th>Name</th>
               <th>Email</th>
               <th>Country</th>
+              {activeTab === "students" && <th>Courses</th>}
               <th>Role</th>
               <th>Status</th>
               <th>Blocks</th>
@@ -126,11 +130,40 @@ export const AdminContent = ({
                 <td>
                   <span className="country-badge">{user.country || "N/A"}</span>
                 </td>
+                {activeTab === "students" && (
+                  <td>
+                    {user.enrollments && user.enrollments.length > 0 ? (
+                      <ul style={{ paddingLeft: "1rem", margin: 0 }}>
+                        {user.enrollments.map((enroll, i) => {
+                          const shortTitle =
+                            enroll.course_title.length > 15
+                              ? enroll.course_title.substring(0, 15) + "..."
+                              : enroll.course_title;
+
+                          return (
+                            <li key={i} title={enroll.course_title}>
+                              <strong>{shortTitle}</strong>{" "}
+                              <span
+                                style={{ fontSize: "0.8em", color: "#666" }}
+                              >
+                                ({enroll.instructor || "N/A"})
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : (
+                      <span style={{ color: "#aaa" }}>No enrollments</span>
+                    )}
+                  </td>
+                )}
+
                 <td>
                   <span className={`role-badge ${user.role}`}>
                     {getRoleName(user.role)}
                   </span>
                 </td>
+
                 <td>
                   <div className="status-badge">
                     {user.is_blocked ? (
@@ -296,6 +329,13 @@ export const AdminContent = ({
               <strong>{userStats[key]}</strong>
             </div>
           ))}
+          <div className="stat-card">
+            <div className="stat-icon" style={{ backgroundColor: "#a855f7" }}>
+              <i className="fa-solid fa-clipboard-list"></i>
+            </div>
+            <span>Total Enrollments</span>
+            <strong>{financialOverview?.total_enrollments || 0}</strong>
+          </div>
         </div>
 
         {/* Cursos */}
@@ -312,6 +352,31 @@ export const AdminContent = ({
               <strong>{courseStats[key]}</strong>
             </div>
           ))}
+          {/* 💰 FINANCIAL OVERVIEW */}
+
+          <div
+            className="stat-card border-0"
+            style={{ borderTop: "5px solid #22c55e" }}
+          >
+            <div className="stat-icon" style={{ backgroundColor: "#22c55e" }}>
+              <i className="fa-solid fa-sack-dollar"></i>
+            </div>
+            <span>Total Revenue</span>
+            <strong>
+              ${financialOverview?.total_revenue?.toFixed(2) || "0.00"}
+            </strong>
+          </div>
+
+          <div
+            className="stat-card border-0"
+            style={{ borderTop: "5px solid #3b82f6" }}
+          >
+            <div className="stat-icon" style={{ backgroundColor: "#3b82f6" }}>
+              <i className="fa-solid fa-bag-shopping"></i>
+            </div>
+            <span>Total Sales</span>
+            <strong>{financialOverview?.total_sales || 0}</strong>
+          </div>
 
           <h3 className="chart-title">Registered Users per Month</h3>
           <div className="chart-card">
@@ -555,17 +620,26 @@ export const AdminContent = ({
                 <h3 className="section-title">Basic Information</h3>
                 <div className="form-grid">
                   <div className="form-group full-width">
-                    <label htmlFor="image_url" className="form-label">
-                      Course Image URL
+                    <label htmlFor="image" className="form-label">
+                      Course Image
                     </label>
                     <input
-                      type="url"
-                      id="image_url"
-                      name="image_url"
+                      type="file"
+                      id="image"
+                      name="image"
                       className="form-control"
-                      value={courseFormData.image_url}
-                      onChange={handleCourseInputChange}
+                      accept="image/*"
+                      onChange={(e) => setImageFile(e.target.files[0])}
                     />
+                    {imageFile && (
+                      <div className="mt-2">
+                        <img
+                          src={URL.createObjectURL(imageFile)}
+                          alt="Preview"
+                          style={{ width: "150px", borderRadius: "10px" }}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="form-group full-width">
@@ -1480,7 +1554,17 @@ export const AdminContent = ({
   };
 
   return (
-    <div className="admin-content">
+    <div
+      className="admin-content"
+      style={{
+        background: "rgba(20, 60, 150, 0.25)",
+        backdropFilter: "blur(12px)",
+        borderRadius: "20px",
+        border: "1px solid rgba(255, 255, 255, 0.2)",
+        padding: "3rem 4rem",
+        margin: "2rem",
+      }}
+    >
       <div className="admin-container">
         {renderHeader()}
         {activeView === "dashboard" ? (

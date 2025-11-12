@@ -49,7 +49,8 @@ export const DashboardStudent = () => {
             id: course.teacher_id,
             name: course.instructor || "Unknown Teacher",
             bio: course.instructorBio || "",
-            avatar_url: course.avatar_url || "https://via.placeholder.com/80",
+            avatar_url:
+              course.instructorImage || "https://via.placeholder.com/80",
           });
         }
       });

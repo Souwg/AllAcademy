@@ -60,7 +60,18 @@ class User(db.Model):
             "block_reason": self.block_reason,
             "block_count": self.block_count,
             "created_at": self.created_at.isoformat(),
-            "last_login": self.last_login.isoformat() if self.last_login else None
+            "last_login": self.last_login.isoformat() if self.last_login else None,
+            "enrollments": [
+            {
+                "course_id": e.course.id,
+                "course_title": e.course.title,
+                "instructor": f"{e.course.teacher.first_name} {e.course.teacher.last_name}" if e.course.teacher else None,
+                "progress": e.progress,
+                "completed": e.completed,
+                "enrolled_at": e.enrolled_at.isoformat(),
+            }
+            for e in self.enrollments
+        ]
         }
 
 class CourseLevel(enum.Enum):
@@ -159,6 +170,7 @@ class Course(db.Model):
     discount_price = db.Column(db.Float)
     level = db.Column(db.Enum(CourseLevel), default=CourseLevel.BEGINNER)
     language = db.Column(db.String(50), default="English")
+    image_url = db.Column(db.String(500), nullable=True)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_published = db.Column(db.Boolean, default=False)
@@ -196,6 +208,7 @@ class Course(db.Model):
             "duration": self.duration,
             "level": self.level.value,
             "language": self.language,
+            "image_url": self.image_url,
             "lastUpdated": self.last_updated.strftime("%B %Y"),
             "access_duration": self.access_duration,
             "teacher_id": self.teacher_id,

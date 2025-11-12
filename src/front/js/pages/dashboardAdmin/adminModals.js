@@ -544,6 +544,60 @@ export const AdminModals = ({
                 }}
               >
                 {/* === BASIC INFO === */}
+                {/* === IMAGE === */}
+                <div className="form-group">
+                  <label>Course Image</label>
+
+                  {/* Imagen actual o vista previa */}
+                  {courseToEdit.previewImage ? (
+                    <img
+                      src={courseToEdit.previewImage}
+                      alt="Preview"
+                      className="course-image-preview"
+                      style={{
+                        width: "120px",
+                        height: "80px",
+                        borderRadius: "8px",
+                        objectFit: "cover",
+                        marginBottom: "10px",
+                      }}
+                    />
+                  ) : courseToEdit.image_url ? (
+                    <img
+                      src={courseToEdit.image_url}
+                      alt="Current"
+                      className="course-image-preview"
+                      style={{
+                        width: "120px",
+                        height: "80px",
+                        borderRadius: "8px",
+                        objectFit: "cover",
+                        marginBottom: "10px",
+                      }}
+                    />
+                  ) : (
+                    <p style={{ color: "#888", fontSize: "14px" }}>
+                      No image uploaded
+                    </p>
+                  )}
+
+                  {/* Input de carga */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        setCourseToEdit({
+                          ...courseToEdit,
+                          imageFile: file,
+                          previewImage: URL.createObjectURL(file), // 👈 vista previa instantánea
+                        });
+                      }
+                    }}
+                  />
+                </div>
+
                 <div className="form-group">
                   <label>Title</label>
                   <input

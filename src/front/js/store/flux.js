@@ -51,6 +51,10 @@ const getState = ({ getStore, getActions, setStore }) => {
       selectedCourseLoading: false,
       selectedCourseError: null,
       videos: [],
+      financialOverview: {
+        total_revenue: 0,
+        total_sales: 0,
+      },
 
       notifications: getNotifications(),
       lastNotifiedMessage:
@@ -446,6 +450,32 @@ const getState = ({ getStore, getActions, setStore }) => {
         } catch (err) {
           console.error("Error in getTeacherCourses:", err);
           return [];
+        }
+      },
+      getFinancialOverview: async () => {
+        try {
+          const token = localStorage.getItem("token");
+          const resp = await fetch(
+            "http://localhost:3001/api/admin/financial-overview",
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+            }
+          );
+
+          const data = await resp.json();
+          if (!resp.ok)
+            throw new Error(data.msg || "Error fetching financial data");
+
+          // 💾 Guardar en el store
+          setStore({ financialOverview: data });
+          return data;
+        } catch (err) {
+          console.error("❌ Error in getFinancialOverview:", err);
+          return null;
         }
       },
 
