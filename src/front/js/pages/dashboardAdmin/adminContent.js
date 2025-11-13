@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -75,6 +75,7 @@ export const AdminContent = ({
   financialOverview,
   imageFile,
   setImageFile,
+  imageInputRef,
 }) => {
   const renderUserTable = (usersToRender) => {
     if (usersToRender.length === 0) {
@@ -629,6 +630,7 @@ export const AdminContent = ({
                       name="image"
                       className="form-control"
                       accept="image/*"
+                      ref={imageInputRef}
                       onChange={(e) => setImageFile(e.target.files[0])}
                     />
                     {imageFile && (
@@ -863,6 +865,11 @@ export const AdminContent = ({
                     <label htmlFor="short_description" className="form-label">
                       Short Description *
                     </label>
+                    <small className="text-muted d-block mb-2">
+                      Must contain at least 60 characters. This text appears on
+                      the course cards.
+                    </small>
+
                     <textarea
                       id="short_description"
                       name="short_description"

@@ -31,7 +31,6 @@ class User(db.Model):
     
     # Relaciones
     courses_teaching = db.relationship('Course', backref='teacher', lazy=True)
-    live_classes = db.relationship("LiveClass", back_populates="teacher")
     enrollments = db.relationship(
     "Enrollment", back_populates="student", cascade="all, delete-orphan"
 )
@@ -78,33 +77,7 @@ class CourseLevel(enum.Enum):
     BEGINNER = "Beginner"
     INTERMEDIATE = "Intermediate"
     ADVANCED = "Advanced"
-class LiveClass(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
-    teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    scheduled_at = db.Column(db.DateTime, nullable=False)  
-    meeting_url = db.Column(db.String(500), nullable=False)
-    recording_url = db.Column(db.String(500))  
-    schedule_id = db.Column(db.Integer, db.ForeignKey('course_schedule.id'), nullable=True)  # 🆕
-    title = db.Column(db.String(200), nullable=True)  # 🆕 título visible de la clase
 
-    course = db.relationship("Course", back_populates="live_classes")
-    teacher = db.relationship("User", back_populates="live_classes")
-    schedule = db.relationship("CourseSchedule")  # Relación al grupo
-
-    def serialize(self):
-        return {
-            "id": self.id,
-            "course_id": self.course_id,
-            "teacher_id": self.teacher_id,
-            "scheduled_at": self.scheduled_at.isoformat() if self.scheduled_at else None,
-            "meeting_url": self.meeting_url,
-            "recording_url": self.recording_url,
-            "title": self.title,
-            "group_name": self.schedule.group_name if self.schedule else None,
-            "course_title": self.course.title if self.course else None,
-            "teacher_email": self.teacher.email if self.teacher else None
-        }
 class Recording(db.Model):
     __tablename__ = "recordings"
     id = db.Column(db.Integer, primary_key=True)
@@ -128,19 +101,26 @@ class Recording(db.Model):
             "title": self.title,
             "recording_url": self.recording_url,
             "created_at": self.created_at.isoformat(),
-            "is_published": self.is_published, 
+            "is_published": self.is_published,
             "group_name": self.schedule.group_name if self.schedule else None,
+
+            # 🔥 LECCIONES + MÓDULO COMPLETO
             "lessons": [
                 {
                     "id": link.lesson.id,
                     "title": link.lesson.title,
                     "order": link.lesson.order,
+
+                    # 📌 INCLUIMOS EL MÓDULO COMPLETO VINCULADO A LA LECCIÓN
+                    "module_id": link.lesson.module.id if link.lesson.module else None,
                     "module_title": link.lesson.module.title if link.lesson.module else None,
                     "module_order": link.lesson.module.order if link.lesson.module else None
                 }
                 for link in self.linked_lessons
+                if link.lesson is not None
             ]
         }
+
     
 class RecordingLesson(db.Model):
     __tablename__ = "recording_lessons"
@@ -183,7 +163,6 @@ class Course(db.Model):
     teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
     modules = db.relationship('Module', backref='course', lazy=True, cascade="all, delete-orphan")
-    live_classes = db.relationship("LiveClass", back_populates="course", cascade="all, delete-orphan")
     what_you_learn = db.relationship('LearningObjective', backref='course', lazy=True, cascade="all, delete-orphan")
     requirements = db.relationship('Requirement', backref='course', lazy=True, cascade="all, delete-orphan")
     enrollments = db.relationship(

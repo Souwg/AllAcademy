@@ -673,6 +673,21 @@ export const AdminModals = ({
                     <option value="Portuguese">Portuguese</option>
                   </select>
                 </div>
+                {/* === DURATION === */}
+                <div className="form-group">
+                  <label>Duration</label>
+                  <input
+                    type="text"
+                    value={courseToEdit.duration || ""}
+                    onChange={(e) =>
+                      setCourseToEdit({
+                        ...courseToEdit,
+                        duration: e.target.value,
+                      })
+                    }
+                    placeholder="Ex: 2 Months, 10 Hours..."
+                  />
+                </div>
 
                 {/* === TEACHER === */}
                 <div className="form-group">

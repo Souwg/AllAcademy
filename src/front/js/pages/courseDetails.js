@@ -324,6 +324,16 @@ export const CourseDetails = () => {
                       className="accordion-collapse collapse"
                     >
                       <div className="accordion-body pt-0">
+                        {/* 📘 Descripción del módulo (si existe) */}
+                        {item.description && (
+                          <p
+                            className="text-muted mb-3"
+                            style={{ fontStyle: "italic", fontSize: "0.85rem" }}
+                          >
+                            {item.description}
+                          </p>
+                        )}
+
                         <div className="list-group list-group-flush">
                           {(item.lessons?.length
                             ? [...item.lessons].sort((a, b) => {

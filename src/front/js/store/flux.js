@@ -1057,7 +1057,8 @@ const getState = ({ getStore, getActions, setStore }) => {
         file,
         title,
         course_id,
-        schedule_id = null
+        schedule_id = null,
+        lessons = []
       ) => {
         try {
           const token = localStorage.getItem("token");
@@ -1069,6 +1070,8 @@ const getState = ({ getStore, getActions, setStore }) => {
           fd.append("course_id", course_id);
           if (schedule_id) fd.append("schedule_id", schedule_id);
 
+          fd.append("lessons", JSON.stringify(lessons)); // 👈 SUPER IMPORTANTE
+
           const resp = await fetch("http://localhost:3001/api/upload-video", {
             method: "POST",
             headers: { Authorization: "Bearer " + token },
@@ -1077,6 +1080,8 @@ const getState = ({ getStore, getActions, setStore }) => {
 
           const data = await resp.json();
           if (!resp.ok) throw new Error(data.msg || "Error al subir el video");
+
+          await getActions().getRecordingsByCourse(course_id, schedule_id);
 
           getActions().showNotification(
             "success",

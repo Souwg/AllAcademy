@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { Context } from "../../store/appContext";
 import Swal from "sweetalert2";
 import { AdminSidebar } from "./adminSidebar";
@@ -24,6 +24,7 @@ export const DashboardAdmin = () => {
   const [coursesLoading, setCoursesLoading] = useState(false);
   const [coursesError, setCoursesError] = useState(null);
   const [imageFile, setImageFile] = useState(null);
+  const imageInputRef = useRef(null);
 
   // Datos del formulario de creación de cursos
   const [courseFormData, setCourseFormData] = useState({
@@ -873,6 +874,12 @@ export const DashboardAdmin = () => {
         ]);
 
         setValidationErrors({});
+        const firstTab = document.querySelector("#basic-tab");
+        if (firstTab) firstTab.click();
+      }
+      // ✅ Limpiar input file manualmente
+      if (imageInputRef?.current) {
+        imageInputRef.current.value = "";
       }
     } catch (err) {
       setCourseCreationStatus({
@@ -1147,6 +1154,7 @@ export const DashboardAdmin = () => {
           handleCreateCourse={handleCreateCourse}
           imageFile={imageFile}
           setImageFile={setImageFile}
+          imageInputRef={imageInputRef}
           courses={courses}
           coursesLoading={coursesLoading}
           coursesError={coursesError}

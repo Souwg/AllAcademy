@@ -508,6 +508,15 @@ def create_course():
             data = request.get_json()
         print(f"📩 Datos recibidos: {data}")
 
+        import json
+        for key in ["what_you_learn", "requirements", "modules", "schedules"]:
+            if key in data and isinstance(data[key], str):
+                try:
+                    data[key] = json.loads(data[key])
+                except json.JSONDecodeError:
+                    print(f"⚠️ Error decodificando {key}: {data[key]}")
+                    data[key] = []
+
         if not data:
             return jsonify({"msg": "Required JSON data"}), 400
         
@@ -1624,27 +1633,44 @@ def create_recording():
         db.session.rollback()
         print(f"❌ Error al crear grabación: {str(e)}")
         return jsonify({"msg": "Error al crear grabación", "error": str(e)}), 500
-    
 @api.route('/recordings/<int:course_id>', methods=['GET'])
 @jwt_required()
 def get_recordings(course_id):
     """
     📌 Endpoint to get all recordings for a specific course.
+    Includes related lessons and modules for each recording.
     """
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-    schedule_id = request.args.get('schedule_id', type=int)
+    try:
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+        schedule_id = request.args.get('schedule_id', type=int)
 
-    query = Recording.query.filter_by(course_id=course_id)
-    if schedule_id:
-        query = query.filter_by(schedule_id=schedule_id)
+        # ✅ Hacer join para traer las lecciones y módulos asociados
+        query = (
+            Recording.query
+            .options(
+                db.joinedload(Recording.linked_lessons)
+                .joinedload(RecordingLesson.lesson)
+                .joinedload(Lesson.module)
+            )
+            .filter_by(course_id=course_id)
+        )
 
-    
-    if user.role == "student":
-        query = query.filter_by(is_published=True)
+        if schedule_id:
+            query = query.filter_by(schedule_id=schedule_id)
 
-    recordings = query.order_by(Recording.created_at.desc()).all()
-    return jsonify([r.serialize() for r in recordings]), 200
+        if user.role == "student":
+            query = query.filter_by(is_published=True)
+
+        recordings = query.order_by(Recording.created_at.desc()).all()
+
+        return jsonify([r.serialize() for r in recordings]), 200
+
+    except Exception as e:
+        print("❌ Error al obtener grabaciones:", str(e))
+        import traceback; traceback.print_exc()
+        return jsonify({"msg": "Error al obtener grabaciones", "error": str(e)}), 500
+
 
 @api.route('/recordings/<int:recording_id>/publish', methods=['PUT'])
 @jwt_required()
@@ -2257,7 +2283,7 @@ def handle_payment_success(event):
 @jwt_required()
 def upload_video():
     """
-    🎥 Subir un video a Cloudinary y guardar el registro como una grabación.
+    🎥 Subir un video a Cloudinary, guardar la grabación y vincular lecciones seleccionadas.
     """
     try:
         if "file" not in request.files:
@@ -2265,8 +2291,9 @@ def upload_video():
 
         file = request.files["file"]
         title = request.form.get("title")
-        course_id = request.form.get("course_id")
-        schedule_id = request.form.get("schedule_id")
+        course_id = request.form.get("course_id", type=int)
+        schedule_id = request.form.get("schedule_id", type=int)
+        lessons = request.form.get("lessons")  # 👈 VIENE COMO STRING JSON
 
         if not course_id or not title:
             return jsonify({"msg": "Faltan datos: título o curso"}), 400
@@ -2278,9 +2305,10 @@ def upload_video():
             io.BytesIO(file.read()),
             resource_type="video",
             folder=f"allacademy/courses/{course_id}/recordings",
-            chunk_size=6_000_000  # 6 MB por fragmento
+            chunk_size=6_000_000
         )
 
+        # 📌 Crear grabación
         new_recording = Recording(
             course_id=course_id,
             schedule_id=schedule_id,
@@ -2289,20 +2317,28 @@ def upload_video():
             recording_url=upload_result["secure_url"],
             is_published=False
         )
-
         db.session.add(new_recording)
+        db.session.flush()  # 👈 Necesario para obtener new_recording.id
+
+        # 📌 GUARDAR LECCIONES ASOCIADAS
+        if lessons:
+            lessons = json.loads(lessons)
+            for lesson_id in lessons:
+                db.session.add(RecordingLesson(
+                    recording_id=new_recording.id,
+                    lesson_id=lesson_id
+                ))
+
         db.session.commit()
 
         return jsonify({
-            "msg": "Video subido y guardado correctamente",
+            "msg": "Video subido con éxito",
             "recording": new_recording.serialize()
-        }), 200
+        }), 201
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        print("❌ Error al subir video:", str(e))
         db.session.rollback()
+        import traceback; traceback.print_exc()
         return jsonify({"msg": "Error al subir video", "error": str(e)}), 500
 
 

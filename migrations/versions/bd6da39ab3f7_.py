@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 8601f8593790
+Revision ID: bd6da39ab3f7
 Revises: 
-Create Date: 2025-10-15 18:42:38.345480
+Create Date: 2025-11-12 16:45:53.322168
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '8601f8593790'
+revision = 'bd6da39ab3f7'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -56,6 +56,7 @@ def upgrade():
     sa.Column('discount_price', sa.Float(), nullable=True),
     sa.Column('level', sa.Enum('BEGINNER', 'INTERMEDIATE', 'ADVANCED', name='courselevel'), nullable=True),
     sa.Column('language', sa.String(length=50), nullable=True),
+    sa.Column('image_url', sa.String(length=500), nullable=True),
     sa.Column('last_updated', sa.DateTime(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('is_published', sa.Boolean(), nullable=True),
@@ -63,10 +64,6 @@ def upgrade():
     sa.Column('access_duration', sa.String(length=50), nullable=True),
     sa.Column('has_live_classes', sa.Boolean(), nullable=True),
     sa.Column('has_recorded_videos', sa.Boolean(), nullable=True),
-    sa.Column('live_class_days', sa.String(length=100), nullable=True),
-    sa.Column('live_class_start_time', sa.Time(), nullable=True),
-    sa.Column('live_class_end_time', sa.Time(), nullable=True),
-    sa.Column('live_class_timezone', sa.String(length=50), nullable=True),
     sa.Column('teacher_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['teacher_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id'),
@@ -82,14 +79,15 @@ def upgrade():
     sa.ForeignKeyConstraint(['sender_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('course_chat_messages',
+    op.create_table('course_schedule',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('course_id', sa.Integer(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('content', sa.String(length=500), nullable=False),
-    sa.Column('timestamp', sa.DateTime(), nullable=True),
+    sa.Column('day_of_week', sa.String(length=50), nullable=False),
+    sa.Column('start_time', sa.Time(), nullable=False),
+    sa.Column('end_time', sa.Time(), nullable=False),
+    sa.Column('timezone', sa.String(length=50), nullable=True),
+    sa.Column('group_name', sa.String(length=100), nullable=True),
     sa.ForeignKeyConstraint(['course_id'], ['course.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('learning_objective',
@@ -97,17 +95,6 @@ def upgrade():
     sa.Column('objective', sa.String(length=300), nullable=False),
     sa.Column('course_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['course_id'], ['course.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('live_class',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('course_id', sa.Integer(), nullable=False),
-    sa.Column('teacher_id', sa.Integer(), nullable=False),
-    sa.Column('scheduled_at', sa.DateTime(), nullable=False),
-    sa.Column('meeting_url', sa.String(length=500), nullable=False),
-    sa.Column('recording_url', sa.String(length=500), nullable=True),
-    sa.ForeignKeyConstraint(['course_id'], ['course.id'], ),
-    sa.ForeignKeyConstraint(['teacher_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('module',
@@ -119,23 +106,26 @@ def upgrade():
     sa.ForeignKeyConstraint(['course_id'], ['course.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('purchases',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('course_id', sa.Integer(), nullable=False),
+    sa.Column('payment_intent_id', sa.String(length=255), nullable=False),
+    sa.Column('amount', sa.Integer(), nullable=False),
+    sa.Column('currency', sa.String(length=10), nullable=False),
+    sa.Column('status', sa.String(length=50), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['course_id'], ['course.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('payment_intent_id')
+    )
     op.create_table('requirement',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('requirement', sa.String(length=300), nullable=False),
     sa.Column('course_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['course_id'], ['course.id'], ),
     sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('student_course',
-    sa.Column('student_id', sa.Integer(), nullable=False),
-    sa.Column('course_id', sa.Integer(), nullable=False),
-    sa.Column('enrolled_at', sa.DateTime(), nullable=True),
-    sa.Column('progress', sa.Integer(), nullable=True),
-    sa.Column('completed', sa.Boolean(), nullable=True),
-    sa.Column('completed_at', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['course_id'], ['course.id'], ),
-    sa.ForeignKeyConstraint(['student_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('student_id', 'course_id')
     )
     op.create_table('wishlist',
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -145,15 +135,76 @@ def upgrade():
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('user_id', 'course_id')
     )
+    op.create_table('course_chat_messages',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('course_id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('content', sa.String(length=500), nullable=False),
+    sa.Column('timestamp', sa.DateTime(), nullable=True),
+    sa.Column('schedule_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['course_id'], ['course.id'], ),
+    sa.ForeignKeyConstraint(['schedule_id'], ['course_schedule.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('lesson',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('title', sa.String(length=200), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('content', sa.Text(), nullable=True),
-    sa.Column('video_url', sa.String(length=500), nullable=True),
     sa.Column('order', sa.Integer(), nullable=False),
+    sa.Column('video_url', sa.String(length=500), nullable=True),
     sa.Column('module_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['module_id'], ['module.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('live_class',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('course_id', sa.Integer(), nullable=False),
+    sa.Column('teacher_id', sa.Integer(), nullable=False),
+    sa.Column('scheduled_at', sa.DateTime(), nullable=False),
+    sa.Column('meeting_url', sa.String(length=500), nullable=False),
+    sa.Column('recording_url', sa.String(length=500), nullable=True),
+    sa.Column('schedule_id', sa.Integer(), nullable=True),
+    sa.Column('title', sa.String(length=200), nullable=True),
+    sa.ForeignKeyConstraint(['course_id'], ['course.id'], ),
+    sa.ForeignKeyConstraint(['schedule_id'], ['course_schedule.id'], ),
+    sa.ForeignKeyConstraint(['teacher_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('recordings',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('course_id', sa.Integer(), nullable=False),
+    sa.Column('schedule_id', sa.Integer(), nullable=True),
+    sa.Column('teacher_id', sa.Integer(), nullable=False),
+    sa.Column('title', sa.String(length=255), nullable=False),
+    sa.Column('recording_url', sa.String(length=500), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('is_published', sa.Boolean(), nullable=True),
+    sa.ForeignKeyConstraint(['course_id'], ['course.id'], ),
+    sa.ForeignKeyConstraint(['schedule_id'], ['course_schedule.id'], ),
+    sa.ForeignKeyConstraint(['teacher_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('student_course',
+    sa.Column('student_id', sa.Integer(), nullable=False),
+    sa.Column('course_id', sa.Integer(), nullable=False),
+    sa.Column('enrolled_at', sa.DateTime(), nullable=True),
+    sa.Column('progress', sa.Integer(), nullable=True),
+    sa.Column('completed', sa.Boolean(), nullable=True),
+    sa.Column('completed_at', sa.DateTime(), nullable=True),
+    sa.Column('schedule_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['course_id'], ['course.id'], ),
+    sa.ForeignKeyConstraint(['schedule_id'], ['course_schedule.id'], ),
+    sa.ForeignKeyConstraint(['student_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('student_id', 'course_id')
+    )
+    op.create_table('recording_lessons',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('recording_id', sa.Integer(), nullable=False),
+    sa.Column('lesson_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['lesson_id'], ['lesson.id'], ),
+    sa.ForeignKeyConstraint(['recording_id'], ['recordings.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###
@@ -161,14 +212,18 @@ def upgrade():
 
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_table('lesson')
-    op.drop_table('wishlist')
+    op.drop_table('recording_lessons')
     op.drop_table('student_course')
-    op.drop_table('requirement')
-    op.drop_table('module')
+    op.drop_table('recordings')
     op.drop_table('live_class')
-    op.drop_table('learning_objective')
+    op.drop_table('lesson')
     op.drop_table('course_chat_messages')
+    op.drop_table('wishlist')
+    op.drop_table('requirement')
+    op.drop_table('purchases')
+    op.drop_table('module')
+    op.drop_table('learning_objective')
+    op.drop_table('course_schedule')
     op.drop_table('private_chat_messages')
     op.drop_table('course')
     op.drop_table('user')

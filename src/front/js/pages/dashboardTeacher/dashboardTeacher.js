@@ -109,17 +109,13 @@ export const DashboardTeacher = () => {
         recordingUrl,
         recordingTitle,
         selectedCourse.id,
-        selectedGroupId ? Number(selectedGroupId) : null
+        selectedGroupId ? Number(selectedGroupId) : null,
+        selectedLessons
       );
 
       Swal.close();
 
       if (uploaded) {
-        Swal.fire({
-          icon: "success",
-          title: "Video uploaded successfully!",
-          confirmButtonColor: "#10b981",
-        });
         setRecordingTitle("");
         setRecordingUrl("");
         setSelectedGroupId(null);
@@ -823,6 +819,7 @@ export const DashboardTeacher = () => {
                             <ul className="list-group list-group-flush">
                               {groupVideos.map((video) => (
                                 <li
+                                  uploaded
                                   key={video.id}
                                   className="list-group-item d-flex justify-content-between align-items-center video-item"
                                 >
