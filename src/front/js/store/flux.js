@@ -46,10 +46,11 @@ const getState = ({ getStore, getActions, setStore }) => {
       notification: { show: false, type: "", message: "" },
       coursesError: null,
       lastPaymentId: null,
-
       selectedCourse: null,
       selectedCourseLoading: false,
       selectedCourseError: null,
+      assignmentsOverview: [],
+      studentAssignments: [],
       videos: [],
       financialOverview: {
         total_revenue: 0,
@@ -1092,6 +1093,236 @@ const getState = ({ getStore, getActions, setStore }) => {
           console.error("❌ uploadVideoToBackend:", err);
           getActions().showNotification("error", err.message);
           return null;
+        }
+      },
+      createAssignment: async (data) => {
+        try {
+          const resp = await fetch(
+            `http://localhost:3001/api/teacher/recordings/${data.recording_id}/assignments`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + localStorage.getItem("token"),
+              },
+              body: JSON.stringify({
+                title: data.title,
+                description: data.description,
+              }),
+            }
+          );
+
+          if (!resp.ok) throw new Error("Error creating assignment");
+
+          return true;
+        } catch (err) {
+          console.log("❌ Error creating assignment:", err);
+          return false;
+        }
+      },
+      getAssignmentsBySchedule: async (scheduleId) => {
+        try {
+          const resp = await fetch(
+            `http://localhost:3001/api/teacher/schedule/${scheduleId}/assignments`,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + localStorage.getItem("token"),
+              },
+            }
+          );
+
+          if (!resp.ok) throw new Error("Error fetching assignments");
+
+          const data = await resp.json();
+          setStore({ assignmentsBySchedule: data }); // guardamos en el store
+          return data;
+        } catch (err) {
+          console.error("❌ Error loading assignments:", err);
+          return [];
+        }
+      },
+      getTeacherAssignmentsOverview: async () => {
+        try {
+          const resp = await fetch(
+            "http://localhost:3001/api/teacher/assignments/overview",
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + localStorage.getItem("token"),
+              },
+            }
+          );
+
+          if (!resp.ok) throw new Error("Failed to fetch assignments overview");
+
+          const data = await resp.json();
+
+          setStore({ assignmentsOverview: data });
+
+          return data;
+        } catch (err) {
+          console.error("❌ Error fetching assignments overview:", err);
+          return [];
+        }
+      },
+      updateAssignment: async (assignmentId, data) => {
+        try {
+          const resp = await fetch(
+            `http://localhost:3001/api/teacher/assignments/${assignmentId}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + localStorage.getItem("token"),
+              },
+              body: JSON.stringify(data),
+            }
+          );
+
+          if (!resp.ok) {
+            console.error("❌ Error updating assignment");
+            return false;
+          }
+
+          const result = await resp.json();
+          console.log("✅ Assignment updated:", result);
+
+          return true;
+        } catch (err) {
+          console.error("❌ Error:", err);
+          return false;
+        }
+      },
+      deleteAssignment: async (assignmentId) => {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          console.error("❌ No token found");
+          return { success: false, msg: "Unauthorized" };
+        }
+
+        try {
+          const resp = await fetch(
+            `http://localhost:3001/api/teacher/assignments/${assignmentId}`,
+            {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+            }
+          );
+
+          const data = await resp.json();
+
+          if (!resp.ok) {
+            console.error("❌ Error deleting assignment:", data.msg);
+            return { success: false, msg: data.msg };
+          }
+
+          console.log("🗑 Assignment deleted successfully");
+
+          return { success: true, msg: "Assignment deleted successfully" };
+        } catch (error) {
+          console.error("❌ Error deleting assignment:", error);
+          return { success: false, msg: "Server error" };
+        }
+      },
+      getStudentAssignmentsBySchedule: async (courseId, scheduleId) => {
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) return [];
+
+          const url = `http://localhost:3001/api/student/assignments?course_id=${courseId}&schedule_id=${scheduleId}`;
+
+          const resp = await fetch(url, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+          });
+
+          const data = await resp.json();
+
+          if (!resp.ok) {
+            console.error("❌ Error fetching assignments:", data.msg);
+            return [];
+          }
+
+          console.log("📚 Student assignments:", data);
+
+          return data;
+        } catch (err) {
+          console.error("❌ Error in getStudentAssignmentsBySchedule:", err);
+          return [];
+        }
+      },
+      submitAssignment: async (assignmentId) => {
+        try {
+          const token = localStorage.getItem("token");
+
+          const resp = await fetch(
+            `http://localhost:3001/api/student/assignments/${assignmentId}/submit`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+            }
+          );
+
+          const data = await resp.json();
+
+          if (!resp.ok) {
+            console.error("❌ Error submitting assignment:", data.msg);
+            return { success: false, msg: data.msg };
+          }
+
+          console.log("📬 Assignment submitted:", data);
+
+          return { success: true, data };
+        } catch (err) {
+          console.error("❌ Error:", err);
+          return { success: false, msg: "Network error" };
+        }
+      },
+      reviewAssignment: async (submissionId, status, feedback = "") => {
+        try {
+          const token = localStorage.getItem("token");
+
+          const resp = await fetch(
+            "http://localhost:3001/api/teacher/assignments/" +
+              submissionId +
+              "/review",
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+              body: JSON.stringify({
+                status: status,
+                feedback: feedback,
+              }),
+            }
+          );
+
+          const data = await resp.json();
+
+          if (!resp.ok) {
+            console.error("❌ Error reviewing assignment:", data.msg);
+            return { success: false, msg: data.msg };
+          }
+
+          console.log("✅ Review success:", data);
+          return { success: true };
+        } catch (err) {
+          console.error("❌ Fatal error in reviewAssignment:", err);
+          return { success: false, msg: "Network error" };
         }
       },
     },

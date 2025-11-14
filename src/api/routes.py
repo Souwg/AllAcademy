@@ -7,7 +7,7 @@ import requests
 from flask import Flask, json, request, jsonify, url_for, Blueprint
 from sqlalchemy import extract, func
 from psycopg2 import IntegrityError
-from api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment, CourseChatMessage, PrivateChatMessage, CourseSchedule, Recording, RecordingLesson, Purchase   
+from api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment, CourseChatMessage, PrivateChatMessage, CourseSchedule, Recording, RecordingLesson, Purchase, Assignment, AssignmentSubmission  
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -599,6 +599,7 @@ def create_course():
                     
                     new_schedule = CourseSchedule(
                         course_id=new_course.id,
+                        teacher_id=teacher_id, 
                         day_of_week=",".join(days), 
                         start_time=start_time,
                         end_time=end_time,
@@ -2369,3 +2370,639 @@ def get_cloudinary_signature():
         "api_key": os.getenv("CLOUDINARY_API_KEY"),
         "folder": folder
     }), 200
+######################### Progress with Assignments###########################
+@api.route('/teacher/recordings/<int:recording_id>/assignments', methods=['POST'])
+@jwt_required()
+def create_assignment(recording_id):
+    try:
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+
+        # Solo profesores pueden crear tareas
+        if user.role != "teacher":
+            return jsonify({"msg": "Unauthorized"}), 403
+
+        data = request.get_json()
+        title = data.get("title")
+        description = data.get("description")
+
+        if not title:
+            return jsonify({"msg": "Title is required"}), 400
+
+        # Buscar la grabación
+        recording = Recording.query.get(recording_id)
+        if not recording:
+            return jsonify({"msg": "Recording not found"}), 404
+
+        # Validar que el profesor sea dueño de la grabación
+        if recording.teacher_id != user.id:
+            return jsonify({"msg": "You are not allowed to create assignments for this recording"}), 403
+
+        # Crear la tarea
+        new_assignment = Assignment(
+            course_id=recording.course_id,
+            recording_id=recording.id,
+            schedule_id=recording.schedule_id,
+            title=title,
+            description=description
+        )
+
+        db.session.add(new_assignment)
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Assignment created successfully",
+            "assignment": new_assignment.serialize()
+        }), 201
+
+    except Exception as e:
+        print("❌ Error creating assignment:", str(e))
+        return jsonify({"msg": "Server error"}), 500
+
+@api.route('/teacher/assignments/<int:assignment_id>', methods=['PUT'])
+@jwt_required()
+def update_assignment(assignment_id):
+    try:
+        user_id = get_jwt_identity()
+        teacher = User.query.get(user_id)
+
+        print("\n=================== UPDATE ASSIGNMENT DEBUG ===================")
+        print("👩‍🏫 Logged-in teacher:", teacher.id, teacher.role)
+
+        if not teacher or teacher.role != "teacher":
+            print("❌ Unauthorized: user is not a teacher")
+            return jsonify({"msg": "Unauthorized"}), 403
+
+        # Buscar la tarea
+        assignment = Assignment.query.get(assignment_id)
+        if not assignment:
+            print("❌ Assignment not found")
+            return jsonify({"msg": "Assignment not found"}), 404
+
+        print("📝 Assignment belongs to recording_id:", assignment.recording_id)
+
+        # Validar que la grabación sea del profesor
+        recording = Recording.query.get(assignment.recording_id)
+        if not recording:
+            print("❌ Recording not found")
+            return jsonify({"msg": "Recording not found"}), 404
+
+        print("👨‍🏫 Recording teacher_id:", recording.teacher_id)
+        print("👩‍🏫 Current teacher_id:", teacher.id)
+
+        if recording.teacher_id != teacher.id:
+            print("❌ You are not allowed to edit this assignment")
+            return jsonify({"msg": "You are not allowed to edit this assignment"}), 403
+
+        data = request.get_json()
+        title = data.get("title")
+        description = data.get("description")
+
+        # Actualizar campos
+        if title:
+            assignment.title = title
+        if description:
+            assignment.description = description
+
+        db.session.commit()
+
+        print("✅ Assignment updated successfully")
+
+        return jsonify({
+            "msg": "Assignment updated successfully",
+            "assignment": assignment.serialize()
+        }), 200
+
+    except Exception as e:
+        print("❌ ERROR updating assignment:", str(e))
+        return jsonify({"msg": "Server error"}), 500
+    
+@api.route('/teacher/assignments/<int:assignment_id>', methods=['DELETE'])
+@jwt_required()
+def delete_assignment(assignment_id):
+    print("\n==================== DELETE ASSIGNMENT DEBUG ====================")
+
+    try:
+        # =====================================================
+        # 1. GET TEACHER
+        # =====================================================
+        teacher_id = get_jwt_identity()
+        teacher = User.query.get(teacher_id)
+
+        print("👤 Logged-in teacher ID:", teacher_id)
+        print("👤 Logged-in role:", teacher.role if teacher else "NOT FOUND")
+
+        if not teacher or teacher.role != "teacher":
+            print("❌ Unauthorized: user no es teacher")
+            return jsonify({"msg": "Unauthorized"}), 403
+
+        # =====================================================
+        # 2. GET ASSIGNMENT
+        # =====================================================
+        assignment = Assignment.query.get(assignment_id)
+
+        if not assignment:
+            print("❌ Assignment no encontrado:", assignment_id)
+            return jsonify({"msg": "Assignment not found"}), 404
+
+        print("\n📝 Assignment encontrado:", assignment_id)
+        print("📘 Assignment.course_id:", assignment.course_id)
+        print("📘 Assignment.recording_id:", assignment.recording_id)
+        print("📘 Assignment.schedule_id:", assignment.schedule_id)
+
+        # =====================================================
+        # 3. GET COURSE
+        # =====================================================
+        course = assignment.course
+        print("🎓 Course.teacher_id:", course.teacher_id)
+
+        # =====================================================
+        # 4. GET SCHEDULE
+        # =====================================================
+        schedule = assignment.schedule
+        if schedule:
+            print("📅 Schedule ID:", schedule.id)
+            print("👨‍🏫 Schedule.teacher_id:", schedule.teacher_id)
+        else:
+            print("⚠️ Este assignment NO tiene schedule asignado")
+
+        # =====================================================
+        # 5. VALIDAR PERMISO REAL
+        # =====================================================
+        print("\n🔍 VALIDACIÓN DE PERMISOS")
+
+        print("➡ Teacher logueado:", teacher_id)
+        print("➡ Teacher dueño del COURSE:", course.teacher_id)
+        print("➡ Teacher dueño del SCHEDULE:", schedule.teacher_id if schedule else None)
+
+        # ⚠️ VALIDACIÓN REAL
+        # Primero validamos por schedule, si existe
+        if schedule and int(schedule.teacher_id) != int(teacher_id):
+            print("❌ El teacher NO coincide con el schedule")
+            return jsonify({"msg": "You cannot delete assignments for this schedule"}), 403
+
+        # Luego validamos por course (solo si quieres doble seguridad)
+        if course.teacher_id != teacher_id:
+            print("⚠️ Course.teacher_id no coincide, pero permitimos por schedule")
+            print("➡ Course.teacher_id:", course.teacher_id)
+            print("➡ Teacher ID:", teacher_id)
+
+        # =====================================================
+        # 6. DELETE SUBMISSIONS
+        # =====================================================
+        submissions = AssignmentSubmission.query.filter_by(
+            assignment_id=assignment_id
+        ).all()
+
+        print("\n🧹 Eliminando submissions:", len(submissions))
+
+        for s in submissions:
+            print("   - Eliminando submission ID:", s.id)
+            db.session.delete(s)
+
+        # =====================================================
+        # 7. DELETE ASSIGNMENT
+        # =====================================================
+        print("🗑 Eliminando assignment:", assignment_id)
+        db.session.delete(assignment)
+
+        db.session.commit()
+        print("✅ Assignment eliminado correctamente")
+
+        return jsonify({"msg": "Assignment deleted successfully"}), 200
+
+    except Exception as e:
+        print("❌ ERROR GENERAL:", str(e))
+        import traceback
+        traceback.print_exc()
+        return jsonify({"msg": "Server error"}), 500
+
+
+
+
+@api.route('/teacher/assignments/overview', methods=['GET'])
+@jwt_required()
+def get_teacher_assignments_overview():
+    print("\n==================== ASSIGNMENTS OVERVIEW DEBUG ====================")
+
+    try:
+        # =====================================================
+        # 1) GET TEACHER
+        # =====================================================
+        teacher_id = get_jwt_identity()
+        teacher = User.query.get(teacher_id)
+
+        print("👤 Logged-in user ID:", teacher_id)
+        print("👤 Logged-in role:", teacher.role if teacher else "NOT FOUND")
+
+        if not teacher or teacher.role != "teacher":
+            print("❌ Unauthorized: User is NOT a teacher")
+            return jsonify({"msg": "Unauthorized"}), 403
+
+        # =====================================================
+        # 2) GET COURSES BY TEACHER USING SCHEDULES
+        # =====================================================
+        print("\n🔎 Fetching courses using CourseSchedule.teacher_id =", teacher_id)
+
+        try:
+            courses = (
+                Course.query
+                .join(CourseSchedule, CourseSchedule.course_id == Course.id)
+                .filter(CourseSchedule.teacher_id == teacher_id)
+                .distinct()
+                .all()
+            )
+        except Exception as db_err:
+            print("❌ ERROR during COURSES query:", str(db_err))
+            return jsonify({"msg": "Database error in courses query"}), 500
+
+        print("📘 Courses found:", [c.title for c in courses])
+
+        if len(courses) == 0:
+            print("⚠️ No courses found for this teacher")
+        
+        overview = []
+
+        # =====================================================
+        # 3) LOOP COURSES
+        # =====================================================
+        for course in courses:
+            print("\n==================== COURSE ====================")
+            print("📚 Course:", course.title, "(ID:", course.id, ")")
+
+            course_data = {
+                "course_id": course.id,
+                "course_title": course.title,
+                "schedules": []
+            }
+
+            # =====================================================
+            # 4) GET SCHEDULES
+            # =====================================================
+            print("🔎 Fetching schedules for this course + teacher")
+
+            try:
+                schedules = CourseSchedule.query.filter_by(
+                    course_id=course.id,
+                    teacher_id=teacher_id
+                ).all()
+            except Exception as db_err:
+                print("❌ ERROR during SCHEDULES query:", str(db_err))
+                return jsonify({"msg": "Database error in schedules query"}), 500
+
+            print("📅 Schedules found:", [s.id for s in schedules])
+
+            # =====================================================
+            # 5) LOOP SCHEDULES
+            # =====================================================
+            for sch in schedules:
+                print("\n----- SCHEDULE -----")
+                print("🆔 Schedule ID:", sch.id)
+                print("👥 Group:", sch.group_name)
+                print("📅 Day:", sch.day_of_week)
+
+                schedule_data = {
+                    "schedule_id": sch.id,
+                    "group_name": sch.group_name,
+                    "day_of_week": sch.day_of_week,
+                    "start_time": sch.start_time.strftime("%H:%M") if sch.start_time else None,
+                    "end_time": sch.end_time.strftime("%H:%M") if sch.end_time else None,
+                    "recordings": []
+                }
+
+                # =====================================================
+                # 6) GET RECORDINGS
+                # =====================================================
+                print("🔎 Fetching recordings for schedule:", sch.id)
+
+                try:
+                    recordings = Recording.query.filter_by(
+                        course_id=course.id,
+                        schedule_id=sch.id
+                    ).all()
+                except Exception as db_err:
+                    print("❌ ERROR during RECORDINGS query:", str(db_err))
+                    return jsonify({"msg": "Database error in recordings query"}), 500
+
+                print("🎥 Recordings found:", [r.id for r in recordings])
+
+                # =====================================================
+                # 7) LOOP RECORDINGS
+                # =====================================================
+                for rec in recordings:
+                    print("\n----- RECORDING -----")
+                    print("🎬 Recording ID:", rec.id, "| Title:", rec.title)
+
+                    recording_data = {
+                        "recording_id": rec.id,
+                        "recording_title": rec.title,
+                        "assignments": []
+                    }
+
+                    # =====================================================
+                    # 8) GET ASSIGNMENTS
+                    # =====================================================
+                    print("🔎 Fetching assignments for recording:", rec.id)
+
+                    try:
+                        assignments = Assignment.query.filter_by(recording_id=rec.id, schedule_id=sch.id).all()
+                    except Exception as db_err:
+                        print("❌ ERROR during ASSIGNMENTS query:", str(db_err))
+                        return jsonify({"msg": "Database error in assignments query"}), 500
+
+                    print("📝 Assignments found:", [a.id for a in assignments])
+
+                    # =====================================================
+                    # 9) LOOP ASSIGNMENTS
+                    # =====================================================
+                    for a in assignments:
+                        print("\n----- ASSIGNMENT -----")
+                        print("📝 Assignment ID:", a.id, "| Title:", a.title)
+
+                        assignment_data = {
+                            "assignment_id": a.id,
+                            "title": a.title,
+                            "description": a.description,
+                            "created_at": a.created_at.isoformat(),
+                            "submissions": []
+                        }
+
+                        # =====================================================
+                        # 10) GET SUBMISSIONS
+                        # =====================================================
+                        print("🔎 Fetching submissions for assignment:", a.id)
+
+                        try:
+                            submissions = AssignmentSubmission.query.filter_by(
+                                assignment_id=a.id
+                            ).all()
+                        except Exception as db_err:
+                            print("❌ ERROR during SUBMISSIONS query:", str(db_err))
+                            return jsonify({"msg": "Database error in submissions query"}), 500
+
+                        print("📨 Submissions found:", [s.id for s in submissions])
+
+                        # =====================================================
+                        # 11) LOOP SUBMISSIONS
+                        # =====================================================
+                        for s in submissions:
+                            student = User.query.get(s.student_id)
+                            print("👤 Submission student:", student.first_name, student.last_name)
+
+                            assignment_data["submissions"].append({
+                                "submission_id": s.id,
+                                "student_id": s.student_id,
+                                "student_name": f"{student.first_name} {student.last_name}",
+                                "status": s.status,
+                                "feedback": s.feedback,
+                                "submitted_at": (
+                                    s.submitted_at.isoformat() if s.submitted_at else None
+                                )
+                            })
+
+                        recording_data["assignments"].append(assignment_data)
+
+                    schedule_data["recordings"].append(recording_data)
+
+                course_data["schedules"].append(schedule_data)
+
+            overview.append(course_data)
+
+        print("\n✅ Returning assignments overview successfully")
+        return jsonify(overview), 200
+
+    except Exception as e:
+        print("\n❌ GENERAL ERROR in assignments overview:", str(e))
+        import traceback
+        traceback.print_exc()
+        return jsonify({"msg": "Server error"}), 500
+
+
+@api.route('/teacher/assignments/<int:submission_id>/review', methods=['PUT'])
+@jwt_required()
+def review_assignment(submission_id):
+    try:
+        print("\n========== REVIEW ASSIGNMENT DEBUG ==========")
+
+        teacher_id = get_jwt_identity()
+        teacher = User.query.get(teacher_id)
+        print("👨‍🏫 Logged teacher:", teacher_id, "role:", teacher.role)
+
+        submission = AssignmentSubmission.query.get(submission_id)
+        print("📨 Submission received:", submission_id, "->", submission)
+
+        if not submission:
+            print("❌ Submission not found")
+            return jsonify({"msg": "Submission not found"}), 404
+
+        assignment = Assignment.query.get(submission.assignment_id)
+        print("📝 Assignment ID:", assignment.id, "Schedule:", assignment.schedule_id)
+
+        schedule = CourseSchedule.query.get(assignment.schedule_id)
+        print("📅 Schedule teacher_id:", schedule.teacher_id if schedule else None)
+        print("👨‍🏫 Logged teacher_id:", teacher_id)
+
+        # VALIDACIÓN EXACTA PROBLEMA
+        if not schedule:
+            print("❌ No schedule found")
+        if int(schedule.teacher_id) != int(teacher_id):
+            print("❌ Teacher does NOT own this schedule (type mismatch)")
+            print("➡ schedule.teacher_id:", schedule.teacher_id, type(schedule.teacher_id))
+            print("➡ teacher_id:", teacher_id, type(teacher_id))
+            return jsonify({"msg": "Teacher mismatch"}), 403
+
+        data = request.get_json()
+        status = data.get("status")
+        feedback = data.get("feedback")
+
+        print("🔄 Status to apply:", status)
+        print("🗒 Feedback:", feedback)
+
+        submission.status = status
+        submission.feedback = feedback
+
+        db.session.commit()
+
+        print("✅ Review saved successfully")
+        return jsonify({"msg": "Review submitted", "submission": submission.serialize()}), 200
+
+    except Exception as e:
+        print("❌ ERROR in review_assignment:", str(e))
+
+
+
+@api.route('/student/assignments', methods=['GET'])
+@jwt_required()
+def get_student_assignments_by_schedule():
+    print("\n==================== 📘 STUDENT ASSIGNMENTS DEBUG ====================")
+
+    try:
+        # ------------------------------------------------------
+        # 1. Identificar estudiante
+        # ------------------------------------------------------
+        student_id = get_jwt_identity()
+        student = User.query.get(student_id)
+
+        print(f"👤 Logged-in Student ID: {student_id}")
+        print(f"🎓 Role: {student.role if student else 'NOT FOUND'}")
+
+        if student.role != "student":
+            print("❌ Unauthorized: user is not a student")
+            return jsonify({"msg": "Unauthorized"}), 403
+
+        # ------------------------------------------------------
+        # 2. Obtener params
+        # ------------------------------------------------------
+        course_id = request.args.get("course_id", type=int)
+        schedule_id = request.args.get("schedule_id", type=int)
+
+        print(f"📘 Received course_id: {course_id}")
+        print(f"📅 Received schedule_id: {schedule_id}")
+
+        if not course_id or not schedule_id:
+            print("❌ Missing course_id or schedule_id")
+            return jsonify({"msg": "course_id and schedule_id are required"}), 400
+
+        # ------------------------------------------------------
+        # 3. Validar que está inscrito en ese schedule
+        # ------------------------------------------------------
+        print("🔍 Checking enrollment...")
+
+        enrollment = Enrollment.query.filter_by(
+            student_id=student_id,
+            course_id=course_id,
+            schedule_id=schedule_id
+        ).first()
+
+        if not enrollment:
+            print("❌ Student is NOT enrolled in this schedule!")
+            return jsonify({"msg": "You are not enrolled in this schedule"}), 403
+
+        print("✅ Enrollment exists")
+
+        # ------------------------------------------------------
+        # 4. Obtener recordings del schedule
+        # ------------------------------------------------------
+        print("\n🔎 Fetching recordings for schedule...")
+
+        recordings = Recording.query.filter_by(
+            course_id=course_id,
+            schedule_id=schedule_id
+        ).order_by(Recording.created_at.desc()).all()
+
+        print(f"🎥 Recordings found: {[r.id for r in recordings]}")
+
+        result = []
+
+        # ------------------------------------------------------
+        # 5. Recorrer recordings
+        # ------------------------------------------------------
+        for r in recordings:
+            print(f"\n----- 📼 RECORDING {r.id} -----")
+            print(f"🎞 Title: {r.title}")
+
+            # Obtener assignments por recording + schedule
+            assignments = Assignment.query.filter_by(
+                recording_id=r.id,
+                schedule_id=schedule_id
+            ).all()
+
+            print(f"📝 Assignments found: {[a.id for a in assignments]}")
+
+            recording_data = {
+                "recording_id": r.id,
+                "recording_title": r.title,
+                "created_at": r.created_at.isoformat(),
+                "assignments": []
+            }
+
+            # ------------------------------------------------------
+            # 6. Recorrer assignments
+            # ------------------------------------------------------
+            for a in assignments:
+                print(f"\n   ➤ Assignment ID: {a.id} | Title: {a.title}")
+
+                submission = AssignmentSubmission.query.filter_by(
+                    assignment_id=a.id,
+                    student_id=student_id
+                ).first()
+
+                if submission:
+                    print(f"      📬 Submission found → Status: {submission.status}")
+                else:
+                    print("      ⚠️ No submission found → status = not_submitted")
+
+                recording_data["assignments"].append({
+                    "assignment_id": a.id,
+                    "title": a.title,
+                    "description": a.description,
+                    "status": submission.status if submission else "not_submitted",
+                    "feedback": submission.feedback if submission else None,
+                    "submitted_at": submission.submitted_at.isoformat() if submission else None
+                })
+
+            result.append(recording_data)
+
+        print("\n✅ Returning assignments successfully")
+        return jsonify(result), 200
+
+    except Exception as e:
+        print("❌ FATAL ERROR in get_student_assignments_by_schedule:", str(e))
+        import traceback
+        traceback.print_exc()
+        return jsonify({"msg": "Server error"}), 500
+
+@api.route('/student/assignments/<int:assignment_id>/submit', methods=['POST'])
+@jwt_required()
+def submit_assignment(assignment_id):
+    try:
+        # 1. Identificar estudiante
+        student_id = get_jwt_identity()
+        student = User.query.get(student_id)
+
+        if student.role != "student":
+            return jsonify({"msg": "Unauthorized"}), 403
+
+        # 2. Buscar la tarea
+        assignment = Assignment.query.get(assignment_id)
+        if not assignment:
+            return jsonify({"msg": "Assignment not found"}), 404
+
+        # 3. Validar que está inscrito en el schedule correcto
+        enrollment = Enrollment.query.filter_by(
+            student_id=student_id,
+            course_id=assignment.course_id,
+            schedule_id=assignment.schedule_id
+        ).first()
+
+        if not enrollment:
+            return jsonify({"msg": "You are not enrolled in this schedule"}), 403
+
+        # 4. Verificar si ya la envió antes
+        existing = AssignmentSubmission.query.filter_by(
+            assignment_id=assignment_id,
+            student_id=student_id
+        ).first()
+
+        if existing:
+            return jsonify({"msg": "Assignment already submitted"}), 400
+
+        # 5. Crear submit
+        submission = AssignmentSubmission(
+            assignment_id=assignment_id,
+            student_id=student_id,
+            course_id=assignment.course_id,
+            status="pending"
+        )
+
+        db.session.add(submission)
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Assignment submitted successfully",
+            "submission": submission.serialize()
+        }), 201
+
+    except Exception as e:
+        print("❌ Error submitting assignment:", str(e))
+        return jsonify({"msg": "Server error"}), 500

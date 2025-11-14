@@ -20,6 +20,40 @@ export const DashboardStudent = () => {
   const [showPrivateChat, setShowPrivateChat] = useState(false);
   const [selectedScheduleId, setSelectedScheduleId] = useState(null);
   const [originalScheduleId, setOriginalScheduleId] = useState(null);
+  const [studentAssignments, setStudentAssignments] = useState({});
+
+  useEffect(() => {
+    if (activeView === "my-assignments" && myEnrollments.length > 0) {
+      myEnrollments.forEach((enroll) => {
+        const courseId = enroll.course.id;
+        const scheduleId = enroll.schedule.id;
+        loadAssignments(courseId, scheduleId);
+      });
+    }
+  }, [activeView, myEnrollments]);
+
+  const loadAssignments = async (courseId, scheduleId) => {
+    const assignments = await actions.getStudentAssignmentsBySchedule(
+      courseId,
+      scheduleId
+    );
+    setStudentAssignments((prev) => ({
+      ...prev,
+      [`${courseId}-${scheduleId}`]: assignments || [],
+    }));
+  };
+
+  const submitAssignment = async (assignmentId, courseId, scheduleId) => {
+    const resp = await actions.submitAssignment(assignmentId);
+
+    if (!resp || resp.success === false) {
+      alert(resp?.msg || "Error submitting assignment");
+      return;
+    }
+
+    // 👌 Recargar las tareas del estudiante para ese curso y schedule
+    await loadAssignments(courseId, scheduleId);
+  };
 
   const openPrivateChat = async (teacher) => {
     const messages = await actions.getPrivateChat(teacher.id);
@@ -136,19 +170,6 @@ export const DashboardStudent = () => {
                     Here’s a personalized overview of your teaching activity
                     today.
                   </p>
-                </div>
-              </div>
-              {/* 🧭 Quick Access Buttons */}
-              <div className="d-flex flex-wrap gap-3 mt-3 quick-access-buttons">
-                <div className="dashboard-buttons">
-                  <button className="btn btn-light me-2">
-                    <i className="fa-solid fa-plus me-2"></i>
-                    My Certificates
-                  </button>
-                  <button className="btn  btn-outline-light me-2">
-                    <i className="fa-solid fa-users me-2"></i>
-                    Edit Profile
-                  </button>
                 </div>
               </div>
             </div>
@@ -400,7 +421,7 @@ export const DashboardStudent = () => {
           <div className="container-fluid">
             <div className="teacher-students-banner-modern mb-4">
               <div className="banner-icon">
-                <i class="fa-solid fa-chalkboard-user"></i>
+                <i className="fa-solid fa-chalkboard-user"></i>
               </div>
               <div className="banner-content">
                 <h2 className="banner-title">My Teachers</h2>
@@ -457,7 +478,7 @@ export const DashboardStudent = () => {
           <div className="container-fluid">
             <div className="teacher-students-banner-modern mb-4">
               <div className="banner-icon">
-                <i class="fa-solid fa-chalkboard-user"></i>
+                <i className="fa-solid fa-chalkboard-user"></i>
               </div>
               <div className="banner-content">
                 <h2 className="banner-title">My Class Recordings</h2>
@@ -558,6 +579,65 @@ export const DashboardStudent = () => {
                                       ).toLocaleDateString()
                                     : "No date"}
                                 </div>
+                                {video.lessons &&
+                                  video.lessons.length > 0 &&
+                                  (() => {
+                                    const lessonsByModule =
+                                      video.lessons.reduce((acc, lesson) => {
+                                        const key = lesson.module_id;
+                                        if (!acc[key]) {
+                                          acc[key] = {
+                                            module_title: lesson.module_title,
+                                            module_order: lesson.module_order,
+                                            lessons: [],
+                                          };
+                                        }
+                                        acc[key].lessons.push(lesson);
+                                        return acc;
+                                      }, {});
+
+                                    return (
+                                      <ul className="mt-2 mb-0 ps-3">
+                                        {Object.values(lessonsByModule)
+                                          .sort(
+                                            (a, b) =>
+                                              a.module_order - b.module_order
+                                          )
+                                          .map((module) => (
+                                            <li
+                                              key={module.module_order}
+                                              className="mt-2"
+                                            >
+                                              <strong
+                                                style={{ fontSize: "0.9rem" }}
+                                              >
+                                                Module {module.module_order}:{" "}
+                                                {module.module_title}
+                                              </strong>
+
+                                              <ul className="mt-1">
+                                                {module.lessons
+                                                  .sort(
+                                                    (a, b) => a.order - b.order
+                                                  )
+                                                  .map((lesson) => (
+                                                    <li
+                                                      key={lesson.id}
+                                                      className="text-muted"
+                                                      style={{
+                                                        fontSize: "0.85rem",
+                                                      }}
+                                                    >
+                                                      Lesson {lesson.order}:{" "}
+                                                      {lesson.title}
+                                                    </li>
+                                                  ))}
+                                              </ul>
+                                            </li>
+                                          ))}
+                                      </ul>
+                                    );
+                                  })()}
                               </div>
 
                               <a
@@ -610,31 +690,184 @@ export const DashboardStudent = () => {
             )}
           </div>
         );
-
-      case "wishlist":
+      case "my-assignments":
         return (
-          <div className="container">
-            <div className="student-banner">
-              <h3 className="fw-bold m-0">
-                <i className="fa-regular fa-heart me-2"></i> Wishlist
-              </h3>
+          <div className="container-fluid">
+            {/* Banner Superior */}
+            <div
+              className="teacher-students-banner-modern mb-4"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "15px",
+              }}
+            >
+              <div className="banner-icon">
+                <i className="fa-solid fa-list-check"></i>
+              </div>
+              <div className="banner-content">
+                <h2 className="banner-title">My Assignments</h2>
+                <p className="banner-subtitle">
+                  View your tasks, check your progress, and submit your work ✨
+                </p>
+              </div>
             </div>
+
+            {myEnrollments.length === 0 ? (
+              <p className="text-muted">You are not enrolled in any course.</p>
+            ) : (
+              myEnrollments.map((enroll) => {
+                const course = enroll.course;
+                const schedule = enroll.schedule;
+
+                const key = `${course.id}-${schedule.id}`;
+                const assignments = studentAssignments[key] || [];
+
+                return (
+                  <div
+                    key={key}
+                    className="p-4 mb-4 rounded-4 shadow-sm"
+                    style={{
+                      background: "#fff",
+                      borderRadius: "15px",
+                      border: "1px solid #e5e7eb",
+                      boxShadow: "0 6px 20px rgba(0,0,0,0.06)",
+                    }}
+                  >
+                    <h4
+                      className="fw-bold mb-3"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #2d3078 0%, #3f42a0 100%)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                      }}
+                    >
+                      {course.title}
+                    </h4>
+
+                    {assignments.length === 0 ? (
+                      <p className="text-muted">No assignments loaded.</p>
+                    ) : (
+                      assignments
+                        .flatMap((r) => r.assignments)
+                        .map((a) => {
+                          const statusColors = {
+                            approved: "#22c55e",
+                            rejected: "#ef4444",
+                            pending: "#eab308",
+                            not_submitted: "#6b7280",
+                          };
+
+                          return (
+                            <div
+                              key={a.assignment_id}
+                              className="p-4 rounded-4 mb-4 shadow-sm"
+                              style={{
+                                background: "#f9fafc",
+                                borderLeft: `6px solid ${
+                                  statusColors[a.status]
+                                }`,
+                                borderRadius: "12px",
+                              }}
+                            >
+                              {/* Layout principal */}
+                              <div
+                                className="d-flex justify-content-between"
+                                style={{
+                                  gap: "20px",
+                                  alignItems: "flex-start",
+                                }}
+                              >
+                                {/* TEXTO DE LA TAREA */}
+                                <div style={{ flex: 1 }}>
+                                  <h5 className="fw-bold">{a.title}</h5>
+                                  <p className="text-muted mb-2">
+                                    {a.description}
+                                  </p>
+
+                                  {/* BADGE DE STATUS */}
+                                  <span
+                                    style={{
+                                      background: statusColors[a.status],
+                                      padding: "6px 12px",
+                                      borderRadius: "20px",
+                                      fontSize: "0.8rem",
+                                      fontWeight: "600",
+                                      color: "white",
+                                    }}
+                                  >
+                                    {a.status.replace("_", " ").toUpperCase()}
+                                  </span>
+
+                                  {/* FEEDBACK */}
+                                  {a.feedback && (
+                                    <div className="mt-3">
+                                      <strong>Feedback:</strong>
+                                      <p className="text-muted small m-0">
+                                        {a.feedback}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* BOTÓN SUBMIT */}
+                                {a.status === "not_submitted" && (
+                                  <button
+                                    onClick={() =>
+                                      submitAssignment(
+                                        a.assignment_id,
+                                        course.id,
+                                        schedule.id
+                                      )
+                                    }
+                                    style={{
+                                      background:
+                                        "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                                      color: "white",
+                                      padding: "10px 18px",
+                                      borderRadius: "10px",
+                                      border: "none",
+                                      fontWeight: "600",
+                                      fontSize: "0.9rem",
+                                      cursor: "pointer",
+                                      minWidth: "130px", // ✔ MISMO ANCHO SIEMPRE
+                                      height: "42px", // ✔ MISMA ALTURA SIEMPRE
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      boxShadow:
+                                        "0 4px 10px rgba(22,163,74,0.25)",
+                                      transition: "all 0.3s ease",
+                                    }}
+                                    onMouseOver={(e) => {
+                                      e.currentTarget.style.transform =
+                                        "translateY(-2px)";
+                                      e.currentTarget.style.boxShadow =
+                                        "0 6px 14px rgba(22,163,74,0.35)";
+                                    }}
+                                    onMouseOut={(e) => {
+                                      e.currentTarget.style.transform =
+                                        "translateY(0)";
+                                      e.currentTarget.style.boxShadow =
+                                        "0 4px 10px rgba(22,163,74,0.25)";
+                                    }}
+                                  >
+                                    <i className="fa-solid fa-upload me-2"></i>
+                                    Submit
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                    )}
+                  </div>
+                );
+              })
+            )}
           </div>
         );
-
-      case "settings":
-        return (
-          <div className="container">
-            <div className="student-banner">
-              <h3 className="fw-bold m-0">
-                <i className="fa-solid fa-gear me-2"></i> Settings
-              </h3>
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
     }
   };
 

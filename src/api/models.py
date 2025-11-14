@@ -65,7 +65,7 @@ class User(db.Model):
                 "course_id": e.course.id,
                 "course_title": e.course.title,
                 "instructor": f"{e.course.teacher.first_name} {e.course.teacher.last_name}" if e.course.teacher else None,
-                "progress": e.progress,
+                "progress": e.calculate_progress(),   
                 "completed": e.completed,
                 "enrolled_at": e.enrolled_at.isoformat(),
             }
@@ -207,15 +207,23 @@ class Course(db.Model):
     
 class CourseSchedule(db.Model):
     __tablename__ = "course_schedule"
+
     id = db.Column(db.Integer, primary_key=True)
     course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
+
+    # 👇 ESTA COLUMNA ES LA QUE FALTABA
+    teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
     day_of_week = db.Column(db.String(50), nullable=False)
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
     timezone = db.Column(db.String(50), default="GMT-5")
-    group_name = db.Column(db.String(100), nullable=True)  # Ej: "Grupo A", "Grupo B"
+    group_name = db.Column(db.String(100), nullable=True)
 
+    # relaciones
     course = db.relationship("Course", backref=db.backref("schedules", cascade="all, delete-orphan"))
+    teacher = db.relationship("User")
+
 
     def serialize(self):
         from .models import Enrollment  
@@ -299,6 +307,66 @@ class Requirement(db.Model):
     
     def __repr__(self):
         return f'<Requirement {self.requirement[:50]}...>'
+    
+class Assignment(db.Model):
+    __tablename__ = "assignments"
+
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
+    recording_id = db.Column(db.Integer, db.ForeignKey('recordings.id'), nullable=True)
+
+    schedule_id = db.Column(db.Integer, db.ForeignKey('course_schedule.id'), nullable=False)  # 👈 NUEVA
+
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relaciones
+    course = db.relationship("Course", backref="assignments")
+    recording = db.relationship("Recording", backref="assignment")
+    schedule = db.relationship("CourseSchedule")  # 👈 NUEVA
+
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "course_id": self.course_id,
+            "recording_id": self.recording_id,
+            "schedule_id": self.schedule_id,
+            "title": self.title,
+            "description": self.description,
+            "created_at": self.created_at.isoformat()
+        }
+
+class AssignmentSubmission(db.Model):
+    __tablename__ = "assignment_submissions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    assignment_id = db.Column(db.Integer, db.ForeignKey('assignments.id'), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)  # 👈 NUEVA FK
+
+    status = db.Column(db.String(20), default="pending")  # pending, approved, rejected
+    feedback = db.Column(db.Text, nullable=True)
+    submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relaciones
+    assignment = db.relationship("Assignment", backref="submissions")
+    student = db.relationship("User", backref="assignment_submissions")
+    course = db.relationship("Course", backref="assignment_submissions")  # 👈 NUEVA RELACIÓN
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "assignment_id": self.assignment_id,
+            "student_id": self.student_id,
+            "course_id": self.course_id,
+            "status": self.status,
+            "feedback": self.feedback,
+            "submitted_at": self.submitted_at.isoformat()
+        }
+
+
 
 class BlockedTokenList(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -310,7 +378,6 @@ class Enrollment(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     course_id = db.Column(db.Integer, db.ForeignKey('course.id'), primary_key=True)
     enrolled_at = db.Column(db.DateTime, default=datetime.utcnow)
-    progress = db.Column(db.Integer, default=0)
     completed = db.Column(db.Boolean, default=False)
     completed_at = db.Column(db.DateTime, nullable=True)
 
@@ -330,10 +397,36 @@ class Enrollment(db.Model):
             "student_id": self.student_id,
             "course_id": self.course_id,
             "enrolled_at": self.enrolled_at.isoformat(),
-            "progress": self.progress,
+            "progress": self.calculate_progress(),
             "completed": self.completed,
             "schedule": self.schedule.serialize() if self.schedule else None
         }
+    def calculate_progress(self):
+        from .models import Recording, Assignment, AssignmentSubmission  # 👈 Import interno, correcto
+
+        # 1. Total de grabaciones del curso
+        total_videos = Recording.query.filter_by(course_id=self.course_id).count()
+
+        # 2. Total de tareas del curso
+        total_assignments = Assignment.query.filter_by(course_id=self.course_id).count()
+
+        # 3. Videos completados (por ahora 0)
+        completed_videos = 0
+
+        # 4. Tareas aprobadas por el estudiante
+        approved_tasks = AssignmentSubmission.query.filter_by(
+            student_id=self.student_id,
+            course_id=self.course_id,
+            status="approved"
+        ).count()
+
+        # Evitar división por cero
+        total_items = total_videos + total_assignments
+        if total_items == 0:
+            return 0
+
+        progress = ((completed_videos + approved_tasks) / total_items) * 100
+        return int(progress)
 
     
 class CourseChatMessage(db.Model):

@@ -851,3 +851,239 @@ body {
   padding: 4px 10px;
   border-radius: 8px;
 }
+/* =======================================================================
+📘 ASSIGNMENTS SECTION — ESTILO IGUAL A “MY CLASS VIDEOS”
+======================================================================= */
+
+/* 📦 Card general del grupo */
+.assignments-section .assignment-group-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 2rem;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.assignments-section .assignment-group-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* 🔵 Título del grupo */
+.assignments-section .group-header {
+  font-weight: 700;
+  margin-left: 2.2rem;
+  font-size: 1.25rem;
+  color: #001933;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 🎥 Título de la grabación */
+.assignments-section .recording-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  margin-left: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #003366;
+}
+
+/* 📘 Card de assignment */
+.assignments-section .assignment-card {
+  background: #f9fafc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-left: 1.5rem;
+  margin-top: 1.2rem;
+  border: none;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.25s ease;
+}
+
+.assignments-section .assignment-card:hover {
+  background: #eef2ff;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08);
+}
+
+/* 📝 Título del assignment */
+.assignments-section .assignment-card h5 {
+  font-weight: 700;
+  color: #001933;
+  margin-bottom: 8px;
+}
+
+/* 🧾 Descripción */
+.assignments-section .assignment-card p {
+  color: #6c757d;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+/* 🟦 Tabla moderna */
+.assignments-section .modern-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.assignments-section .modern-table thead {
+  background: linear-gradient(135deg, #f0f3ff 0%, #e2e8ff 100%);
+}
+
+.assignments-section .modern-table th {
+  padding: 12px 10px;
+  font-weight: 600;
+  color: #001933;
+}
+
+.assignments-section .modern-table td {
+  padding: 10px;
+  background: #fff;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+/* 🟢 Badges de estado */
+.status-badge {
+  padding: 5px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-badge.approved {
+  background: #e7f9f0;
+  color: #198754;
+}
+
+.status-badge.rejected {
+  background: #fde8e8;
+  color: #d9534f;
+}
+
+.status-badge.pending {
+  background: #fff5da;
+  color: #b88600;
+}
+
+/* 🔘 Botones de acción */
+.modern-action-btn {
+  border-radius: 10px !important;
+  padding: 6px 10px !important;
+  transition: 0.2s ease;
+}
+
+.modern-action-btn:hover {
+  transform: translateY(-2px);
+}
+/* 🌟 SUBMISSIONS SECTION */
+.submissions-wrapper {
+  margin-top: 20px;
+}
+
+.submissions-header {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2d3078;
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.no-submissions {
+  color: #6c757d;
+  margin-left: 5px;
+}
+
+/* Tarjeta moderna */
+.submissions-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  border: 1px solid #eef1f6;
+}
+
+/* Tabla moderna */
+.submissions-table thead tr {
+  background: #f5f7fb;
+  border-radius: 10px;
+}
+
+.submissions-table th {
+  font-weight: 600;
+  color: #4b4f74;
+  padding: 12px;
+}
+
+.submission-row:hover {
+  background: #f9fbff !important;
+}
+
+.student-name {
+  font-weight: 600;
+  color: #001933;
+}
+
+/* Badges */
+.submission-badge {
+  padding: 6px 12px;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.badge-approved {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.badge-rejected {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.badge-pending {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+}
+
+/* Botones de acción */
+.submission-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.submission-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.submission-btn.approve {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+.submission-btn.reject {
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+}
+
+.submission-btn:hover {
+  transform: translateY(-2px);
+  transition: 0.2s ease;
+}

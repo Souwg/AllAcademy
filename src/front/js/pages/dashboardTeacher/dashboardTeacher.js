@@ -49,6 +49,100 @@ export const DashboardTeacher = () => {
     image: null, // 👈 archivo real
     preview: null,
   });
+  const [showCreateAssignmentModal, setShowCreateAssignmentModal] =
+    useState(false);
+  const [selectedRecording, setSelectedRecording] = useState(null);
+  const [assignmentTitle, setAssignmentTitle] = useState("");
+  const [assignmentDescription, setAssignmentDescription] = useState("");
+  // ✏️ EDIT ASSIGNMENT
+  const [showEditAssignmentModal, setShowEditAssignmentModal] = useState(false);
+  const [editingAssignment, setEditingAssignment] = useState(null);
+  const [editAssignmentTitle, setEditAssignmentTitle] = useState("");
+  const [editAssignmentDescription, setEditAssignmentDescription] =
+    useState("");
+
+  const openEditAssignmentModal = (assignment) => {
+    setEditingAssignment(assignment);
+    setEditAssignmentTitle(assignment.title);
+    setEditAssignmentDescription(assignment.description);
+    setShowEditAssignmentModal(true);
+  };
+
+  const handleDelete = async (assignmentId) => {
+    const result = await actions.deleteAssignment(assignmentId);
+
+    if (result.success) {
+      actions.showNotification("success", "Assignment removed successfully!");
+      actions.getTeacherAssignmentsOverview();
+    } else {
+      actions.showNotification("error", result.msg);
+    }
+  };
+
+  const handleUpdateAssignment = async () => {
+    if (!editAssignmentTitle) {
+      actions.showNotification("warning", "Please enter a title.");
+      return;
+    }
+
+    const body = {
+      title: editAssignmentTitle,
+      description: editAssignmentDescription,
+    };
+
+    const success = await actions.updateAssignment(
+      editingAssignment.assignment_id,
+      body
+    );
+
+    if (success) {
+      actions.showNotification("success", "Task updated successfully.");
+      setShowEditAssignmentModal(false);
+      actions.getTeacherAssignmentsOverview();
+    } else {
+      actions.showNotification("error", "Could not update the task.");
+    }
+  };
+
+  useEffect(() => {
+    if (activeView === "assignments") {
+      actions.getTeacherAssignmentsOverview();
+    }
+  }, [activeView]);
+
+  const openCreateAssignmentModal = (video, course) => {
+    setSelectedRecording(video);
+    setSelectedCourse(course);
+    setAssignmentTitle("");
+    setAssignmentDescription("");
+    setShowCreateAssignmentModal(true);
+  };
+
+  const handleCreateAssignment = async () => {
+    console.log("🎥 Selected recording:", selectedRecording);
+    console.log("📌 recording_id:", selectedRecording?.id);
+
+    if (!assignmentTitle) {
+      actions.showNotification("warning", "Please enter a title.");
+      return;
+    }
+
+    const body = {
+      course_id: selectedCourse.id,
+      recording_id: selectedRecording.id,
+      title: assignmentTitle,
+      description: assignmentDescription,
+    };
+
+    const success = await actions.createAssignment(body);
+
+    if (success) {
+      actions.showNotification("success", "Task created successfully.");
+      setShowCreateAssignmentModal(false);
+    } else {
+      actions.showNotification("error", "Could not create the task.");
+    }
+  };
 
   const openEditModal = (video) => {
     setEditingVideo(video);
@@ -819,9 +913,10 @@ export const DashboardTeacher = () => {
                             <ul className="list-group list-group-flush">
                               {groupVideos.map((video) => (
                                 <li
-                                  uploaded
                                   key={video.id}
-                                  className="list-group-item d-flex justify-content-between align-items-center video-item"
+                                  className={`list-group-item video-item ${
+                                    video.is_published ? "uploaded" : ""
+                                  }`}
                                 >
                                   <div>
                                     <strong
@@ -852,181 +947,273 @@ export const DashboardTeacher = () => {
                                         : "No date"}
                                     </div>
 
-                                    {video.lessons && video.lessons.length > 0 && (
-                                      <ul className="mt-1 mb-0 ps-3">
-                                        {video.lessons.map((lesson) => (
-                                          <li
-                                            key={lesson.id}
-                                            className="text-muted"
-                                            style={{ fontSize: "0.85rem" }}
-                                          >
-                                            <strong>
-                                              Module {lesson.module_order}:{" "}
-                                              {lesson.module_title}
-                                            </strong>{" "}
-                                            — Lesson {lesson.order}:{" "}
-                                            {lesson.title}
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    )}
-                                  </div>
-                                  <div className="d-flex gap-2">
-                                    {/* Botón Watch */}
-                                    <button
-                                      onClick={() => {
-                                        setSelectedVideoUrl(
-                                          video.recording_url
-                                        );
-                                        setSelectedVideoTitle(video.title);
-                                        setShowVideoModal(true);
-                                      }}
-                                      style={{
-                                        background:
-                                          "linear-gradient(135deg, #2d3078 0%, #3f42a0 100%)",
-                                        color: "white",
-                                        padding: "8px 16px",
-                                        borderRadius: "10px",
-                                        fontWeight: "600",
-                                        fontSize: "0.9rem",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: "6px",
-                                        cursor: "pointer",
-                                        boxShadow:
-                                          "0 4px 10px rgba(45, 48, 120, 0.25)",
-                                        transition: "all 0.3s ease",
-                                      }}
-                                      onMouseOver={(e) => {
-                                        e.currentTarget.style.transform =
-                                          "translateY(-2px)";
-                                        e.currentTarget.style.boxShadow =
-                                          "0 6px 14px rgba(45, 48, 120, 0.35)";
-                                      }}
-                                      onMouseOut={(e) => {
-                                        e.currentTarget.style.transform =
-                                          "translateY(0)";
-                                        e.currentTarget.style.boxShadow =
-                                          "0 4px 10px rgba(45, 48, 120, 0.25)";
-                                      }}
-                                    >
-                                      <i className="fa-solid fa-play"></i> Watch
-                                    </button>
-                                    {/* Botón Publish/Unpublish */}
-                                    <button
-                                      onClick={async () => {
-                                        const newStatus = !video.is_published;
-                                        const result =
-                                          await actions.togglePublishRecording(
-                                            video.id,
-                                            newStatus
+                                    {video.lessons &&
+                                      video.lessons.length > 0 &&
+                                      (() => {
+                                        // Paso 1: agrupar por módulo
+                                        const lessonsByModule =
+                                          video.lessons.reduce(
+                                            (acc, lesson) => {
+                                              const key = lesson.module_id;
+                                              if (!acc[key]) {
+                                                acc[key] = {
+                                                  module_title:
+                                                    lesson.module_title,
+                                                  module_order:
+                                                    lesson.module_order,
+                                                  lessons: [],
+                                                };
+                                              }
+                                              acc[key].lessons.push(lesson);
+                                              return acc;
+                                            },
+                                            {}
                                           );
-                                        if (result) {
-                                          Swal.fire({
-                                            icon: "success",
-                                            title: newStatus
-                                              ? "Recording published!"
-                                              : "Recording unpublished!",
-                                            text: newStatus
-                                              ? "Students can now watch this recording."
-                                              : "The recording is no longer visible to students.",
-                                            confirmButtonColor: "#2d3078",
-                                          });
-                                        }
-                                      }}
-                                      style={{
-                                        background: video.is_published
-                                          ? "linear-gradient(135deg, #eab308 0%, #ca8a04 100%)"
-                                          : "linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%)",
-                                        color: "white",
-                                        padding: "8px 14px",
-                                        border: "none",
-                                        borderRadius: "10px",
-                                        fontWeight: "600",
-                                        fontSize: "0.9rem",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        cursor: "pointer",
-                                        boxShadow:
-                                          "0 4px 10px rgba(0,0,0,0.15)",
-                                        transition: "all 0.3s ease",
-                                      }}
-                                    >
-                                      <i
-                                        className={`fa-solid ${
-                                          video.is_published
-                                            ? "fa-eye-slash"
-                                            : "fa-eye"
-                                        } me-2`}
-                                      ></i>
-                                      {video.is_published
-                                        ? "Unpublish"
-                                        : "Publish"}
-                                    </button>
-                                    <button
-                                      onClick={() => openEditModal(video)}
-                                      style={{
-                                        background:
-                                          "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)",
-                                        color: "white",
-                                        padding: "8px 14px",
-                                        border: "none",
-                                        borderRadius: "10px",
-                                        fontWeight: "600",
-                                        fontSize: "0.9rem",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        cursor: "pointer",
-                                        boxShadow:
-                                          "0 4px 10px rgba(99, 102, 241, 0.25)",
-                                        transition: "all 0.3s ease",
-                                      }}
-                                      onMouseOver={(e) => {
-                                        e.currentTarget.style.transform =
-                                          "translateY(-2px)";
-                                        e.currentTarget.style.boxShadow =
-                                          "0 6px 14px rgba(99, 102, 241, 0.35)";
-                                      }}
-                                      onMouseOut={(e) => {
-                                        e.currentTarget.style.transform =
-                                          "translateY(0)";
-                                        e.currentTarget.style.boxShadow =
-                                          "0 4px 10px rgba(99, 102, 241, 0.25)";
-                                      }}
-                                    >
-                                      <i className="fa-solid fa-pen"></i>
-                                    </button>
 
-                                    {/* Botón Delete */}
-                                    <button
-                                      onClick={() => {
-                                        Swal.fire({
-                                          title: "Are you sure?",
-                                          text: "This action will permanently delete the recording.",
-                                          icon: "warning",
-                                          showCancelButton: true,
-                                          confirmButtonColor: "#e4263c",
-                                          cancelButtonColor: "#6c757d",
-                                          confirmButtonText: "Yes, delete it",
-                                          cancelButtonText: "Cancel",
-                                          reverseButtons: true,
-                                        }).then((result) => {
-                                          if (result.isConfirmed) {
-                                            actions.deleteVideo(video.id);
+                                        // Paso 2: renderizar agrupado
+                                        return (
+                                          <ul className="mt-1 mb-0 ps-3">
+                                            {Object.values(lessonsByModule)
+                                              .sort(
+                                                (a, b) =>
+                                                  a.module_order -
+                                                  b.module_order
+                                              )
+                                              .map((module) => (
+                                                <li
+                                                  key={module.module_order}
+                                                  className="mt-2"
+                                                >
+                                                  <strong
+                                                    style={{
+                                                      fontSize: "0.9rem",
+                                                    }}
+                                                  >
+                                                    Module {module.module_order}
+                                                    : {module.module_title}
+                                                  </strong>
+
+                                                  <ul className="mt-1">
+                                                    {module.lessons
+                                                      .sort(
+                                                        (a, b) =>
+                                                          a.order - b.order
+                                                      )
+                                                      .map((lesson) => (
+                                                        <li
+                                                          key={lesson.id}
+                                                          className="text-muted"
+                                                          style={{
+                                                            fontSize: "0.85rem",
+                                                          }}
+                                                        >
+                                                          Lesson {lesson.order}:{" "}
+                                                          {lesson.title}
+                                                        </li>
+                                                      ))}
+                                                  </ul>
+                                                </li>
+                                              ))}
+                                          </ul>
+                                        );
+                                      })()}
+                                  </div>
+                                  <div className="d-flex justify-content-between align-items-center mt-4 w-100">
+                                    <div className="d-flex gap-2 mt-4">
+                                      {/* Botón Watch */}
+                                      <button
+                                        onClick={() => {
+                                          setSelectedVideoUrl(
+                                            video.recording_url
+                                          );
+                                          setSelectedVideoTitle(video.title);
+                                          setShowVideoModal(true);
+                                        }}
+                                        style={{
+                                          background:
+                                            "linear-gradient(135deg, #2d3078 0%, #3f42a0 100%)",
+                                          color: "white",
+                                          padding: "8px 16px",
+                                          borderRadius: "10px",
+                                          fontWeight: "600",
+                                          fontSize: "0.9rem",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          gap: "6px",
+                                          cursor: "pointer",
+                                          boxShadow:
+                                            "0 4px 10px rgba(45, 48, 120, 0.25)",
+                                          transition: "all 0.3s ease",
+                                        }}
+                                        onMouseOver={(e) => {
+                                          e.currentTarget.style.transform =
+                                            "translateY(-2px)";
+                                          e.currentTarget.style.boxShadow =
+                                            "0 6px 14px rgba(45, 48, 120, 0.35)";
+                                        }}
+                                        onMouseOut={(e) => {
+                                          e.currentTarget.style.transform =
+                                            "translateY(0)";
+                                          e.currentTarget.style.boxShadow =
+                                            "0 4px 10px rgba(45, 48, 120, 0.25)";
+                                        }}
+                                      >
+                                        <i className="fa-solid fa-play"></i>{" "}
+                                        Watch
+                                      </button>
+                                      {/* Botón Publish/Unpublish */}
+                                      <button
+                                        onClick={async () => {
+                                          const newStatus = !video.is_published;
+                                          const result =
+                                            await actions.togglePublishRecording(
+                                              video.id,
+                                              newStatus
+                                            );
+                                          if (result) {
                                             Swal.fire({
-                                              title: "Deleted!",
-                                              text: "The recording has been successfully deleted.",
                                               icon: "success",
+                                              title: newStatus
+                                                ? "Recording published!"
+                                                : "Recording unpublished!",
+                                              text: newStatus
+                                                ? "Students can now watch this recording."
+                                                : "The recording is no longer visible to students.",
                                               confirmButtonColor: "#2d3078",
                                             });
                                           }
-                                        });
-                                      }}
+                                        }}
+                                        style={{
+                                          background: video.is_published
+                                            ? "linear-gradient(135deg, #eab308 0%, #ca8a04 100%)"
+                                            : "linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%)",
+                                          color: "white",
+                                          padding: "8px 14px",
+                                          border: "none",
+                                          borderRadius: "10px",
+                                          fontWeight: "600",
+                                          fontSize: "0.9rem",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          cursor: "pointer",
+                                          boxShadow:
+                                            "0 4px 10px rgba(0,0,0,0.15)",
+                                          transition: "all 0.3s ease",
+                                        }}
+                                      >
+                                        <i
+                                          className={`fa-solid ${
+                                            video.is_published
+                                              ? "fa-eye-slash"
+                                              : "fa-eye"
+                                          } me-2`}
+                                        ></i>
+                                        {video.is_published
+                                          ? "Unpublish"
+                                          : "Publish"}
+                                      </button>
+
+                                      <button
+                                        onClick={() => openEditModal(video)}
+                                        style={{
+                                          background:
+                                            "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)",
+                                          color: "white",
+                                          padding: "8px 14px",
+                                          border: "none",
+                                          borderRadius: "10px",
+                                          fontWeight: "600",
+                                          fontSize: "0.9rem",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          cursor: "pointer",
+                                          boxShadow:
+                                            "0 4px 10px rgba(99, 102, 241, 0.25)",
+                                          transition: "all 0.3s ease",
+                                        }}
+                                        onMouseOver={(e) => {
+                                          e.currentTarget.style.transform =
+                                            "translateY(-2px)";
+                                          e.currentTarget.style.boxShadow =
+                                            "0 6px 14px rgba(99, 102, 241, 0.35)";
+                                        }}
+                                        onMouseOut={(e) => {
+                                          e.currentTarget.style.transform =
+                                            "translateY(0)";
+                                          e.currentTarget.style.boxShadow =
+                                            "0 4px 10px rgba(99, 102, 241, 0.25)";
+                                        }}
+                                      >
+                                        <i className="fa-solid fa-pen"></i>
+                                      </button>
+
+                                      {/* Botón Delete */}
+                                      <button
+                                        onClick={() => {
+                                          Swal.fire({
+                                            title: "Are you sure?",
+                                            text: "This action will permanently delete the recording.",
+                                            icon: "warning",
+                                            showCancelButton: true,
+                                            confirmButtonColor: "#e4263c",
+                                            cancelButtonColor: "#6c757d",
+                                            confirmButtonText: "Yes, delete it",
+                                            cancelButtonText: "Cancel",
+                                            reverseButtons: true,
+                                          }).then((result) => {
+                                            if (result.isConfirmed) {
+                                              actions.deleteVideo(video.id);
+                                              Swal.fire({
+                                                title: "Deleted!",
+                                                text: "The recording has been successfully deleted.",
+                                                icon: "success",
+                                                confirmButtonColor: "#2d3078",
+                                              });
+                                            }
+                                          });
+                                        }}
+                                        style={{
+                                          background:
+                                            "linear-gradient(135deg, #e4263c 0%, #c11e32 100%)",
+                                          color: "white",
+                                          padding: "8px 14px",
+                                          border: "none",
+                                          borderRadius: "10px",
+                                          fontWeight: "600",
+                                          fontSize: "0.9rem",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          cursor: "pointer",
+                                          boxShadow:
+                                            "0 4px 10px rgba(228, 38, 60, 0.25)",
+                                          transition: "all 0.3s ease",
+                                        }}
+                                        onMouseOver={(e) => {
+                                          e.currentTarget.style.transform =
+                                            "translateY(-2px)";
+                                          e.currentTarget.style.boxShadow =
+                                            "0 6px 14px rgba(228, 38, 60, 0.35)";
+                                        }}
+                                        onMouseOut={(e) => {
+                                          e.currentTarget.style.transform =
+                                            "translateY(0)";
+                                          e.currentTarget.style.boxShadow =
+                                            "0 4px 10px rgba(228, 38, 60, 0.25)";
+                                        }}
+                                      >
+                                        <i className="fa-solid fa-trash"></i>
+                                      </button>
+                                    </div>
+                                    <button
+                                      onClick={() =>
+                                        openCreateAssignmentModal(video, course)
+                                      }
                                       style={{
                                         background:
-                                          "linear-gradient(135deg, #e4263c 0%, #c11e32 100%)",
+                                          "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
                                         color: "white",
                                         padding: "8px 14px",
                                         border: "none",
@@ -1035,26 +1222,14 @@ export const DashboardTeacher = () => {
                                         fontSize: "0.9rem",
                                         display: "flex",
                                         alignItems: "center",
-                                        justifyContent: "center",
                                         cursor: "pointer",
                                         boxShadow:
-                                          "0 4px 10px rgba(228, 38, 60, 0.25)",
+                                          "0 4px 10px rgba(34,197,94,0.25)",
                                         transition: "all 0.3s ease",
                                       }}
-                                      onMouseOver={(e) => {
-                                        e.currentTarget.style.transform =
-                                          "translateY(-2px)";
-                                        e.currentTarget.style.boxShadow =
-                                          "0 6px 14px rgba(228, 38, 60, 0.35)";
-                                      }}
-                                      onMouseOut={(e) => {
-                                        e.currentTarget.style.transform =
-                                          "translateY(0)";
-                                        e.currentTarget.style.boxShadow =
-                                          "0 4px 10px rgba(228, 38, 60, 0.25)";
-                                      }}
                                     >
-                                      <i className="fa-solid fa-trash"></i>
+                                      <i className="fa-solid fa-clipboard-list me-2"></i>
+                                      Create Task
                                     </button>
                                   </div>
                                 </li>
@@ -1077,6 +1252,237 @@ export const DashboardTeacher = () => {
                 <div className="yellow ball"></div>
                 <div className="green ball"></div>
               </div>
+            )}
+          </div>
+        );
+      case "assignments":
+        return (
+          <div className="container-fluid pt-0 assignments-section">
+            {/* Banner */}
+            <div className="teacher-students-banner-modern mb-4">
+              <div className="banner-icon">
+                <i className="fa-solid fa-clipboard-list"></i>
+              </div>
+              <div className="banner-content">
+                <h2 className="banner-title">Assignments & Submissions</h2>
+                <p className="banner-subtitle">
+                  Create and manage all tasks for your classes ✨
+                </p>
+              </div>
+            </div>
+
+            {store.assignmentsOverview.length === 0 ? (
+              <p className="text-muted">No assignments found yet.</p>
+            ) : (
+              store.assignmentsOverview.map((course) => (
+                <div key={course.course_id} className="mb-5">
+                  {/* Course Title */}
+                  <h3
+                    className="mb-3"
+                    style={{
+                      fontSize: "1.8rem",
+                      fontWeight: "700",
+                      letterSpacing: "0.5px",
+                      background: "linear-gradient(135deg, #2d3078, #3f42a0)",
+                      WebkitBackgroundClip: "text",
+                      color: "transparent",
+                      paddingLeft: "12px",
+                      borderLeft: "4px solid #3f42a0",
+                    }}
+                  >
+                    {course.course_title}
+                  </h3>
+
+                  {/* Groups */}
+                  {course.schedules.map((sch) => (
+                    <div
+                      key={sch.schedule_id}
+                      className="card shadow-sm p-4 mb-4 border-0 rounded-4 assignment-group-card"
+                    >
+                      <h5 className="fw-bold mb-3 group-header">
+                        {sch.group_name} — {sch.day_of_week} ({sch.start_time}–
+                        {sch.end_time})
+                      </h5>
+
+                      {/* Recordings */}
+                      {sch.recordings.length === 0 ? (
+                        <p className="text-muted ms-2">No recordings yet.</p>
+                      ) : (
+                        sch.recordings.map((rec) => (
+                          <div key={rec.recording_id} className="mb-4 ps-3">
+                            {/* 🎥 Recording Title + BUTTON */}
+                            <div className="d-flex justify-content-between align-items-center">
+                              <h5 className="fw-bold recording-title">
+                                {rec.recording_title}
+                              </h5>
+
+                              <button
+                                className="btn btn-success"
+                                style={{
+                                  borderRadius: "10px",
+                                  fontWeight: "600",
+                                  padding: "6px 14px",
+                                }}
+                                onClick={() =>
+                                  openCreateAssignmentModal(rec, course)
+                                }
+                              >
+                                <i className="fa-solid fa-plus me-1"></i>
+                                Create Task
+                              </button>
+                            </div>
+
+                            {/* Assignments list */}
+                            {rec.assignments.length === 0 ? (
+                              <p className="text-muted ms-4">
+                                No tasks yet for this class.
+                              </p>
+                            ) : (
+                              rec.assignments.map((a) => (
+                                <div
+                                  key={a.assignment_id}
+                                  className="card p-3 border-0 shadow-sm rounded-3 mt-3 ms-3 assignment-card"
+                                >
+                                  <h6 className="fw-bold text-dark">
+                                    {a.title}
+                                  </h6>
+                                  <p className="text-muted">{a.description}</p>
+
+                                  <div className="d-flex align-items-center gap-2 mb-4">
+                                    <button
+                                      className="btn btn-sm btn-outline-primary"
+                                      onClick={() => openEditAssignmentModal(a)}
+                                    >
+                                      <i className="fa-solid fa-pen-to-square me-1"></i>
+                                      Edit
+                                    </button>
+
+                                    <button
+                                      className="btn btn-sm btn-danger"
+                                      onClick={() =>
+                                        handleDelete(a.assignment_id)
+                                      }
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+
+                                  {/* Submissions */}
+                                  {/* Submissions */}
+                                  <div className="submissions-wrapper mt-4">
+                                    <div className="submissions-header">
+                                      <i className="fa-solid fa-user-check me-2"></i>
+                                      Submissions
+                                    </div>
+
+                                    {a.submissions.length === 0 ? (
+                                      <p className="no-submissions">
+                                        No submissions yet.
+                                      </p>
+                                    ) : (
+                                      <div className="submissions-card">
+                                        <table className="table table-hover align-middle submissions-table">
+                                          <thead>
+                                            <tr>
+                                              <th>Student</th>
+                                              <th>Status</th>
+                                              <th>Submitted</th>
+                                              <th>Feedback</th>
+                                              <th></th>
+                                            </tr>
+                                          </thead>
+
+                                          <tbody>
+                                            {a.submissions.map((s) => (
+                                              <tr
+                                                key={s.submission_id}
+                                                className="submission-row"
+                                              >
+                                                <td className="student-name">
+                                                  <i className="fa-solid fa-user-circle me-2 text-primary"></i>
+                                                  {s.student_name}
+                                                </td>
+
+                                                <td>
+                                                  <span
+                                                    className={`submission-badge badge-${s.status}`}
+                                                  >
+                                                    {s.status}
+                                                  </span>
+                                                </td>
+
+                                                <td className="submitted-date">
+                                                  {new Date(
+                                                    s.submitted_at
+                                                  ).toLocaleString()}
+                                                </td>
+
+                                                <td className="feedback-field">
+                                                  {s.feedback || (
+                                                    <span className="text-muted">
+                                                      —
+                                                    </span>
+                                                  )}
+                                                </td>
+
+                                                <td>
+                                                  <div className="submission-actions">
+                                                    {/* Approve */}
+                                                    <button
+                                                      className="submission-btn approve"
+                                                      onClick={async () => {
+                                                        await actions.reviewAssignment(
+                                                          s.submission_id,
+                                                          "approved"
+                                                        );
+                                                        actions.getTeacherAssignmentsOverview();
+                                                      }}
+                                                    >
+                                                      <i className="fa-solid fa-check"></i>
+                                                    </button>
+
+                                                    {/* Reject */}
+                                                    <button
+                                                      className="submission-btn reject"
+                                                      onClick={async () => {
+                                                        const { value: fb } =
+                                                          await Swal.fire({
+                                                            title:
+                                                              "Reject Task",
+                                                            input: "textarea",
+                                                            showCancelButton: true,
+                                                          });
+
+                                                        await actions.reviewAssignment(
+                                                          s.submission_id,
+                                                          "rejected",
+                                                          fb || ""
+                                                        );
+
+                                                        actions.getTeacherAssignmentsOverview();
+                                                      }}
+                                                    >
+                                                      <i className="fa-solid fa-xmark"></i>
+                                                    </button>
+                                                  </div>
+                                                </td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ))
             )}
           </div>
         );
@@ -1864,6 +2270,122 @@ export const DashboardTeacher = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {showCreateAssignmentModal && selectedRecording && (
+        <div
+          className="modal fade show d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  <i className="fa-solid fa-clipboard-list me-2"></i>
+                  Create Task — {selectedRecording.title}
+                </h5>
+                <button
+                  className="btn-close"
+                  onClick={() => setShowCreateAssignmentModal(false)}
+                ></button>
+              </div>
+
+              <div className="modal-body">
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Title</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={assignmentTitle}
+                    onChange={(e) => setAssignmentTitle(e.target.value)}
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Description</label>
+                  <textarea
+                    className="form-control"
+                    rows="4"
+                    value={assignmentDescription}
+                    onChange={(e) => setAssignmentDescription(e.target.value)}
+                  ></textarea>
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowCreateAssignmentModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-success"
+                  onClick={handleCreateAssignment}
+                >
+                  <i className="fa-solid fa-check me-1"></i>
+                  Create Task
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showEditAssignmentModal && editingAssignment && (
+        <div
+          className="modal fade show d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content rounded-4 border-0 shadow-lg">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  <i className="fa-solid fa-pen-to-square me-2"></i>
+                  Edit Task — {editingAssignment.title}
+                </h5>
+              </div>
+
+              <div className="modal-body">
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Title</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={editAssignmentTitle}
+                    onChange={(e) => setEditAssignmentTitle(e.target.value)}
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Description</label>
+                  <textarea
+                    className="form-control"
+                    rows="4"
+                    value={editAssignmentDescription}
+                    onChange={(e) =>
+                      setEditAssignmentDescription(e.target.value)
+                    }
+                  ></textarea>
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowEditAssignmentModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleUpdateAssignment}
+                >
+                  <i className="fa-solid fa-save me-1"></i>
+                  Save Changes
+                </button>
+              </div>
             </div>
           </div>
         </div>
