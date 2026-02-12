@@ -1058,7 +1058,6 @@ export const AdminContent = ({
                           onChange={(e) =>
                             updateSchedule(index, "start_time", e.target.value)
                           }
-                          required
                         />
                       </div>
 
@@ -1071,7 +1070,6 @@ export const AdminContent = ({
                           onChange={(e) =>
                             updateSchedule(index, "end_time", e.target.value)
                           }
-                          required
                         />
                       </div>
 
@@ -1174,7 +1172,6 @@ export const AdminContent = ({
                               updateModule(moduleIndex, "title", e.target.value)
                             }
                             placeholder="Ex: Introduction to React"
-                            required
                           />
                         </div>
 

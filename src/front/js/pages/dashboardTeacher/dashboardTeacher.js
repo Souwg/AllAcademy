@@ -111,7 +111,11 @@ export const DashboardTeacher = () => {
   }, [activeView]);
 
   const openCreateAssignmentModal = (video, course) => {
-    setSelectedRecording(video);
+    setSelectedRecording({
+      id: video.id || video.recording_id,
+      title: video.title || video.recording_title,
+    });
+
     setSelectedCourse(course);
     setAssignmentTitle("");
     setAssignmentDescription("");
@@ -138,6 +142,10 @@ export const DashboardTeacher = () => {
 
     if (success) {
       actions.showNotification("success", "Task created successfully.");
+
+      // 👇👇👇 AQUI VIENE LO IMPORTANTE
+      await actions.getTeacherAssignmentsOverview();
+
       setShowCreateAssignmentModal(false);
     } else {
       actions.showNotification("error", "Could not create the task.");
@@ -1207,30 +1215,6 @@ export const DashboardTeacher = () => {
                                         <i className="fa-solid fa-trash"></i>
                                       </button>
                                     </div>
-                                    <button
-                                      onClick={() =>
-                                        openCreateAssignmentModal(video, course)
-                                      }
-                                      style={{
-                                        background:
-                                          "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
-                                        color: "white",
-                                        padding: "8px 14px",
-                                        border: "none",
-                                        borderRadius: "10px",
-                                        fontWeight: "600",
-                                        fontSize: "0.9rem",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        cursor: "pointer",
-                                        boxShadow:
-                                          "0 4px 10px rgba(34,197,94,0.25)",
-                                        transition: "all 0.3s ease",
-                                      }}
-                                    >
-                                      <i className="fa-solid fa-clipboard-list me-2"></i>
-                                      Create Task
-                                    </button>
                                   </div>
                                 </li>
                               ))}
@@ -1316,20 +1300,36 @@ export const DashboardTeacher = () => {
                                 {rec.recording_title}
                               </h5>
 
-                              <button
-                                className="btn btn-success"
-                                style={{
-                                  borderRadius: "10px",
-                                  fontWeight: "600",
-                                  padding: "6px 14px",
-                                }}
-                                onClick={() =>
-                                  openCreateAssignmentModal(rec, course)
-                                }
-                              >
-                                <i className="fa-solid fa-plus me-1"></i>
-                                Create Task
-                              </button>
+                              {rec.assignments.length === 0 ? (
+                                // ⭐ SI NO HAY TAREAS → BOTÓN VERDE NORMAL
+                                <button
+                                  className="btn btn-success"
+                                  style={{
+                                    borderRadius: "10px",
+                                    fontWeight: "600",
+                                    padding: "6px 14px",
+                                  }}
+                                  onClick={() =>
+                                    openCreateAssignmentModal(rec, course)
+                                  }
+                                >
+                                  <i className="fa-solid fa-plus me-1"></i>
+                                  Create Task
+                                </button>
+                              ) : (
+                                // ⭐ SI YA HAY TAREAS → TEXTO MUTEADO
+                                <span
+                                  className="text-muted"
+                                  style={{
+                                    fontStyle: "italic",
+                                    fontSize: "0.85rem",
+                                    paddingRight: "10px",
+                                  }}
+                                >
+                                  <i className="fa-solid fa-circle-check me-1 text-success"></i>
+                                  Task already created
+                                </span>
+                              )}
                             </div>
 
                             {/* Assignments list */}
@@ -1338,143 +1338,154 @@ export const DashboardTeacher = () => {
                                 No tasks yet for this class.
                               </p>
                             ) : (
-                              rec.assignments.map((a) => (
-                                <div
-                                  key={a.assignment_id}
-                                  className="card p-3 border-0 shadow-sm rounded-3 mt-3 ms-3 assignment-card"
-                                >
-                                  <h6 className="fw-bold text-dark">
-                                    {a.title}
-                                  </h6>
-                                  <p className="text-muted">{a.description}</p>
+                              rec.assignments
+                                .slice()
+                                .sort(
+                                  (a, b) =>
+                                    new Date(b.created_at) -
+                                    new Date(a.created_at)
+                                )
+                                .map((a) => (
+                                  <div
+                                    key={a.assignment_id}
+                                    className="card p-3 border-0 shadow-sm rounded-3 mt-3 ms-3 assignment-card"
+                                  >
+                                    <h6 className="fw-bold text-dark">
+                                      {a.title}
+                                    </h6>
+                                    <p className="text-muted">
+                                      {a.description}
+                                    </p>
 
-                                  <div className="d-flex align-items-center gap-2 mb-4">
-                                    <button
-                                      className="btn btn-sm btn-outline-primary"
-                                      onClick={() => openEditAssignmentModal(a)}
-                                    >
-                                      <i className="fa-solid fa-pen-to-square me-1"></i>
-                                      Edit
-                                    </button>
+                                    <div className="d-flex align-items-center gap-2 mb-4">
+                                      <button
+                                        className="btn btn-sm btn-outline-primary"
+                                        onClick={() =>
+                                          openEditAssignmentModal(a)
+                                        }
+                                      >
+                                        <i className="fa-solid fa-pen-to-square me-1"></i>
+                                        Edit
+                                      </button>
 
-                                    <button
-                                      className="btn btn-sm btn-danger"
-                                      onClick={() =>
-                                        handleDelete(a.assignment_id)
-                                      }
-                                    >
-                                      Delete
-                                    </button>
-                                  </div>
-
-                                  {/* Submissions */}
-                                  {/* Submissions */}
-                                  <div className="submissions-wrapper mt-4">
-                                    <div className="submissions-header">
-                                      <i className="fa-solid fa-user-check me-2"></i>
-                                      Submissions
+                                      <button
+                                        className="btn btn-sm btn-danger"
+                                        onClick={() =>
+                                          handleDelete(a.assignment_id)
+                                        }
+                                      >
+                                        Delete
+                                      </button>
                                     </div>
 
-                                    {a.submissions.length === 0 ? (
-                                      <p className="no-submissions">
-                                        No submissions yet.
-                                      </p>
-                                    ) : (
-                                      <div className="submissions-card">
-                                        <table className="table table-hover align-middle submissions-table">
-                                          <thead>
-                                            <tr>
-                                              <th>Student</th>
-                                              <th>Status</th>
-                                              <th>Submitted</th>
-                                              <th>Feedback</th>
-                                              <th></th>
-                                            </tr>
-                                          </thead>
-
-                                          <tbody>
-                                            {a.submissions.map((s) => (
-                                              <tr
-                                                key={s.submission_id}
-                                                className="submission-row"
-                                              >
-                                                <td className="student-name">
-                                                  <i className="fa-solid fa-user-circle me-2 text-primary"></i>
-                                                  {s.student_name}
-                                                </td>
-
-                                                <td>
-                                                  <span
-                                                    className={`submission-badge badge-${s.status}`}
-                                                  >
-                                                    {s.status}
-                                                  </span>
-                                                </td>
-
-                                                <td className="submitted-date">
-                                                  {new Date(
-                                                    s.submitted_at
-                                                  ).toLocaleString()}
-                                                </td>
-
-                                                <td className="feedback-field">
-                                                  {s.feedback || (
-                                                    <span className="text-muted">
-                                                      —
-                                                    </span>
-                                                  )}
-                                                </td>
-
-                                                <td>
-                                                  <div className="submission-actions">
-                                                    {/* Approve */}
-                                                    <button
-                                                      className="submission-btn approve"
-                                                      onClick={async () => {
-                                                        await actions.reviewAssignment(
-                                                          s.submission_id,
-                                                          "approved"
-                                                        );
-                                                        actions.getTeacherAssignmentsOverview();
-                                                      }}
-                                                    >
-                                                      <i className="fa-solid fa-check"></i>
-                                                    </button>
-
-                                                    {/* Reject */}
-                                                    <button
-                                                      className="submission-btn reject"
-                                                      onClick={async () => {
-                                                        const { value: fb } =
-                                                          await Swal.fire({
-                                                            title:
-                                                              "Reject Task",
-                                                            input: "textarea",
-                                                            showCancelButton: true,
-                                                          });
-
-                                                        await actions.reviewAssignment(
-                                                          s.submission_id,
-                                                          "rejected",
-                                                          fb || ""
-                                                        );
-
-                                                        actions.getTeacherAssignmentsOverview();
-                                                      }}
-                                                    >
-                                                      <i className="fa-solid fa-xmark"></i>
-                                                    </button>
-                                                  </div>
-                                                </td>
-                                              </tr>
-                                            ))}
-                                          </tbody>
-                                        </table>
+                                    {/* Submissions */}
+                                    {/* Submissions */}
+                                    <div className="submissions-wrapper mt-4">
+                                      <div className="submissions-header">
+                                        <i className="fa-solid fa-user-check me-2"></i>
+                                        Submissions
                                       </div>
-                                    )}
+
+                                      {a.submissions.length === 0 ? (
+                                        <p className="no-submissions">
+                                          No submissions yet.
+                                        </p>
+                                      ) : (
+                                        <div className="submissions-card">
+                                          <table className="table table-hover align-middle submissions-table">
+                                            <thead>
+                                              <tr>
+                                                <th>Student</th>
+                                                <th>Status</th>
+                                                <th>Submitted</th>
+                                                <th>Feedback</th>
+                                                <th></th>
+                                              </tr>
+                                            </thead>
+
+                                            <tbody>
+                                              {a.submissions.map((s) => (
+                                                <tr
+                                                  key={s.submission_id}
+                                                  className="submission-row"
+                                                >
+                                                  <td className="student-name">
+                                                    <i className="fa-solid fa-user-circle me-2 text-primary"></i>
+                                                    {s.student_name}
+                                                  </td>
+
+                                                  <td>
+                                                    <span
+                                                      className={`submission-badge badge-${s.status}`}
+                                                    >
+                                                      {s.status}
+                                                    </span>
+                                                  </td>
+
+                                                  <td className="submitted-date">
+                                                    {new Date(
+                                                      s.submitted_at
+                                                    ).toLocaleString()}
+                                                  </td>
+
+                                                  <td className="feedback-field">
+                                                    {s.feedback || (
+                                                      <span className="text-muted">
+                                                        —
+                                                      </span>
+                                                    )}
+                                                  </td>
+
+                                                  <td>
+                                                    <div className="submission-actions">
+                                                      {/* Approve */}
+                                                      <button
+                                                        className="submission-btn approve"
+                                                        onClick={async () => {
+                                                          await actions.reviewAssignment(
+                                                            s.submission_id,
+                                                            "approved"
+                                                          );
+                                                          actions.getTeacherAssignmentsOverview();
+                                                        }}
+                                                      >
+                                                        <i className="fa-solid fa-check"></i>
+                                                      </button>
+
+                                                      {/* Reject */}
+                                                      <button
+                                                        className="submission-btn reject"
+                                                        onClick={async () => {
+                                                          const { value: fb } =
+                                                            await Swal.fire({
+                                                              title:
+                                                                "Reject Task",
+                                                              input: "textarea",
+                                                              showCancelButton: true,
+                                                            });
+
+                                                          await actions.reviewAssignment(
+                                                            s.submission_id,
+                                                            "rejected",
+                                                            fb || ""
+                                                          );
+
+                                                          actions.getTeacherAssignmentsOverview();
+                                                        }}
+                                                      >
+                                                        <i className="fa-solid fa-xmark"></i>
+                                                      </button>
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                              ))}
+                                            </tbody>
+                                          </table>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              ))
+                                ))
                             )}
                           </div>
                         ))

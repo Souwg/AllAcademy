@@ -21,6 +21,14 @@ export const DashboardStudent = () => {
   const [selectedScheduleId, setSelectedScheduleId] = useState(null);
   const [originalScheduleId, setOriginalScheduleId] = useState(null);
   const [studentAssignments, setStudentAssignments] = useState({});
+  useEffect(() => {
+    if (activeView === "dashboard" || activeView === "my-courses") {
+      if (user && myEnrollments.length > 0) {
+        console.log("🔄 Refreshing student progress...");
+        actions.refreshStudentProgress();
+      }
+    }
+  }, [activeView]);
 
   useEffect(() => {
     if (activeView === "my-assignments" && myEnrollments.length > 0) {

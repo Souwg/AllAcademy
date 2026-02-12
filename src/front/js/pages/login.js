@@ -16,6 +16,7 @@ export const Login = () => {
   const navigate = useNavigate();
 
   const isMounted = useRef(true);
+  const API_BASE = process.env.BACKEND_URL;
 
   useEffect(() => {
     isMounted.current = true;
@@ -79,7 +80,7 @@ export const Login = () => {
     if (isMounted.current) setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3001/api/login", {
+      const response = await fetch(`${API_BASE}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

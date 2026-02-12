@@ -1,3 +1,5 @@
+const API_BASE = process.env.BACKEND_URL;
+
 const getState = ({ getStore, getActions, setStore }) => {
   // 🧰 Helpers internos reutilizables
   const saveNotifications = (notifications) => {
@@ -70,7 +72,7 @@ const getState = ({ getStore, getActions, setStore }) => {
     actions: {
       signupUser: async (formData) => {
         try {
-          const resp = await fetch("http://localhost:3001/api/signup", {
+          const resp = await fetch(`${API_BASE}/signup`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -102,6 +104,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           return { success: false, message: "Connection error" };
         }
       },
+
       updateUserProfile: async (updatedData) => {
         try {
           const token = localStorage.getItem("token");
@@ -113,11 +116,12 @@ const getState = ({ getStore, getActions, setStore }) => {
               formData.append(key, updatedData[key]);
             }
           }
+
           if (updatedData.image_url === "") {
             formData.append("remove_image", "true");
           }
 
-          const resp = await fetch("http://localhost:3001/api/user/profile", {
+          const resp = await fetch(`${API_BASE}/user/profile`, {
             method: "PUT",
             headers: {
               Authorization: "Bearer " + token,
@@ -126,8 +130,9 @@ const getState = ({ getStore, getActions, setStore }) => {
           });
 
           const data = await resp.json();
-          if (!resp.ok)
+          if (!resp.ok) {
             throw new Error(data.msg || "Error al actualizar perfil");
+          }
 
           // Guardar en localStorage y en el store
           localStorage.setItem("user", JSON.stringify(data.user));
@@ -147,7 +152,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
       loginUser: async (email, password) => {
         try {
-          const resp = await fetch("http://localhost:3001/api/login", {
+          const resp = await fetch(`${API_BASE}/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password }),
@@ -228,7 +233,7 @@ const getState = ({ getStore, getActions, setStore }) => {
         setStore({ coursesLoading: true, coursesError: null });
 
         try {
-          const resp = await fetch("http://localhost:3001/api/courses");
+          const resp = await fetch(`${API_BASE}/courses`);
           if (!resp.ok) throw new Error("Error al cargar cursos");
           const data = await resp.json();
 
@@ -257,12 +262,11 @@ const getState = ({ getStore, getActions, setStore }) => {
           setStore({ coursesError: err.message, coursesLoading: false });
         }
       },
+
       // dentro de getState en flux.js
       getUserStatsPerMonth: async () => {
         try {
-          const resp = await fetch(
-            "http://localhost:3001/api/stats/users-per-month"
-          );
+          const resp = await fetch(`${API_BASE}/stats/users-per-month`);
           if (!resp.ok) throw new Error("Error fetching stats");
 
           const data = await resp.json();
@@ -274,17 +278,20 @@ const getState = ({ getStore, getActions, setStore }) => {
           return [];
         }
       },
+
       getCourseBySlug: async (slug) => {
         setStore({ selectedCourseLoading: true, selectedCourseError: null });
 
         try {
-          const resp = await fetch(
-            `http://localhost:3001/api/courses/slug/${slug}`
-          );
+          const resp = await fetch(`${API_BASE}/courses/slug/${slug}`);
           if (!resp.ok) throw new Error("Error al cargar el curso");
+
           const data = await resp.json();
 
-          setStore({ selectedCourse: data, selectedCourseLoading: false });
+          setStore({
+            selectedCourse: data,
+            selectedCourseLoading: false,
+          });
         } catch (err) {
           console.error("Error cargando curso por slug:", err);
           setStore({
@@ -293,19 +300,17 @@ const getState = ({ getStore, getActions, setStore }) => {
           });
         }
       },
+
       enrollCourse: async (courseId, scheduleId) => {
         try {
-          const resp = await fetch(
-            `http://localhost:3001/api/enroll/${courseId}`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + localStorage.getItem("token"),
-              },
-              body: JSON.stringify({ schedule_id: scheduleId }),
-            }
-          );
+          const resp = await fetch(`${API_BASE}/enroll/${courseId}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + localStorage.getItem("token"),
+            },
+            body: JSON.stringify({ schedule_id: scheduleId }),
+          });
 
           if (!resp.ok) throw new Error("Error enrolling in course");
           const data = await resp.json();
@@ -317,7 +322,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
       getMyEnrollments: async () => {
         try {
-          const resp = await fetch("http://localhost:3001/api/my-enrollments", {
+          const resp = await fetch(`${API_BASE}/my-enrollments`, {
             method: "GET",
             headers: {
               Authorization: "Bearer " + localStorage.getItem("token"),
@@ -331,11 +336,12 @@ const getState = ({ getStore, getActions, setStore }) => {
           console.error("Error in getMyEnrollments:", err);
         }
       },
+
       getCourseChat: async (courseId, scheduleId = null) => {
         try {
           const token = localStorage.getItem("token");
 
-          let url = `http://localhost:3001/api/course/${courseId}/chat`;
+          let url = `${API_BASE}/course/${courseId}/chat`;
           if (scheduleId) url += `?schedule_id=${scheduleId}`;
 
           const resp = await fetch(url, {
@@ -370,17 +376,14 @@ const getState = ({ getStore, getActions, setStore }) => {
           const body = { content };
           if (scheduleId) body.schedule_id = scheduleId;
 
-          const resp = await fetch(
-            `http://localhost:3001/api/course/${courseId}/chat`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
-              },
-              body: JSON.stringify(body),
-            }
-          );
+          const resp = await fetch(`${API_BASE}/course/${courseId}/chat`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+            body: JSON.stringify(body),
+          });
 
           if (!resp.ok) throw new Error("Error al enviar el mensaje");
           const data = await resp.json();
@@ -394,16 +397,13 @@ const getState = ({ getStore, getActions, setStore }) => {
       getTeacherCourses: async () => {
         try {
           const token = localStorage.getItem("token");
-          const resp = await fetch(
-            "http://localhost:3001/api/teacher/courses",
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
-              },
-            }
-          );
+          const resp = await fetch(`${API_BASE}/teacher/courses`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+          });
 
           if (!resp.ok) throw new Error("Error fetching teacher courses");
 
@@ -453,19 +453,17 @@ const getState = ({ getStore, getActions, setStore }) => {
           return [];
         }
       },
+
       getFinancialOverview: async () => {
         try {
           const token = localStorage.getItem("token");
-          const resp = await fetch(
-            "http://localhost:3001/api/admin/financial-overview",
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
-              },
-            }
-          );
+          const resp = await fetch(`${API_BASE}/admin/financial-overview`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+          });
 
           const data = await resp.json();
           if (!resp.ok)
@@ -483,16 +481,13 @@ const getState = ({ getStore, getActions, setStore }) => {
       getTeacherStudents: async () => {
         try {
           const token = localStorage.getItem("token");
-          const resp = await fetch(
-            "http://localhost:3001/api/teacher/students",
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
-              },
-            }
-          );
+          const resp = await fetch(`${API_BASE}/teacher/students`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+          });
 
           if (!resp.ok) throw new Error("Error fetching teacher students");
 
@@ -505,11 +500,12 @@ const getState = ({ getStore, getActions, setStore }) => {
           return [];
         }
       },
+
       getStudentsByCourse: async (courseId) => {
         try {
           const token = localStorage.getItem("token");
           const resp = await fetch(
-            `http://localhost:3001/api/teacher/course/${courseId}/students`,
+            `${API_BASE}/teacher/course/${courseId}/students`,
             {
               method: "GET",
               headers: {
@@ -527,19 +523,17 @@ const getState = ({ getStore, getActions, setStore }) => {
           return [];
         }
       },
+
       getPrivateChat: async (studentId) => {
         try {
           const token = localStorage.getItem("token");
-          const resp = await fetch(
-            `http://localhost:3001/api/chat/${studentId}`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
-              },
-            }
-          );
+          const resp = await fetch(`${API_BASE}/chat/${studentId}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+          });
 
           if (!resp.ok) throw new Error("Error al obtener mensajes privados");
           const data = await resp.json();
@@ -553,17 +547,14 @@ const getState = ({ getStore, getActions, setStore }) => {
       postPrivateChat: async (studentId, content) => {
         try {
           const token = localStorage.getItem("token");
-          const resp = await fetch(
-            `http://localhost:3001/api/chat/${studentId}`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
-              },
-              body: JSON.stringify({ content }),
-            }
-          );
+          const resp = await fetch(`${API_BASE}/chat/${studentId}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+            body: JSON.stringify({ content }),
+          });
 
           if (!resp.ok) throw new Error("Error al enviar mensaje privado");
           const data = await resp.json();
@@ -573,6 +564,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           return null;
         }
       },
+
       addNotification: (notification) => {
         const store = getStore();
         const now = new Date();
@@ -769,7 +761,7 @@ const getState = ({ getStore, getActions, setStore }) => {
       getRecordingsByCourse: async (courseId, scheduleId = null) => {
         try {
           const token = localStorage.getItem("token");
-          let url = `http://localhost:3001/api/recordings/${courseId}`;
+          let url = `${API_BASE}/recordings/${courseId}`;
           if (scheduleId) url += `?schedule_id=${scheduleId}`;
 
           const resp = await fetch(url, {
@@ -782,6 +774,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
           if (!resp.ok) throw new Error("Error al obtener grabaciones");
           const data = await resp.json();
+
           console.log(
             "🎥 Grabaciones recibidas para curso:",
             courseId,
@@ -789,6 +782,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             scheduleId,
             data
           );
+
           // 🧠 Agregar al store todas las grabaciones para todos los cursos
           const store = getStore();
           setStore({
@@ -809,7 +803,7 @@ const getState = ({ getStore, getActions, setStore }) => {
       createRecording: async (recordingData) => {
         try {
           const token = localStorage.getItem("token");
-          const resp = await fetch("http://localhost:3001/api/recordings", {
+          const resp = await fetch(`${API_BASE}/recordings`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -838,16 +832,13 @@ const getState = ({ getStore, getActions, setStore }) => {
       deleteVideo: async (videoId) => {
         try {
           const token = localStorage.getItem("token");
-          const resp = await fetch(
-            `http://localhost:3001/api/recordings/${videoId}`,
-            {
-              method: "DELETE",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
-              },
-            }
-          );
+          const resp = await fetch(`${API_BASE}/recordings/${videoId}`, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+          });
 
           if (!resp.ok) throw new Error("Error al eliminar grabación");
 
@@ -862,12 +853,13 @@ const getState = ({ getStore, getActions, setStore }) => {
           return false;
         }
       },
+
       // 📢 Publicar / despublicar grabación
       togglePublishRecording: async (recordingId, isPublished) => {
         try {
           const token = localStorage.getItem("token");
           const resp = await fetch(
-            `http://localhost:3001/api/recordings/${recordingId}/publish`,
+            `${API_BASE}/recordings/${recordingId}/publish`,
             {
               method: "PUT",
               headers: {
@@ -894,20 +886,18 @@ const getState = ({ getStore, getActions, setStore }) => {
           return null;
         }
       },
+
       updateRecording: async (recordingId, updatedData) => {
         try {
           const token = localStorage.getItem("token");
-          const resp = await fetch(
-            `http://localhost:3001/api/recordings/${recordingId}`,
-            {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
-              },
-              body: JSON.stringify(updatedData),
-            }
-          );
+          const resp = await fetch(`${API_BASE}/recordings/${recordingId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+            body: JSON.stringify(updatedData),
+          });
 
           if (!resp.ok) throw new Error("Error al actualizar grabación");
 
@@ -927,6 +917,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           return false;
         }
       },
+
       showNotification: (type, message) => {
         setStore({
           notification: {
@@ -962,21 +953,18 @@ const getState = ({ getStore, getActions, setStore }) => {
       createPaymentIntent: async (courseId, scheduleId = null) => {
         try {
           const token = localStorage.getItem("token");
-          const resp = await fetch(
-            "http://localhost:3001/api/create-checkout-session",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
-              },
-              body: JSON.stringify({
-                course_id: courseId,
-                schedule_id: scheduleId,
-                currency: "usd",
-              }),
-            }
-          );
+          const resp = await fetch(`${API_BASE}/create-checkout-session`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+            body: JSON.stringify({
+              course_id: courseId,
+              schedule_id: scheduleId,
+              currency: "usd",
+            }),
+          });
 
           if (!resp.ok) throw new Error("Error al crear PaymentIntent");
           const data = await resp.json();
@@ -988,6 +976,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           return null;
         }
       },
+
       createPaypalOrder: async (course_id, schedule_id) => {
         try {
           const token = localStorage.getItem("token"); // 👈 SIN JSON.parse
@@ -995,28 +984,27 @@ const getState = ({ getStore, getActions, setStore }) => {
             console.error("No JWT token in localStorage");
             return null;
           }
-          // 🧭 AGREGA AQUÍ LOS CONSOLE.LOG
+
+          // 🧭 DEBUG
           console.log("🧭 DEBUG PAYPAL ORDER:");
           console.log("course_id:", course_id);
           console.log("schedule_id:", schedule_id);
 
-          const resp = await fetch(
-            "http://localhost:3001/api/paypal/create-order",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`, // 👈 token plano
-              },
-              body: JSON.stringify({ course_id, schedule_id }),
-            }
-          );
+          const resp = await fetch(`${API_BASE}/paypal/create-order`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ course_id, schedule_id }),
+          });
 
           const data = await resp.json().catch(() => null);
           if (!resp.ok) {
             console.error("createPaypalOrder failed", resp.status, data);
             return null;
           }
+
           return data; // { id, links: [...] }
         } catch (err) {
           console.error("createPaypalOrder error:", err);
@@ -1033,12 +1021,12 @@ const getState = ({ getStore, getActions, setStore }) => {
           }
 
           const resp = await fetch(
-            `http://localhost:3001/api/paypal/capture-order/${orderId}`,
+            `${API_BASE}/paypal/capture-order/${orderId}`,
             {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`, // 👈 token plano
+                Authorization: `Bearer ${token}`,
               },
             }
           );
@@ -1048,12 +1036,14 @@ const getState = ({ getStore, getActions, setStore }) => {
             console.error("capturePaypalOrder failed", resp.status, data);
             return { error: true };
           }
+
           return data;
         } catch (err) {
           console.error("capturePaypalOrder error:", err);
           return { error: true };
         }
       },
+
       uploadVideoToBackend: async (
         file,
         title,
@@ -1073,9 +1063,11 @@ const getState = ({ getStore, getActions, setStore }) => {
 
           fd.append("lessons", JSON.stringify(lessons)); // 👈 SUPER IMPORTANTE
 
-          const resp = await fetch("http://localhost:3001/api/upload-video", {
+          const resp = await fetch(`${API_BASE}/upload-video`, {
             method: "POST",
-            headers: { Authorization: "Bearer " + token },
+            headers: {
+              Authorization: "Bearer " + token,
+            },
             body: fd,
           });
 
@@ -1086,8 +1078,9 @@ const getState = ({ getStore, getActions, setStore }) => {
 
           getActions().showNotification(
             "success",
-            "🎥 Video subido con éxito!"
+            "Video uploaded successfully!"
           );
+
           return data.recording;
         } catch (err) {
           console.error("❌ uploadVideoToBackend:", err);
@@ -1095,10 +1088,11 @@ const getState = ({ getStore, getActions, setStore }) => {
           return null;
         }
       },
+
       createAssignment: async (data) => {
         try {
           const resp = await fetch(
-            `http://localhost:3001/api/teacher/recordings/${data.recording_id}/assignments`,
+            `${API_BASE}/teacher/recordings/${data.recording_id}/assignments`,
             {
               method: "POST",
               headers: {
@@ -1120,10 +1114,11 @@ const getState = ({ getStore, getActions, setStore }) => {
           return false;
         }
       },
+
       getAssignmentsBySchedule: async (scheduleId) => {
         try {
           const resp = await fetch(
-            `http://localhost:3001/api/teacher/schedule/${scheduleId}/assignments`,
+            `${API_BASE}/teacher/schedule/${scheduleId}/assignments`,
             {
               headers: {
                 "Content-Type": "application/json",
@@ -1135,30 +1130,27 @@ const getState = ({ getStore, getActions, setStore }) => {
           if (!resp.ok) throw new Error("Error fetching assignments");
 
           const data = await resp.json();
-          setStore({ assignmentsBySchedule: data }); // guardamos en el store
+          setStore({ assignmentsBySchedule: data });
           return data;
         } catch (err) {
           console.error("❌ Error loading assignments:", err);
           return [];
         }
       },
+
       getTeacherAssignmentsOverview: async () => {
         try {
-          const resp = await fetch(
-            "http://localhost:3001/api/teacher/assignments/overview",
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + localStorage.getItem("token"),
-              },
-            }
-          );
+          const resp = await fetch(`${API_BASE}/teacher/assignments/overview`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + localStorage.getItem("token"),
+            },
+          });
 
           if (!resp.ok) throw new Error("Failed to fetch assignments overview");
 
           const data = await resp.json();
-
           setStore({ assignmentsOverview: data });
 
           return data;
@@ -1167,10 +1159,11 @@ const getState = ({ getStore, getActions, setStore }) => {
           return [];
         }
       },
+
       updateAssignment: async (assignmentId, data) => {
         try {
           const resp = await fetch(
-            `http://localhost:3001/api/teacher/assignments/${assignmentId}`,
+            `${API_BASE}/teacher/assignments/${assignmentId}`,
             {
               method: "PUT",
               headers: {
@@ -1195,6 +1188,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           return false;
         }
       },
+
       deleteAssignment: async (assignmentId) => {
         const token = localStorage.getItem("token");
 
@@ -1205,7 +1199,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
         try {
           const resp = await fetch(
-            `http://localhost:3001/api/teacher/assignments/${assignmentId}`,
+            `${API_BASE}/teacher/assignments/${assignmentId}`,
             {
               method: "DELETE",
               headers: {
@@ -1223,19 +1217,19 @@ const getState = ({ getStore, getActions, setStore }) => {
           }
 
           console.log("🗑 Assignment deleted successfully");
-
           return { success: true, msg: "Assignment deleted successfully" };
         } catch (error) {
           console.error("❌ Error deleting assignment:", error);
           return { success: false, msg: "Server error" };
         }
       },
+
       getStudentAssignmentsBySchedule: async (courseId, scheduleId) => {
         try {
           const token = localStorage.getItem("token");
           if (!token) return [];
 
-          const url = `http://localhost:3001/api/student/assignments?course_id=${courseId}&schedule_id=${scheduleId}`;
+          const url = `${API_BASE}/student/assignments?course_id=${courseId}&schedule_id=${scheduleId}`;
 
           const resp = await fetch(url, {
             method: "GET",
@@ -1253,19 +1247,19 @@ const getState = ({ getStore, getActions, setStore }) => {
           }
 
           console.log("📚 Student assignments:", data);
-
           return data;
         } catch (err) {
           console.error("❌ Error in getStudentAssignmentsBySchedule:", err);
           return [];
         }
       },
+
       submitAssignment: async (assignmentId) => {
         try {
           const token = localStorage.getItem("token");
 
           const resp = await fetch(
-            `http://localhost:3001/api/student/assignments/${assignmentId}/submit`,
+            `${API_BASE}/student/assignments/${assignmentId}/submit`,
             {
               method: "POST",
               headers: {
@@ -1283,21 +1277,19 @@ const getState = ({ getStore, getActions, setStore }) => {
           }
 
           console.log("📬 Assignment submitted:", data);
-
           return { success: true, data };
         } catch (err) {
           console.error("❌ Error:", err);
           return { success: false, msg: "Network error" };
         }
       },
+
       reviewAssignment: async (submissionId, status, feedback = "") => {
         try {
           const token = localStorage.getItem("token");
 
           const resp = await fetch(
-            "http://localhost:3001/api/teacher/assignments/" +
-              submissionId +
-              "/review",
+            `${API_BASE}/teacher/assignments/${submissionId}/review`,
             {
               method: "PUT",
               headers: {
@@ -1323,6 +1315,31 @@ const getState = ({ getStore, getActions, setStore }) => {
         } catch (err) {
           console.error("❌ Fatal error in reviewAssignment:", err);
           return { success: false, msg: "Network error" };
+        }
+      },
+
+      refreshStudentProgress: async (courseId) => {
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) return;
+
+          const resp = await fetch(`${API_BASE}/profile`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+          });
+
+          const data = await resp.json();
+          if (!resp.ok) return;
+
+          // Aquí se actualizan los enrollments que incluyen "progress"
+          setStore({ user: data });
+
+          console.log("🔄 Progress refreshed:", data);
+        } catch (err) {
+          console.error("❌ Error refreshing progress:", err);
         }
       },
     },

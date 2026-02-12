@@ -2,17 +2,18 @@ const webpack = require("webpack");
 const path = require("path");
 const { merge } = require("webpack-merge");
 const common = require("./webpack.common.js");
+// const ErrorOverlayPlugin = require('error-overlay-webpack-plugin');
 
 const port = 3000;
 let publicUrl = `ws://localhost:${port}/ws`;
 
-// Gitpod
+//only for github
 if (process.env.GITPOD_WORKSPACE_URL) {
   const [schema, host] = process.env.GITPOD_WORKSPACE_URL.split("://");
   publicUrl = `wss://${port}-${host}/ws`;
 }
 
-// Codespaces
+//only for codespaces
 if (process.env.CODESPACE_NAME) {
   publicUrl = `wss://${process.env.CODESPACE_NAME}-${port}.app.github.dev/ws`;
 }
@@ -20,34 +21,35 @@ if (process.env.CODESPACE_NAME) {
 module.exports = merge(common, {
   mode: "development",
   devtool: "cheap-module-source-map",
-  devServer: {
-    host: "0.0.0.0",
-    port,
-    hot: true,
-    allowedHosts: "all",
-    historyApiFallback: true,
-    static: {
-      directory: path.resolve(__dirname, "dist"),
-    },
-    proxy: {
-      "/api": {
-        target: "http://localhost:3001", // 👈 apunta al backend
-        changeOrigin: true,
-        secure: false,
-      },
-    },
-    client: {
-      webSocketURL: {
-        hostname: "localhost",
-        port: port,
-        protocol: "ws",
-      },
-    },
-  },
-
   watchOptions: {
     poll: 1000,
     ignored: /node_modules/,
   },
-  plugins: [new webpack.HotModuleReplacementPlugin()],
+  devServer: {
+    port,
+    hot: false,
+    liveReload: true,
+    allowedHosts: "all",
+    historyApiFallback: true,
+
+    client: {
+      overlay: false,
+      webSocketURL: publicUrl,
+    },
+  },
+  plugins: [
+    // new FriendlyErrorsWebpackPlugin(),
+    // new ErrorOverlayPlugin(),
+    // new PrettierPlugin({
+    //     parser: "babylon",
+    //     printWidth: 120,             // Specify the length of line that the printer will wrap on.
+    //     tabWidth: 4,                // Specify the number of spaces per indentation-level.
+    //     useTabs: true,              // Indent lines with tabs instead of spaces.
+    //     bracketSpacing: true,
+    //     extensions: [ ".js", ".jsx" ],
+    //     jsxBracketSameLine: true,
+    //     semi: true,                 // Print semicolons at the ends of statements.
+    //     encoding: 'utf-8'           // Which encoding scheme to use on files
+    // }),
+  ],
 });

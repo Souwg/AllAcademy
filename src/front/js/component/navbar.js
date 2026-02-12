@@ -11,6 +11,7 @@ export const Navbar = () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const API_BASE = process.env.BACKEND_URL;
 
   const handleLogin = () => {
     navigate("/login");
@@ -26,7 +27,7 @@ export const Navbar = () => {
     const token = localStorage.getItem("token");
 
     try {
-      await fetch("http://localhost:3001/api/logout", {
+      await fetch(`${API_BASE}/logout`, {
         method: "POST",
         headers: token
           ? {

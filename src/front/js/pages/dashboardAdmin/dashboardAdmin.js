@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import { AdminSidebar } from "./adminSidebar";
 import { AdminContent } from "./adminContent";
 import { AdminModals } from "./adminModals";
+const API_BASE = process.env.BACKEND_URL;
 export const DashboardAdmin = () => {
   /* ==============================
    * ESTADOS PRINCIPALES
@@ -207,7 +208,8 @@ export const DashboardAdmin = () => {
         formData.append("image", updateData.imageFile);
 
         response = await fetch(
-          `http://localhost:3001/api/admin/courses/${updateData.id}`,
+          `${API_BASE}/admin/courses/${updateData.id}`,
+
           {
             method: "PUT",
             headers: { Authorization: `Bearer ${token}` },
@@ -217,7 +219,8 @@ export const DashboardAdmin = () => {
       } else {
         // 📦 Sin imagen → enviar JSON
         response = await fetch(
-          `http://localhost:3001/api/admin/courses/${updateData.id}`,
+          `${API_BASE}/admin/courses/${updateData.id}`,
+
           {
             method: "PUT",
             headers: {
@@ -273,17 +276,14 @@ export const DashboardAdmin = () => {
   const handleSaveUser = async (userData) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(
-        `http://localhost:3001/api/admin/users/${userData.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(userData),
-        }
-      );
+      const response = await fetch(`${API_BASE}/admin/users/${userData.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(userData),
+      });
 
       const data = await response.json();
       if (!response.ok)
@@ -426,7 +426,7 @@ export const DashboardAdmin = () => {
           return;
         }
 
-        const response = await fetch("http://localhost:3001/api/admin/users", {
+        const response = await fetch(`${API_BASE}/admin/users`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -481,7 +481,7 @@ export const DashboardAdmin = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:3001/api/admin/teachers", {
+      const response = await fetch(`${API_BASE}/admin/teachers`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -523,7 +523,7 @@ export const DashboardAdmin = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:3001/api/admin/users/${userToDelete.id}`,
+        `${API_BASE}/admin/users/${userToDelete.id}`,
         {
           method: "DELETE",
           headers: {
@@ -588,7 +588,8 @@ export const DashboardAdmin = () => {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        `http://localhost:3001/api/admin/users/${userId}/block`,
+        `${API_BASE}/admin/users/${userId}/block`,
+
         {
           method: "POST",
           headers: {
@@ -789,7 +790,7 @@ export const DashboardAdmin = () => {
         formData.append("image", imageFile);
       }
 
-      const response = await fetch("http://localhost:3001/api/courses", {
+      const response = await fetch(`${API_BASE}/courses`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`, // 👈 sin Content-Type manual
@@ -918,15 +919,12 @@ export const DashboardAdmin = () => {
 
       if (result.isConfirmed) {
         const token = localStorage.getItem("token");
-        const response = await fetch(
-          `http://localhost:3001/api/courses/${courseId}`,
-          {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await fetch(`${API_BASE}/courses/${courseId}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -955,7 +953,7 @@ export const DashboardAdmin = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:3001/api/admin/courses", {
+      const response = await fetch(`${API_BASE}/admin/courses`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -989,7 +987,7 @@ export const DashboardAdmin = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:3001/api/admin/users/${userId}/unblock`,
+        `${API_BASE}/admin/users/${userId}/unblock`,
         {
           method: "POST",
           headers: {
@@ -1048,8 +1046,9 @@ export const DashboardAdmin = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(
-        `http://localhost:3001/api/admin/users/${user.id}/role`,
+      const response = awaitfetch(
+        `${API_BASE}/admin/users/${user.id}/role`,
+
         {
           method: "PUT",
           headers: {

@@ -16,6 +16,9 @@ export const CourseDetails = () => {
   const [loadingPayment, setLoadingPayment] = useState(false);
   const [loadingPayPal, setLoadingPayPal] = useState(false);
   const user = JSON.parse(localStorage.getItem("user"));
+  const userCountry = user?.country;
+  console.log("🌍 User country:", userCountry);
+  const [showVenezuelaModal, setShowVenezuelaModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [clientSecret, setClientSecret] = useState("");
@@ -469,8 +472,27 @@ export const CourseDetails = () => {
                       <div className="d-grid gap-2 mb-4">
                         <button
                           className="btn btn-primary"
-                          onClick={() => setShowPaymentModal(true)}
-                          disabled={loadingPayment || loadingPayPal}
+                          onClick={() => {
+                            if (!user) {
+                              navigate("/login");
+                              return;
+                            }
+
+                            if (!selectedSchedule) {
+                              actions.showNotification(
+                                "error",
+                                "Por favor selecciona un horario"
+                              );
+                              return;
+                            }
+
+                            // 🔑 AQUÍ USAS userCountry
+                            if (userCountry === "VE") {
+                              setShowVenezuelaModal(true);
+                            } else {
+                              setShowPaymentModal(true);
+                            }
+                          }}
                         >
                           Buy Now
                         </button>
@@ -590,6 +612,72 @@ export const CourseDetails = () => {
           </div>
         </div>
       </div>
+      {showVenezuelaModal && (
+        <div className="payment-method-modal-overlay-modern">
+          <div className="payment-method-modal-modern p-4 shadow-lg">
+            {/* Header */}
+            <div className="payment-method-header-modern text-center mb-4">
+              <i className="fa-solid fa-flag fa-2x text-warning mb-2"></i>
+              <h5 className="fw-bold mb-0">Payment methods for Venezuela</h5>
+              <p className="text-muted small mt-1">
+                Choose the payment option that works best for you
+              </p>
+            </div>
+
+            {/* Opciones */}
+            <div className="d-grid gap-3">
+              {/* STRIPE */}
+              <button
+                className="payment-method-option-modern stripe"
+                onClick={() => {
+                  setShowVenezuelaModal(false);
+                  setTimeout(() => handleBuyNow(), 300);
+                }}
+              >
+                <i className="fa-brands fa-stripe"></i>
+                Pay with Stripe
+              </button>
+
+              {/* PAYPAL */}
+              <button
+                className="payment-method-option-modern paypal"
+                onClick={() => {
+                  setShowVenezuelaModal(false);
+                  handlePayPal();
+                }}
+              >
+                <i className="fa-brands fa-paypal"></i>
+                Pay with PayPal
+              </button>
+
+              {/* WHATSAPP */}
+              <button
+                className="payment-method-option-modern paypal"
+                onClick={() => {
+                  const url = `https://api.whatsapp.com/send?phone=584123421868&text=${encodeURIComponent(
+                    `Hola, quiero pagar el curso ${course.title}`
+                  )}`;
+
+                  console.log("🔗 WhatsApp URL:", url);
+                  window.open(url, "_blank");
+                }}
+              >
+                <i className="fa-brands fa-whatsapp"></i>
+                WhatsApp (Pago móvil y Binance Pay)
+              </button>
+
+              {/* CANCEL */}
+              <button
+                className="payment-method-option-modern cancel"
+                onClick={() => setShowVenezuelaModal(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 💳 Modal único de selección de método de pago (Moderno) */}
       {showPaymentModal && (
         <div className="payment-method-modal-overlay-modern">

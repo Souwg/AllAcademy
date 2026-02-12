@@ -2404,7 +2404,8 @@ def create_assignment(recording_id):
             recording_id=recording.id,
             schedule_id=recording.schedule_id,
             title=title,
-            description=description
+            description=description,
+            created_at=datetime.utcnow() 
         )
 
         db.session.add(new_assignment)
@@ -2705,7 +2706,12 @@ def get_teacher_assignments_overview():
                     print("🔎 Fetching assignments for recording:", rec.id)
 
                     try:
-                        assignments = Assignment.query.filter_by(recording_id=rec.id, schedule_id=sch.id).all()
+                        assignments = (
+                            Assignment.query
+                            .filter_by(recording_id=rec.id, schedule_id=sch.id)
+                            .order_by(Assignment.created_at.desc())   # 👈 ORDEN CORRECTO
+                            .all()
+                        )
                     except Exception as db_err:
                         print("❌ ERROR during ASSIGNMENTS query:", str(db_err))
                         return jsonify({"msg": "Database error in assignments query"}), 500

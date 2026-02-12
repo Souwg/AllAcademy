@@ -319,7 +319,12 @@ class Assignment(db.Model):
 
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(
+        db.DateTime,
+        server_default=db.func.now(),
+        default=datetime.utcnow,
+        nullable=False
+    )
 
     # Relaciones
     course = db.relationship("Course", backref="assignments")
@@ -402,31 +407,48 @@ class Enrollment(db.Model):
             "schedule": self.schedule.serialize() if self.schedule else None
         }
     def calculate_progress(self):
-        from .models import Recording, Assignment, AssignmentSubmission  # 👈 Import interno, correcto
+        from .models import Recording, Assignment, AssignmentSubmission, Module, Lesson
 
-        # 1. Total de grabaciones del curso
-        total_videos = Recording.query.filter_by(course_id=self.course_id).count()
+        # 1️⃣ Obtener todas las lecciones del curso
+        total_lessons = Lesson.query.join(Module).filter(
+            Module.course_id == self.course_id
+        ).count()
 
-        # 2. Total de tareas del curso
-        total_assignments = Assignment.query.filter_by(course_id=self.course_id).count()
+        if total_lessons == 0:
+            return 0
 
-        # 3. Videos completados (por ahora 0)
-        completed_videos = 0
-
-        # 4. Tareas aprobadas por el estudiante
-        approved_tasks = AssignmentSubmission.query.filter_by(
+        # 2️⃣ Obtener todas las tareas aprobadas del estudiante
+        approved_assignments = AssignmentSubmission.query.filter_by(
             student_id=self.student_id,
             course_id=self.course_id,
             status="approved"
-        ).count()
+        ).all()
 
-        # Evitar división por cero
-        total_items = total_videos + total_assignments
-        if total_items == 0:
+        if not approved_assignments:
             return 0
 
-        progress = ((completed_videos + approved_tasks) / total_items) * 100
+        # 3️⃣ Contar cuántas lecciones están en las grabaciones de esas tareas
+        approved_lesson_ids = set()
+
+        for sub in approved_assignments:
+            assignment = Assignment.query.get(sub.assignment_id)
+            if not assignment:
+                continue
+
+            recording = Recording.query.get(assignment.recording_id)
+            if not recording or not recording.linked_lessons:
+                continue
+
+            # Agregar todas las lecciones asociadas a la grabación
+            for link in recording.linked_lessons:
+                if link.lesson:
+                    approved_lesson_ids.add(link.lesson_id)
+
+        # 4️⃣ Calcular progreso
+        progress = (len(approved_lesson_ids) / total_lessons) * 100
+
         return int(progress)
+
 
     
 class CourseChatMessage(db.Model):
