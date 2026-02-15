@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:14
+    container_name: allcademy-db
+    restart: always
+    env_file:
+      - .env.production
+    volumes:
+      - pgdata_allcademy:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+  web:
+    build: .
+    container_name: allcademy-web
+    restart: always
+    env_file:
+      - .env.production
+    depends_on:
+      - db
+    ports:
+      - "5001:5000"
+
+volumes:
+  pgdata_allcademy:

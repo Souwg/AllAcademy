@@ -7,8 +7,8 @@ import requests
 from flask import Flask, json, request, jsonify, url_for, Blueprint
 from sqlalchemy import extract, func
 from psycopg2 import IntegrityError
-from api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment, CourseChatMessage, PrivateChatMessage, CourseSchedule, Recording, RecordingLesson, Purchase, Assignment, AssignmentSubmission  
-from api.utils import generate_sitemap, APIException
+from src.api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment, CourseChatMessage, PrivateChatMessage, CourseSchedule, Recording, RecordingLesson, Purchase, Assignment, AssignmentSubmission  
+from src.api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, get_jwt
@@ -1581,7 +1581,7 @@ def get_students_by_course(course_id):
     except Exception as e:
         print("Error in get_students_by_course:", str(e))
         return jsonify({"msg": "Error fetching students", "error": str(e)}), 500
-from api.models import Recording, RecordingLesson, Lesson
+from src.api.models import Recording, RecordingLesson, Lesson
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 # ============================

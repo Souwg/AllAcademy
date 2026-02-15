@@ -8,8 +8,9 @@ module.exports = merge(common, {
     },
     plugins: [
         new Dotenv({
-            safe: true,
-            systemvars: true
+            path: '.env.build',
+            safe: false,
+            systemvars: false
         })
     ]
 });
