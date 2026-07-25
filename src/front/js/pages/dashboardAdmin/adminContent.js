@@ -419,7 +419,12 @@ export const AdminContent = ({
 
   const renderUsersView = () => {
     const stats = getUserStats();
-
+    const statsLabels = {
+      total: "Usuarios totales",
+      admins: "Administradores",
+      teachers: "Profesores",
+      students: "Estudiantes",
+    };
     const icons = {
       total: { icon: <i className="fa-solid fa-users"></i>, color: "#3b82f6" },
       admins: {
@@ -1381,11 +1386,11 @@ export const AdminContent = ({
     return (
       <div className="courses-management">
         <div className="admin-header">
-          <h3>Available Courses</h3>
+          <h3>Cursos Disponibles</h3>
         </div>
         <button onClick={onRefreshCourses} className="refresh-btn">
           <i className="fa-solid fa-arrows-rotate"></i>
-          Refresh
+          Actualizar lista de cursos
         </button>
         <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
           {courses.map((course) => (
@@ -1461,13 +1466,13 @@ export const AdminContent = ({
                         className="btn course-btn course-edit-btn"
                         onClick={() => onEditCourse(course)}
                       >
-                        Update
+                        Editar
                       </button>
                       <button
                         className="btn course-btn course-delete-btn"
                         onClick={() => onDeleteCourse(course.id)}
                       >
-                        Delete
+                        Eliminar
                       </button>
                     </div>
                   </div>
@@ -1481,11 +1486,11 @@ export const AdminContent = ({
                       {course.is_published ? (
                         <>
                           <i className="fa-solid fa-bullhorn me-1"></i>{" "}
-                          Published
+                          Publicado
                         </>
                       ) : (
                         <>
-                          <i className="fa-solid fa-pen me-1"></i> Draft
+                          <i className="fa-solid fa-pen me-1"></i> Borrador
                         </>
                       )}
                     </span>
@@ -1498,7 +1503,7 @@ export const AdminContent = ({
 
         {courses.length === 0 && (
           <div className="empty-state">
-            <p>No courses have been created yet</p>
+            <p>No hay cursos disponibles</p>
           </div>
         )}
       </div>
@@ -1573,17 +1578,7 @@ export const AdminContent = ({
   };
 
   return (
-    <div
-      className="admin-content"
-      style={{
-        background: "rgba(20, 60, 150, 0.25)",
-        backdropFilter: "blur(12px)",
-        borderRadius: "20px",
-        border: "1px solid rgba(255, 255, 255, 0.2)",
-        padding: "3rem 4rem",
-        margin: "2rem",
-      }}
-    >
+    <div className="admin-content">
       <div className="admin-container">
         {renderHeader()}
         {activeView === "dashboard" ? (

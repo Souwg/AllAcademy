@@ -113,3 +113,9 @@
   width: 2px;
   background-color: #eee;
 }
+/* Ocultar el botón Contáctanos en teléfonos */
+@media (max-width: 576px) {
+  .contact-btn {
+    display: none !important;
+  }
+}

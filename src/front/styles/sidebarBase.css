@@ -1,51 +1,83 @@
+/* =========================
+   LAYOUT GENERAL
+========================= */
+
 .admin-layout {
   display: flex;
-  flex-direction: row;
+  align-items: flex-start;
   width: 100%;
+  min-width: 0;
+  min-height: 100vh;
   background: linear-gradient(to right, #e7ecf5 0%, #c8d3e3 100%);
 }
 
-/* === SIDEBAR con Glassmorphism y Sticky === */
+/* =========================
+   SIDEBAR DE ESCRITORIO
+========================= */
+
 .admin-sidebar {
   flex: 0 0 260px;
-  height: 95vh;
+  width: 260px;
+  min-width: 260px;
+  min-height: 95vh;
+
   position: sticky;
-  border-top-right-radius: 15px;
   top: 0;
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(18px) saturate(180%);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
-  border-right: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+
   padding: 2rem 1rem;
-  transition: all 0.3s ease;
+
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+
+  border-top-right-radius: 15px;
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+
+  transition: width 0.3s ease, padding 0.3s ease;
+
   z-index: 10;
 }
 
-/* === MENÚ === */
+/* =========================
+   MENÚ
+========================= */
+
 .sidebar-menu {
+  width: 100%;
   list-style: none;
   margin: 0;
   padding: 0;
+
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
 .menu-item {
+  width: 100%;
+
   display: flex;
   align-items: center;
   gap: 1rem;
+
   padding: 0.9rem 1.2rem;
+
   border-radius: 12px;
+
   font-size: 1rem;
   color: #444;
+
   cursor: pointer;
-  transition: all 0.3s ease;
   position: relative;
+
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .menu-item:hover {
@@ -65,26 +97,150 @@
   position: absolute;
   left: -8px;
   top: 50%;
-  transform: translateY(-50%);
-  height: 60%;
+
   width: 4px;
+  height: 60%;
+
+  transform: translateY(-50%);
+
   border-radius: 4px;
   background: #5c4dff;
 }
 
-/* Iconos y etiquetas */
 .menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
   font-size: 1.4rem;
-  transition: color 0.3s ease;
-}
-.menu-label {
-  font-weight: 500;
-  font-size: 0.95rem;
 }
 
-/* === CONTENIDO === */
-.admin-content {
-  flex: 1;
-  padding: 2rem;
-  background: transparent;
+.menu-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 992px) {
+  .admin-layout {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-sidebar {
+    position: static;
+
+    width: 100%;
+    min-width: 0;
+    min-height: auto;
+
+    flex: none;
+
+    padding: 0.75rem;
+
+    border-radius: 0;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+  }
+
+  .sidebar-menu {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  .menu-item {
+    min-height: 68px;
+
+    flex-direction: column;
+    justify-content: center;
+
+    gap: 0.35rem;
+    padding: 0.7rem 0.5rem;
+
+    text-align: center;
+  }
+
+  .menu-item:hover {
+    transform: translateY(-2px);
+  }
+
+  .menu-item.active::before {
+    left: 50%;
+    top: auto;
+    bottom: -4px;
+
+    width: 50%;
+    height: 4px;
+
+    transform: translateX(-50%);
+  }
+
+  .menu-icon {
+    font-size: 1.25rem;
+  }
+
+  .menu-label {
+    font-size: 0.8rem;
+    line-height: 1.2;
+  }
+}
+
+/* =========================
+   TELÉFONOS
+========================= */
+
+@media (max-width: 576px) {
+  .admin-sidebar {
+    padding: 0.65rem;
+  }
+
+  .sidebar-menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .menu-item {
+    min-height: 58px;
+    flex-direction: row;
+    justify-content: flex-start;
+
+    gap: 0.65rem;
+    padding: 0.65rem 0.8rem;
+
+    text-align: left;
+  }
+
+  .menu-item.active::before {
+    left: -2px;
+    top: 50%;
+    bottom: auto;
+
+    width: 4px;
+    height: 55%;
+
+    transform: translateY(-50%);
+  }
+
+  .menu-icon {
+    font-size: 1.15rem;
+  }
+
+  .menu-label {
+    font-size: 0.78rem;
+  }
+}
+@media (max-width: 992px) {
+  .admin-wrapper,
+  .admin-layout {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
 }

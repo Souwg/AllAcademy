@@ -1,21 +1,80 @@
-/*social media icon contactMeNavbar*/
-.socialMediaIcon {
-  width: 35px;
-  height: 35px;
-  font-size: 19px;
+/* =========================
+   BARRA SUPERIOR DE CONTACTO
+========================= */
+
+.contact-topbar {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #2d3078;
   color: #fff;
 }
 
-.icon {
-  font-size: 25px;
-  color: #fff;
+.contact-topbar-inner {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.contact-topbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.contact-info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
 }
 
 .contactNavbar {
-  font-size: 16px;
-  font-family: unset;
-  font-weight: 400;
+  margin: 0;
   color: #fff;
+  font-size: 0.95rem;
+  font-family: inherit;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+  font-size: 1.25rem;
+}
+
+.contact-socials {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.socialMediaIcon {
+  width: 35px;
+  height: 35px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+
+  color: #fff;
+  font-size: 17px;
+
+  transition: background-color 0.3s ease, border-color 0.3s ease,
+    transform 0.3s ease;
+}
+
+.socialMediaIcon:hover {
+  transform: translateY(-2px);
 }
 
 /* Efecto base para todos los iconos */
@@ -100,4 +159,44 @@
 /* No pausa al hover */
 .ticker-container:hover .ticker-wrapper {
   animation-play-state: running; /* Asegura que no se pause */
+}
+
+/* =========================
+   TELÉFONOS Y TABLETS PEQUEÑAS
+========================= */
+
+@media (max-width: 820px) {
+  .contact-topbar {
+    padding: 0.55rem 0.75rem;
+  }
+
+  .contact-topbar-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Oculta teléfono, correo y horario */
+  .contact-info-item {
+    display: none;
+  }
+
+  /* Muestra únicamente las redes sociales */
+  .contact-socials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .socialMediaIcon {
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+  }
+
+  .ticker-container {
+    padding: 6px 0;
+    font-size: 0.68rem;
+  }
 }

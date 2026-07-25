@@ -5,57 +5,74 @@ import "../../styles/contactMeNavbar.css";
 export const ContactMeNavbar = () => {
   return (
     <>
-      <div
-        className="container-fluid pb-2"
-        style={{ backgroundColor: "#2D3078" }}
-      >
-        <div className="container-fluid text-center">
-          <div className="row">
-            <div className="col d-flex mt-3">
+      <div className="contact-topbar">
+        <div className="contact-topbar-inner">
+          <div className="contact-topbar-row">
+            {/* Teléfono */}
+            <div className="contact-info-item">
               <div className="icon">
                 <ion-icon name="call"></ion-icon>
               </div>
-              <p className="contactNavbar ms-2 mt-1">+584123633743</p>
+
+              <p className="contactNavbar">+584123633743</p>
             </div>
-            <div className="col d-flex mt-3">
-              <div className="icon me-1">
+
+            {/* Correo */}
+            <div className="contact-info-item">
+              <div className="icon">
                 <i className="fa-solid fa-envelope"></i>
               </div>
-              <p className="contactNavbar ms-2 mt-1">allcademy.ed@gmail.com</p>
+
+              <p className="contactNavbar">allcademy.ed@gmail.com</p>
             </div>
-            <div className="col-auto d-flex mt-3">
+
+            {/* Horario */}
+            <div className="contact-info-item contact-schedule">
               <div className="icon">
                 <ion-icon name="time-outline"></ion-icon>
               </div>
-              <p className="contactNavbar ms-2 mt-1">
-                Lunes a Viernes: 9:00am - 6:00pm
-              </p>
+
+              <p className="contactNavbar">Lunes a Viernes: 9:00am - 6:00pm</p>
             </div>
-            <div className="col d-flex justify-content-end gap-4 mt-3">
-              {/* WhatsApp */}
-              <Link to="/whatsapp" className="text-decoration-none">
-                <div className="socialMediaIcon d-flex align-items-center justify-content-center rounded-circle border p-2 whatsapp-hover">
+
+            {/* Redes sociales */}
+            <div className="contact-socials">
+              <Link
+                to="/whatsapp"
+                className="text-decoration-none"
+                aria-label="WhatsApp"
+              >
+                <div className="socialMediaIcon whatsapp-hover">
                   <i className="fa-brands fa-whatsapp"></i>
                 </div>
               </Link>
 
-              {/* Instagram */}
-              <Link to="/instagram" className="text-decoration-none">
-                <div className="socialMediaIcon d-flex align-items-center justify-content-center rounded-circle border p-2 instagram-hover">
+              <Link
+                to="/instagram"
+                className="text-decoration-none"
+                aria-label="Instagram"
+              >
+                <div className="socialMediaIcon instagram-hover">
                   <i className="fa-brands fa-instagram"></i>
                 </div>
               </Link>
 
-              {/* Facebook */}
-              <Link to="/facebook" className="text-decoration-none">
-                <div className="socialMediaIcon d-flex align-items-center justify-content-center rounded-circle border p-2 facebook-hover">
+              <Link
+                to="/facebook"
+                className="text-decoration-none"
+                aria-label="Facebook"
+              >
+                <div className="socialMediaIcon facebook-hover">
                   <i className="fa-brands fa-facebook"></i>
                 </div>
               </Link>
 
-              {/* Twitter */}
-              <Link to="/twitter" className="text-decoration-none">
-                <div className="socialMediaIcon d-flex align-items-center justify-content-center rounded-circle border p-2  twitter-hover">
+              <Link
+                to="/twitter"
+                className="text-decoration-none"
+                aria-label="Twitter"
+              >
+                <div className="socialMediaIcon twitter-hover">
                   <i className="fa-brands fa-twitter"></i>
                 </div>
               </Link>
