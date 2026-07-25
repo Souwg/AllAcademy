@@ -43,9 +43,8 @@ export const CheckoutForm = ({ onClose, onSuccess }) => {
         setMessage(error.message || "Payment failed. Please try again.");
         console.error("❌ Payment failed:", error);
       } else if (paymentIntent && paymentIntent.status === "succeeded") {
-        console.log("✅ Payment succeeded:", paymentIntent);
-        if (onSuccess) onSuccess(); // 👉 avisa al padre para mostrar el modal de éxito
-        if (onClose) onClose(); // 👉 cierra el modal de Stripe
+        if (onSuccess) onSuccess();
+        if (onClose) onClose();
       } else {
         setMessage("Payment could not be completed. Please try again.");
       }
@@ -73,7 +72,7 @@ export const CheckoutForm = ({ onClose, onSuccess }) => {
           onReady={() => setPaymentElementReady(true)}
           onLoadError={() =>
             setMessage(
-              "Error loading the payment form. Please refresh the page."
+              "Error loading the payment form. Please refresh the page.",
             )
           }
           options={{

@@ -15,20 +15,20 @@ export const ContactMeNavbar = () => {
               <div className="icon">
                 <ion-icon name="call"></ion-icon>
               </div>
-              <p className="contactNavbar ms-2 mt-1">+58 4140000000</p>
+              <p className="contactNavbar ms-2 mt-1">+584123633743</p>
             </div>
             <div className="col d-flex mt-3">
               <div className="icon me-1">
                 <i className="fa-solid fa-envelope"></i>
               </div>
-              <p className="contactNavbar ms-2 mt-1">info@allacademy.com</p>
+              <p className="contactNavbar ms-2 mt-1">allcademy.ed@gmail.com</p>
             </div>
             <div className="col-auto d-flex mt-3">
               <div className="icon">
                 <ion-icon name="time-outline"></ion-icon>
               </div>
               <p className="contactNavbar ms-2 mt-1">
-                Mon to sat Open: 9am - 6pm
+                Lunes a Viernes: 9:00am - 6:00pm
               </p>
             </div>
             <div className="col d-flex justify-content-end gap-4 mt-3">
@@ -63,20 +63,16 @@ export const ContactMeNavbar = () => {
           </div>
         </div>
       </div>
-      <div
-        className="ticker-container"
-        onClick={() => (window.location.href = "/ofertas")}
-        style={{ cursor: "pointer" }}
-      >
+      <div className="ticker-container" style={{ cursor: "pointer" }}>
         <div className="ticker-wrapper">
           <div className="ticker-content">
-            {"LIMITED-TIME OFFER! 20% OFF ALL COURSES • USE CODE: LEARN20 • ENROLL NOW\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0".repeat(
-              5
+            {"APRENDE A TU RITMO • CLASES EN VIVO Y CONTENIDO PRÁCTICO • EXPLORA ALLCADEMY\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0".repeat(
+              5,
             )}
           </div>
           <div className="ticker-content">
-            {"LIMITED-TIME OFFER! 20% OFF ALL COURSES • USE CODE: LEARN20 • ENROLL NOW\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0".repeat(
-              5
+            {"APRENDE A TU RITMO • CLASES EN VIVO Y CONTENIDO PRÁCTICO • EXPLORA ALLCADEMY\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0".repeat(
+              5,
             )}
           </div>
         </div>

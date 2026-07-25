@@ -118,8 +118,8 @@ export const Signup = () => {
     if (formData.password !== formData.confirmPassword) {
       Swal.fire({
         icon: "error",
-        title: "Password Mismatch",
-        text: "The passwords you entered do not match",
+        title: "Las contraseñas no coinciden",
+        text: "Las contraseñas que ingresaste no son iguales",
         confirmButtonColor: "#3085d6",
       });
       return;
@@ -128,8 +128,8 @@ export const Signup = () => {
     if (!formData.acceptTerms) {
       Swal.fire({
         icon: "error",
-        title: "Terms Not Accepted",
-        text: "You must accept the terms and conditions to continue",
+        title: "Términos no aceptados",
+        text: "Debes aceptar los términos y condiciones para continuar",
         confirmButtonColor: "#3085d6",
       });
       return;
@@ -138,8 +138,8 @@ export const Signup = () => {
     if (!formData.country) {
       Swal.fire({
         icon: "error",
-        title: "Country required",
-        text: "Please select your country",
+        title: "País requerido",
+        text: "Por favor selecciona tu país",
         confirmButtonColor: "#3085d6",
       });
       return;
@@ -148,8 +148,8 @@ export const Signup = () => {
     if (!formData.idNumber) {
       Swal.fire({
         icon: "error",
-        title: "ID Number required",
-        text: "Please enter your identification number",
+        title: "Documento requerido",
+        text: "Por favor ingresa tu número de identificación",
         confirmButtonColor: "#3085d6",
       });
       return;
@@ -166,7 +166,7 @@ export const Signup = () => {
     Swal.fire({
       position: "center",
       icon: "success",
-      title: "Registration successful",
+      title: "Registro exitoso",
       showConfirmButton: false,
       timer: 1500,
       backdrop: true,
@@ -183,8 +183,10 @@ export const Signup = () => {
           <div className="card signup-card shadow-lg border-0 w-100 my-4">
             <div className="card-body px-3 px-md-5 py-4">
               <div className="text-center mb-4">
-                <h3 className="fw-bold mb-3">Create your account</h3>
-                <p className="text-muted">Start your learning journey today</p>
+                <h3 className="fw-bold mb-3">Crea tu cuenta</h3>
+                <p className="text-muted">
+                  Empieza hoy tu camino de aprendizaje
+                </p>
               </div>
 
               {error && (
@@ -207,7 +209,7 @@ export const Signup = () => {
                         onChange={handleChange}
                         required
                       />
-                      <label htmlFor="firstName">First Name</label>
+                      <label htmlFor="firstName">Nombre</label>
                     </div>
                   </div>
                   <div className="col-md-6">
@@ -222,7 +224,7 @@ export const Signup = () => {
                         onChange={handleChange}
                         required
                       />
-                      <label htmlFor="lastName">Last Name</label>
+                      <label htmlFor="lastName">Apellido</label>
                     </div>
                   </div>
                 </div>
@@ -238,7 +240,7 @@ export const Signup = () => {
                     onChange={handleChange}
                     required
                   />
-                  <label htmlFor="email">Email address</label>
+                  <label htmlFor="email">Correo electrónico</label>
                 </div>
 
                 <div className="row">
@@ -251,14 +253,14 @@ export const Signup = () => {
                         value={formData.country}
                         onChange={handleChange}
                       >
-                        <option value="">Select</option>
+                        <option value="">Selecciona</option>
                         {countries.map((country) => (
                           <option key={country.code} value={country.code}>
                             {country.name}
                           </option>
                         ))}
                       </select>
-                      <label htmlFor="country">Country</label>
+                      <label htmlFor="country">País</label>
                     </div>
                   </div>
                   <div className="col-md-6">
@@ -268,11 +270,11 @@ export const Signup = () => {
                         className="form-control"
                         id="idNumber"
                         name="idNumber"
-                        placeholder="1234567890"
+                        placeholder="Identificación"
                         value={formData.idNumber}
                         onChange={handleChange}
                       />
-                      <label htmlFor="idNumber">ID Number</label>
+                      <label htmlFor="idNumber">Identificación</label>
                     </div>
                   </div>
                 </div>
@@ -283,13 +285,13 @@ export const Signup = () => {
                     className="form-control"
                     id="password"
                     name="password"
-                    placeholder="Password"
+                    placeholder="Contraseña"
                     value={formData.password}
                     onChange={handleChange}
                     required
                     minLength="6"
                   />
-                  <label htmlFor="password">Password</label>
+                  <label htmlFor="password">Contraseña</label>
                 </div>
 
                 <div className="form-floating mb-3">
@@ -303,7 +305,7 @@ export const Signup = () => {
                     onChange={handleChange}
                     required
                   />
-                  <label htmlFor="confirmPassword">Confirm Password</label>
+                  <label htmlFor="confirmPassword">Confirmar contraseña</label>
                 </div>
 
                 <div className="form-check mb-4">
@@ -316,7 +318,7 @@ export const Signup = () => {
                     onChange={handleChange}
                   />
                   <label className="form-check-label small" htmlFor="terms">
-                    I agree to the{" "}
+                    Acepto los{" "}
                     <a
                       href="#!"
                       className="text-decoration-none"
@@ -334,7 +336,7 @@ export const Signup = () => {
                         });
                       }}
                     >
-                      Terms and conditions
+                      Términos y condiciones
                     </a>{" "}
                     and{" "}
                     <a
@@ -354,7 +356,7 @@ export const Signup = () => {
                         });
                       }}
                     >
-                      Privacy Policy
+                      Política de privacidad
                     </a>
                   </label>
                 </div>
@@ -363,13 +365,13 @@ export const Signup = () => {
                   className="btn btn-primary w-100 py-2 mb-3 rounded-pill fw-bold"
                   type="submit"
                 >
-                  Create Account
+                  Crear cuenta
                 </button>
 
                 <p className="text-center text-muted mb-0">
-                  Already have an account?{" "}
+                  ¿Ya tienes una cuenta?{" "}
                   <Link to="/login" className="text-decoration-none fw-bold">
-                    Sign in
+                    Iniciar sesión
                   </Link>
                 </p>
               </form>

@@ -5,10 +5,10 @@ import { FiHome, FiUsers, FiBook, FiSettings } from "react-icons/fi";
 
 export const AdminSidebar = ({ activeView, setActiveView }) => {
   const adminMenuItems = [
-    { view: "dashboard", icon: <FiHome />, label: "Dashboard" },
-    { view: "users", icon: <FiUsers />, label: "Users" },
-    { view: "courses", icon: <FiBook />, label: "Courses" },
-    { view: "settings", icon: <FiSettings />, label: "Settings" },
+    { view: "dashboard", icon: <FiHome />, label: "Panel de Control" },
+    { view: "users", icon: <FiUsers />, label: "Usuarios" },
+    { view: "courses", icon: <FiBook />, label: "Cursos" },
+    { view: "settings", icon: <FiSettings />, label: "Configuración" },
   ];
 
   return (

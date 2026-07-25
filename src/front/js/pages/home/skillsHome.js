@@ -33,11 +33,11 @@ export const SkillsHome = () => {
                     </svg>
                   </div>
                   <div className="skills-home-card-text">
-                    <h5>Current Learning Path</h5>
+                    <h5>Tu camino de aprendizaje</h5>
                     <div className="skills-home-card-status">
                       <div className="skills-home-card-dot"></div>
                       <span className="skills-home-card-status-text">
-                        Essential Digital Skills
+                        Avanza paso a paso
                       </span>
                     </div>
                   </div>
@@ -81,31 +81,32 @@ export const SkillsHome = () => {
           {/* Columna central - Texto */}
           <div className="col-12 col-md-7 col-lg-5 skills-home-text-col">
             <div className="title-with-line">
-              <h6 className="mt-2 skills-home-subtitle">ABOUT US</h6>
+              <h6 className="mt-2 skills-home-subtitle">SOBRE NOSOTROS</h6>
               <div className="title-line"></div>
             </div>
             <h2 className="skills-home-title text-start">
-              Empowering Learner for a Brighter Future
+              Impulsamos tu aprendizaje para abrir nuevas oportunidades
             </h2>
             <p className="skills-home-description text-start">
-              Education is a vital process that fosters personal growth,
-              societal development, and intellectual advancement. It equips
-              individuals with the knowledge, skills, and critical thinking.
+              Allcademy nace con la idea de hacer el aprendizaje más accesible,
+              práctico y cercano para personas que quieren crecer, mejorar sus
+              habilidades y prepararse para nuevas oportunidades.
             </p>
             <div className="row justify-content-center">
               <div className="col-lg-6 col-xl-5 skills-home-button-col mb-4 position-relative">
                 <button className="btn-18">
                   <span className="text-container">
-                    <span className="text">Button</span>
+                    <span className="text">Conocer más</span>
                   </span>
                 </button>
                 <div className="skills-home-divider"></div>
               </div>
               <div className="col-lg-6 col-xl-5 mb-4">
                 <p className="skills-home-additional-text text-muted text-start">
-                  Education not only empowers people pursue their career goals
-                  but also encourages them to become informed, responsible
-                  citizens.
+                  Creemos que aprender no tiene que ser complicado. Nuestro
+                  objetivo es crear una experiencia clara, sencilla y
+                  motivadora, donde cada persona pueda avanzar a su ritmo y
+                  sentirse acompañada en su proceso.
                 </p>
               </div>
             </div>

@@ -1,17 +1,19 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { Context } from "../store/appContext";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import "../../styles/navbar.css";
 import image from "../../img/Logo.png";
 
 export const Navbar = () => {
   const { actions } = useContext(Context);
   const navigate = useNavigate();
+  const location = useLocation();
   const user = JSON.parse(localStorage.getItem("user"));
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const API_BASE = process.env.BACKEND_URL;
+
+  const isDashboardPage = location.pathname.includes("/dashboard");
 
   const handleLogin = () => {
     navigate("/login");
@@ -92,6 +94,62 @@ export const Navbar = () => {
                 />
               </Link>
             </div>
+
+            <div
+              className="collapse navbar-collapse"
+              id="navbarNavDropdown"
+              style={{
+                marginLeft: "5rem",
+                transform: "translateY(9px)",
+              }}
+            >
+              <ul
+                className="navbar-nav align-items-lg-center mb-0"
+                style={{ gap: "3.5rem" }}
+              >
+                <li className="nav-item">
+                  <Link
+                    to="/"
+                    className="nav-link links active"
+                    style={{
+                      color: "#001933",
+                      fontWeight: "600",
+                      fontSize: "1rem",
+                      position: "relative",
+                      display: "flex",
+                      alignItems: "center",
+                      height: "60px",
+                      padding: "0",
+                    }}
+                    aria-current="page"
+                  >
+                    Inicio
+                    <span className="nav-link-underline"></span>
+                  </Link>
+                </li>
+
+                <li className="nav-item">
+                  <Link
+                    to="/allCourses"
+                    className="nav-link links"
+                    style={{
+                      color: "#001933",
+                      fontWeight: "600",
+                      fontSize: "1rem",
+                      position: "relative",
+                      display: "flex",
+                      alignItems: "center",
+                      height: "60px",
+                      padding: "0",
+                    }}
+                  >
+                    Cursos
+                    <span className="nav-link-underline"></span>
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
             <button
               className="navbar-toggler ms-3"
               type="button"
@@ -105,156 +163,8 @@ export const Navbar = () => {
             </button>
           </div>
 
-          <div className="col-12 col-lg-auto order-lg-2 mx-lg-auto">
-            <div className="collapse navbar-collapse" id="navbarNavDropdown">
-              <ul className="navbar-nav pt-4" style={{ gap: "8rem" }}>
-                <li className="nav-item">
-                  <Link
-                    to="/"
-                    className="nav-link links active"
-                    style={{
-                      color: "#001933",
-                      fontWeight: "600",
-                      fontSize: "1rem",
-                      position: "relative",
-                    }}
-                    aria-current="page"
-                  >
-                    Home
-                    <span className="nav-link-underline"></span>
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link
-                    to="/allCourses"
-                    className="nav-link links"
-                    style={{
-                      color: "#001933",
-                      fontWeight: "600",
-                      fontSize: "1rem",
-                      position: "relative",
-                    }}
-                  >
-                    Courses
-                    <span className="nav-link-underline"></span>
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link
-                    to="/"
-                    className="nav-link links"
-                    style={{
-                      color: "#001933",
-                      fontWeight: "600",
-                      fontSize: "1rem",
-                      position: "relative",
-                    }}
-                  >
-                    Pricing
-                    <span className="nav-link-underline"></span>
-                  </Link>
-                </li>
-                <li
-                  className="nav-item dropdown"
-                  ref={dropdownRef}
-                  onMouseEnter={() => setDropdownOpen(true)}
-                  onMouseLeave={() => setDropdownOpen(false)}
-                >
-                  <Link
-                    to="/"
-                    className="nav-link dropdown-toggle"
-                    style={{
-                      color: "#001933",
-                      fontWeight: "600",
-                      fontSize: "1rem",
-                      padding: "8px 16px",
-                      borderRadius: "8px",
-                    }}
-                    role="button"
-                    aria-expanded={dropdownOpen}
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    Resources
-                    <span
-                      className="dropdown-arrow"
-                      style={{
-                        display: "inline-block",
-                        marginLeft: "8px",
-                        transition: "transform 0.2s ease",
-                        transform: dropdownOpen
-                          ? "rotate(180deg)"
-                          : "rotate(0deg)",
-                      }}
-                    >
-                      ▼
-                    </span>
-                  </Link>
-                  <ul
-                    className={`dropdown-menu ${dropdownOpen ? "show" : ""}`}
-                    style={{
-                      marginTop: "0",
-                      position: "absolute",
-                      left: "0",
-                      top: "100%",
-                    }}
-                  >
-                    <li>
-                      <a
-                        className="dropdown-item"
-                        style={{
-                          padding: "10px 20px",
-                          color: "#001933",
-                          fontWeight: "500",
-                          display: "flex",
-                          alignItems: "center",
-                          transition: "all 0.2s ease",
-                        }}
-                        href="#"
-                      >
-                        <span style={{ marginRight: "10px" }}>→</span>{" "}
-                        Documentation
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        className="dropdown-item"
-                        style={{
-                          padding: "10px 20px",
-                          color: "#001933",
-                          fontWeight: "500",
-                          display: "flex",
-                          alignItems: "center",
-                          transition: "all 0.2s ease",
-                        }}
-                        href="#"
-                      >
-                        <span style={{ marginRight: "10px" }}>→</span> Tutorials
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        className="dropdown-item"
-                        style={{
-                          padding: "10px 20px",
-                          color: "#001933",
-                          fontWeight: "500",
-                          display: "flex",
-                          alignItems: "center",
-                          transition: "all 0.2s ease",
-                        }}
-                        href="#"
-                      >
-                        <span style={{ marginRight: "10px" }}>→</span> Community
-                      </a>
-                    </li>
-                  </ul>
-                </li>
-              </ul>
-            </div>
-          </div>
-
           {/* Resto del código permanece igual */}
-          <div className="col-12 col-lg-auto order-lg-3 mt-3 mt-lg-0 pt-3">
+          <div className="col-12 col-lg-auto mt-3 mt-lg-0">
             <div className="d-grid gap-2 d-md-flex justify-content-md-end align-items-center">
               <button
                 className="btn me-md-2 contact-btn"
@@ -269,7 +179,7 @@ export const Navbar = () => {
                 }}
                 type="button"
               >
-                Contact us
+                Contáctanos
               </button>
               {user ? (
                 <div className="d-flex align-items-center user-section">
@@ -282,7 +192,7 @@ export const Navbar = () => {
                         fontWeight: "500",
                       }}
                     >
-                      Hello, {user.role}
+                      Bienvenido,
                     </span>
                     <span
                       className="d-block user-name"
@@ -295,34 +205,36 @@ export const Navbar = () => {
                       {user.first_name}
                     </span>
                   </div>
-                  <button
-                    className="btn me-2 dashboard-btn"
-                    style={{
-                      borderRadius: "20px",
-                      backgroundColor: "#001933",
-                      color: "#fff",
-                      fontWeight: "600",
-                      fontSize: "1rem",
-                      whiteSpace: "nowrap",
-                      transition: "all 0.2s ease",
-                      padding: "8px 20px",
-                    }}
-                    onClick={handleDashboard}
-                    type="button"
-                    onMouseOver={(e) => {
-                      e.target.style.backgroundColor = "#003366";
-                      e.target.style.transform = "translateY(-2px)";
-                      e.target.style.boxShadow =
-                        "0 4px 8px rgba(0, 25, 51, 0.2)";
-                    }}
-                    onMouseOut={(e) => {
-                      e.target.style.backgroundColor = "#001933";
-                      e.target.style.transform = "translateY(0)";
-                      e.target.style.boxShadow = "none";
-                    }}
-                  >
-                    Dashboard
-                  </button>
+                  {!isDashboardPage && (
+                    <button
+                      className="btn me-2 dashboard-btn"
+                      style={{
+                        borderRadius: "20px",
+                        backgroundColor: "#001933",
+                        color: "#fff",
+                        fontWeight: "600",
+                        fontSize: "1rem",
+                        whiteSpace: "nowrap",
+                        transition: "all 0.2s ease",
+                        padding: "8px 20px",
+                      }}
+                      onClick={handleDashboard}
+                      type="button"
+                      onMouseOver={(e) => {
+                        e.target.style.backgroundColor = "#003366";
+                        e.target.style.transform = "translateY(-2px)";
+                        e.target.style.boxShadow =
+                          "0 4px 8px rgba(0, 25, 51, 0.2)";
+                      }}
+                      onMouseOut={(e) => {
+                        e.target.style.backgroundColor = "#001933";
+                        e.target.style.transform = "translateY(0)";
+                        e.target.style.boxShadow = "none";
+                      }}
+                    >
+                      Panel de control
+                    </button>
+                  )}
                   <button
                     className="btn logout-btn"
                     style={{
@@ -338,7 +250,7 @@ export const Navbar = () => {
                     onClick={handleLogout}
                     type="button"
                   >
-                    Logout
+                    Cerrar sesión
                   </button>
                 </div>
               ) : (
@@ -357,7 +269,7 @@ export const Navbar = () => {
                   onClick={handleLogin}
                   type="button"
                 >
-                  My Account
+                  Iniciar sesión
                 </button>
               )}
             </div>

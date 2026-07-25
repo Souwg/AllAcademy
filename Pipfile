@@ -24,6 +24,7 @@ flask-bcrypt = "*"
 pytz = "*"
 python-slugify = "*"
 stripe = "*"
+resend = "*"
 
 [requires]
 python_version = "3.10"

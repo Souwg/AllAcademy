@@ -89,7 +89,7 @@ export const AdminContent = ({
               data-active-content="📬"
             ></span>
           </span>
-          <p>No users found</p>
+          <p>No se encontraron usuarios</p>
         </div>
       );
     }
@@ -100,16 +100,16 @@ export const AdminContent = ({
           <thead>
             <tr>
               <th>ID</th>
-              <th>Name</th>
+              <th>Nombre</th>
               <th>Email</th>
-              <th>Country</th>
-              {activeTab === "students" && <th>Courses</th>}
-              <th>Role</th>
-              <th>Status</th>
-              <th>Blocks</th>
-              <th>Registration</th>
-              <th>Last Login</th>
-              <th>Actions</th>
+              <th>País</th>
+              {activeTab === "students" && <th>Cursos</th>}
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Bloqueos</th>
+              <th>Registrados</th>
+              <th>Último Inicio de Sesión</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -154,7 +154,7 @@ export const AdminContent = ({
                         })}
                       </ul>
                     ) : (
-                      <span style={{ color: "#aaa" }}>No enrollments</span>
+                      <span style={{ color: "#aaa" }}>Sin inscripciones</span>
                     )}
                   </td>
                 )}
@@ -178,7 +178,7 @@ export const AdminContent = ({
                         )}
                       </span>
                     ) : (
-                      <span className="active-badge">Active</span>
+                      <span className="active-badge">Activo</span>
                     )}
                   </div>
                 </td>
@@ -201,7 +201,7 @@ export const AdminContent = ({
                       </div>
                     </div>
                   ) : (
-                    <span className="never-logged">Never</span>
+                    <span className="never-logged">Nunca</span>
                   )}
                 </td>
                 <td>
@@ -222,14 +222,14 @@ export const AdminContent = ({
                             className="action-btn block-btn"
                             onClick={() => handleBlockUser(user.id)}
                           >
-                            Block
+                            Bloquear
                           </button>
                         ) : (
                           <button
                             className="action-btn unblock-btn"
                             onClick={() => handleUnblockUser(user.id)}
                           >
-                            Unblock
+                            Desbloquear
                           </button>
                         )}
                         <button
@@ -239,7 +239,7 @@ export const AdminContent = ({
                             setShowDeleteModal(true);
                           }}
                         >
-                          Delete
+                          Eliminar
                         </button>
                       </>
                     )}
@@ -255,12 +255,13 @@ export const AdminContent = ({
 
   const getRoleName = (role) => {
     const roles = {
-      admin: "Admin",
-      teacher: "Teacher",
-      student: "Student",
-      user: "User",
+      admin: "Administrador",
+      teacher: "Profesor",
+      student: "Estudiante",
+      user: "Usuario",
     };
-    return roles[role] || "User";
+
+    return roles[role] || "Usuario";
   };
 
   const renderDashboard = () => {
@@ -302,16 +303,23 @@ export const AdminContent = ({
     };
 
     const userLabels = {
-      total: "Total Users",
-      admins: "Admins",
-      teachers: "Teachers",
-      students: "Students",
+      total: "Usuarios totales",
+      admins: "Administradores",
+      teachers: "Profesores",
+      students: "Estudiantes",
     };
 
     const courseLabels = {
-      total: "Total Courses",
-      published: "Published",
-      drafts: "Drafts",
+      total: "Cursos totales",
+      published: "Publicados",
+      drafts: "Borradores",
+    };
+
+    const statsLabels = {
+      total: "Usuarios totales",
+      admins: "Administradores",
+      teachers: "Profesores",
+      students: "Estudiantes",
     };
 
     return (
@@ -334,7 +342,7 @@ export const AdminContent = ({
             <div className="stat-icon" style={{ backgroundColor: "#a855f7" }}>
               <i className="fa-solid fa-clipboard-list"></i>
             </div>
-            <span>Total Enrollments</span>
+            <span>Total Incripciones</span>
             <strong>{financialOverview?.total_enrollments || 0}</strong>
           </div>
         </div>
@@ -362,7 +370,7 @@ export const AdminContent = ({
             <div className="stat-icon" style={{ backgroundColor: "#22c55e" }}>
               <i className="fa-solid fa-sack-dollar"></i>
             </div>
-            <span>Total Revenue</span>
+            <span>Total Ingresos</span>
             <strong>
               ${financialOverview?.total_revenue?.toFixed(2) || "0.00"}
             </strong>
@@ -375,11 +383,11 @@ export const AdminContent = ({
             <div className="stat-icon" style={{ backgroundColor: "#3b82f6" }}>
               <i className="fa-solid fa-bag-shopping"></i>
             </div>
-            <span>Total Sales</span>
+            <span>Total Ventas</span>
             <strong>{financialOverview?.total_sales || 0}</strong>
           </div>
 
-          <h3 className="chart-title">Registered Users per Month</h3>
+          <h3 className="chart-title">Usuarios registrados por mes</h3>
           <div className="chart-card">
             <ResponsiveContainer width="100%" height={260}>
               <BarChart
@@ -440,7 +448,7 @@ export const AdminContent = ({
                 >
                   {icons[key].icon}
                 </div>
-                <span>{key.charAt(0).toUpperCase() + key.slice(1)}</span>
+                <span>{statsLabels[key]}</span>
                 <strong>{stats[key]}</strong>
               </div>
             ))}
@@ -456,10 +464,10 @@ export const AdminContent = ({
                 onClick={() => setActiveTab(tab)}
               >
                 {tab === "admins"
-                  ? "Admins"
+                  ? "Administradores"
                   : tab === "teachers"
-                  ? "Teachers"
-                  : "Students"}{" "}
+                  ? "Profesores"
+                  : "Estudiantes"}{" "}
                 ({stats[tab]})
               </button>
             ))}
@@ -470,12 +478,12 @@ export const AdminContent = ({
               <FiSearch className="search-icon" />
               <input
                 type="text"
-                placeholder={`Search ${
+                placeholder={`Buscar ${
                   activeTab === "admins"
-                    ? "Admins..."
+                    ? "administradores..."
                     : activeTab === "teachers"
-                    ? "Teachers..."
-                    : "Students..."
+                    ? "profesores..."
+                    : "estudiantes..."
                 }`}
                 value={
                   activeTab === "admins"
@@ -518,8 +526,10 @@ export const AdminContent = ({
     return (
       <div className="course-creation-container">
         <div className="creation-header">
-          <h2>Create New Course</h2>
-          <p>Complete the information to create a new course on the platform</p>
+          <h2>Crear Nuevo Curso</h2>
+          <p>
+            Complete la información para crear un nuevo curso en la plataforma
+          </p>
         </div>
 
         <form
@@ -543,7 +553,7 @@ export const AdminContent = ({
                 aria-selected="true"
               >
                 <i className="bi bi-info-circle me-2"></i>
-                Basic Info
+                Información Básica
               </button>
             </li>
             <li className="nav-item" role="presentation">
@@ -558,7 +568,7 @@ export const AdminContent = ({
                 aria-selected="false"
               >
                 <i className="bi bi-text-paragraph me-2"></i>
-                Description
+                Descripción
               </button>
             </li>
             <li className="nav-item" role="presentation">
@@ -573,7 +583,7 @@ export const AdminContent = ({
                 aria-selected="false"
               >
                 <i className="bi bi-calendar-event me-2"></i>
-                Schedule
+                Horario
               </button>
             </li>
             <li className="nav-item" role="presentation">
@@ -588,7 +598,7 @@ export const AdminContent = ({
                 aria-selected="false"
               >
                 <i className="bi bi-collection me-2"></i>
-                Content
+                Contenido
               </button>
             </li>
             <li className="nav-item" role="presentation">
@@ -603,8 +613,8 @@ export const AdminContent = ({
                 aria-selected="false"
               >
                 <i className="bi bi-gear me-2"></i>
-                Settings and{" "}
-                <strong className="text-primary">Create Course</strong>
+                Configuración y{" "}
+                <strong className="text-primary">Crear Curso</strong>
               </button>
             </li>
           </ul>
@@ -618,11 +628,11 @@ export const AdminContent = ({
               aria-labelledby="basic-tab"
             >
               <div className="form-section">
-                <h3 className="section-title">Basic Information</h3>
+                <h3 className="section-title">Información Básica</h3>
                 <div className="form-grid">
                   <div className="form-group full-width">
                     <label htmlFor="image" className="form-label">
-                      Course Image
+                      Imagen del Curso
                     </label>
                     <input
                       type="file"
@@ -646,7 +656,7 @@ export const AdminContent = ({
 
                   <div className="form-group full-width">
                     <label htmlFor="title" className="form-label">
-                      Course Title *
+                      Título del Curso *
                     </label>
                     <input
                       type="text"
@@ -657,7 +667,7 @@ export const AdminContent = ({
                       }`}
                       value={courseFormData.title || ""}
                       onChange={handleCourseInputChange}
-                      placeholder="Ex: Introduction to React"
+                      placeholder="Ej: Introducción a React"
                     />
                     {validationErrors.title && (
                       <div className="invalid-feedback">
@@ -673,14 +683,17 @@ export const AdminContent = ({
                       </label>
 
                       {teachersLoading ? (
-                        <div className="form-control">Loading Teachers...</div>
+                        <div className="form-control">
+                          Cargando profesores...
+                        </div>
                       ) : teachersError ? (
                         <div className="alert alert-danger">
                           Error: {teachersError}
                         </div>
                       ) : teachers.length === 0 ? (
                         <div className="form-control">
-                          No Teachers Available
+                          No hay profesores disponibles. Por favor, cree un
+                          profesor antes de asignar uno a este curso.
                         </div>
                       ) : (
                         <>
@@ -714,7 +727,7 @@ export const AdminContent = ({
                   {/* Duration */}
                   <div className="form-group">
                     <label htmlFor="duration" className="form-label">
-                      Duration *
+                      Duración *
                     </label>
                     <input
                       type="text"
@@ -737,7 +750,7 @@ export const AdminContent = ({
                   {/* Price */}
                   <div className="form-group">
                     <label htmlFor="price" className="form-label">
-                      Price ($) *
+                      Precio ($) *
                     </label>
                     <input
                       type="number"
@@ -761,7 +774,7 @@ export const AdminContent = ({
 
                   <div className="form-group">
                     <label htmlFor="discount_price" className="form-label">
-                      Discount Price ($)
+                      Precio con Descuento ($)
                     </label>
                     <input
                       type="number"
@@ -805,7 +818,7 @@ export const AdminContent = ({
                   {/* Language */}
                   <div className="form-group">
                     <label htmlFor="language" className="form-label">
-                      Language *
+                      Idioma *
                     </label>
                     <select
                       id="language"
@@ -863,11 +876,11 @@ export const AdminContent = ({
                   {/* Short Description */}
                   <div className="form-group full-width">
                     <label htmlFor="short_description" className="form-label">
-                      Short Description *
+                      Descripción Corta *
                     </label>
                     <small className="text-muted d-block mb-2">
-                      Must contain at least 60 characters. This text appears on
-                      the course cards.
+                      Debe contener al menos 60 caracteres. Este texto aparece
+                      en las tarjetas del curso.
                     </small>
 
                     <textarea
@@ -890,7 +903,7 @@ export const AdminContent = ({
                   {/* Full Description */}
                   <div className="form-group full-width">
                     <label htmlFor="description" className="form-label">
-                      Full Description *
+                      Descripción Completa *
                     </label>
                     <textarea
                       id="description"
@@ -913,7 +926,9 @@ export const AdminContent = ({
 
               {/* Sección de objetivos de aprendizaje */}
               <div className="form-section">
-                <h3 className="section-title">What will students learn?</h3>
+                <h3 className="section-title">
+                  ¿Qué aprenderán los estudiantes?
+                </h3>
                 <div className="form-group full-width">
                   <div className="dynamic-list">
                     <div className="list-items">
@@ -926,7 +941,7 @@ export const AdminContent = ({
                             onChange={(e) =>
                               handleLearningObjectiveChange(
                                 index,
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             placeholder="Ex: Create reusable components in React"
@@ -956,7 +971,7 @@ export const AdminContent = ({
 
               {/* Sección de requisitos */}
               <div className="form-section">
-                <h3 className="section-title">Course Requirements</h3>
+                <h3 className="section-title">Requisitos del Curso</h3>
                 <div className="form-group full-width">
                   <div className="dynamic-list">
                     <div className="list-items">
@@ -1186,7 +1201,7 @@ export const AdminContent = ({
                               updateModule(
                                 moduleIndex,
                                 "description",
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             rows="3"
@@ -1235,7 +1250,7 @@ export const AdminContent = ({
                                         moduleIndex,
                                         lessonIndex,
                                         "title",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                     placeholder="Ex: What is React?"
@@ -1253,7 +1268,7 @@ export const AdminContent = ({
                                         moduleIndex,
                                         lessonIndex,
                                         "description",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                     rows="2"
@@ -1495,34 +1510,34 @@ export const AdminContent = ({
       dashboard: (
         <>
           <i className="fa-solid fa-chart-simple me-2"></i>
-          Administration Panel
+          Panel de control
         </>
       ),
       users: (
         <>
           <i className="fa-solid fa-users me-2"></i>
-          User Management
+          Manejo de usuarios
         </>
       ),
       courses: (
         <>
           <i className="fa-solid fa-book me-2"></i>
-          Course Management
+          Gestión de cursos
         </>
       ),
       settings: (
         <>
           <i className="fa-solid fa-cog me-2"></i>
-          System Settings
+          Configuración del sistema
         </>
       ),
     };
 
     const descriptions = {
-      dashboard: "Welcome to the main control panel",
-      courses: "Manage the available courses",
-      users: "Manage the users",
-      settings: "Configure the system settings",
+      dashboard: "Bienvenido al panel de control principal",
+      courses: "Gestiona los cursos disponibles",
+      users: "Gestiona los usuarios",
+      settings: "Configura las opciones del sistema",
     };
 
     return (
@@ -1542,14 +1557,14 @@ export const AdminContent = ({
               onClick={() => setActiveView("courses")}
             >
               <i className="fa-solid fa-plus me-2"></i>
-              Create Course
+              Crear curso
             </button>
             <button
               className="btn btn-lg btn-outline-light me-2"
               onClick={() => setActiveView("users")}
             >
               <i className="fa-solid fa-users me-2"></i>
-              User Management
+              Manejo de usuarios
             </button>
           </div>
         )}
@@ -1581,7 +1596,7 @@ export const AdminContent = ({
             {renderCoursesList()}
           </div>
         ) : (
-          <strong>View in development...</strong>
+          <strong>Vista en desarrollo...</strong>
         )}
       </div>
     </div>

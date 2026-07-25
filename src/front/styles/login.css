@@ -32,6 +32,7 @@ body {
 .login-card .btn-primary {
   background-color: #6c63ff;
   border: none;
+  color: #ffffff;
 }
 
 .login-card .form-check-input:checked {

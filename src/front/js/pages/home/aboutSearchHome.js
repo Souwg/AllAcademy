@@ -50,17 +50,13 @@ export const AboutSearch = () => {
               {/* Text Content */}
               <div className="col-lg-6 mb-5 mb-lg-0 pe-lg-5 hero-text-col">
                 <h1 className="main-heading">
-                  <span className="highlight-text">
-                    Upgrade
-                    <span className="highlight-underline"></span>
-                  </span>{" "}
-                  your skills with{" "}
-                  <span className="highlight-purple">interactive</span> learning
+                  Aprende en vivo con{" "}
+                  <span className="highlight-purple">horarios flexibles</span>
                 </h1>
 
                 <p className="hero-subtitle">
-                  Join our community of learners and get access to cutting-edge
-                  courses taught by industry experts.
+                  Inscríbete en el horario que prefieras y aprende en clases en
+                  vivo coordinadas por profesores con tu grupo.
                 </p>
 
                 {/* Animated Search Bar */}
@@ -75,11 +71,11 @@ export const AboutSearch = () => {
                   </div>
                   <input
                     type="text"
-                    placeholder="Find your perfect course..."
+                    placeholder="Busca cursos..."
                     className="search-input-modern"
                   />
                   <button className="search-button-modern">
-                    Explore
+                    Explorar
                     <svg
                       width="18"
                       height="18"
@@ -99,12 +95,12 @@ export const AboutSearch = () => {
                 </div>
 
                 <div className="trending-topics-container">
-                  <span className="trending-text">Trending now:</span>
+                  <span className="trending-text">Cursos populares:</span>
                   <div className="topics-wrapper">
                     {[
-                      "AI Fundamentals",
-                      "Web Development",
-                      "Data Analytics",
+                      "Python para principiantes",
+                      /* "Web Development",*/
+                      /* "Data Analytics",*/
                     ].map((topic, i) => (
                       <a key={i} href="#" className="topic-badge">
                         {topic}
@@ -175,9 +171,11 @@ export const AboutSearch = () => {
                         />
                       </svg>
                     </div>
-                    <span className="floating-card-title">New Course</span>
+                    <span className="floating-card-title">Clase en vivo</span>
                   </div>
-                  <p className="floating-card-text">UX Design Fundamentals</p>
+                  <p className="floating-card-text">
+                    Iniciación a la programación
+                  </p>
                 </div>
               </div>
             </div>
@@ -224,13 +222,14 @@ export const AboutSearch = () => {
                   </svg>
                 </div>
                 <div className="card-body p-4">
-                  <h5 className="card-title">Interactive Courses</h5>
+                  <h5 className="card-title">Aprendizaje práctico</h5>
                   <p className="card-text">
-                    Engage with hands-on projects and real-world scenarios to
-                    master new skills effectively.
+                    Creamos contenidos claros y aplicables para que puedas
+                    desarrollar nuevas habilidades de forma sencilla, paso a
+                    paso y sin sentirte perdido.
                   </p>
-                  <button className="modern-card-btn btn-1">
-                    Explore Courses
+                  <Link to="/allCourses" className="modern-card-btn btn-1">
+                    Empezar a aprender
                     <svg
                       width="16"
                       height="16"
@@ -246,7 +245,7 @@ export const AboutSearch = () => {
                         strokeLinejoin="round"
                       />
                     </svg>
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -273,13 +272,14 @@ export const AboutSearch = () => {
                   </svg>
                 </div>
                 <div className="card-body p-4">
-                  <h5 className="card-title">Expert Instructors</h5>
+                  <h5 className="card-title">Contenido pensado para ti</h5>
                   <p className="card-text">
-                    Learn from industry professionals with years of practical
-                    experience in their fields.
+                    En Allcademy buscamos ofrecer una experiencia cercana, útil
+                    y fácil de seguir, enfocada en personas que quieren crecer y
+                    prepararse mejor.
                   </p>
-                  <button className="modern-card-btn btn-2">
-                    Meet Instructors
+                  <Link to="/allCourses" className="modern-card-btn btn-2">
+                    Conocer más
                     <svg
                       width="16"
                       height="16"
@@ -295,7 +295,7 @@ export const AboutSearch = () => {
                         strokeLinejoin="round"
                       />
                     </svg>
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -321,13 +321,13 @@ export const AboutSearch = () => {
                   </svg>
                 </div>
                 <div className="card-body p-4">
-                  <h5 className="card-title">Flexible Learning</h5>
+                  <h5 className="card-title">Aprende a tu ritmo</h5>
                   <p className="card-text">
-                    Study at your own pace with 24/7 access to all course
-                    materials and resources.
+                    Avanza cuando puedas, desde donde estés, con una plataforma
+                    diseñada para acompañarte en tu proceso de aprendizaje.
                   </p>
-                  <button className="modern-card-btn btn-3">
-                    Start Learning
+                  <Link to="/allCourses" className="modern-card-btn btn-3">
+                    Ver contenido
                     <svg
                       width="16"
                       height="16"
@@ -343,7 +343,7 @@ export const AboutSearch = () => {
                         strokeLinejoin="round"
                       />
                     </svg>
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>

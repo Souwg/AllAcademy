@@ -9,6 +9,8 @@ import { CourseDetails } from "./pages/courseDetails";
 import { MyEnrollments } from "./pages/myEnrollments";
 import { Signup } from "./pages/signup";
 import { Login } from "./pages/login";
+import { ForgotPassword } from "./pages/forgotPassword";
+import { ResetPassword } from "./pages/resetPassword";
 import { DashboardAdmin } from "./pages/dashboardAdmin/dashboardAdmin";
 import { DashboardTeacher } from "./pages/dashboardTeacher/dashboardTeacher";
 import { DashboardStudent } from "./pages/dashboardStudent/dashboardStudent";
@@ -39,6 +41,8 @@ const Layout = () => {
             <Route element={<CourseDetails />} path="/courses/:slug" />
             <Route element={<Signup />} path="/signup" />
             <Route element={<Login />} path="/login" />
+            <Route element={<ForgotPassword />} path="/forgot-password" />
+            <Route element={<ResetPassword />} path="/reset-password" />
             <Route element={<MyEnrollments />} path="/my-enrollments" />
             <Route element={<DashboardAdmin />} path="/admin/dashboard" />
             <Route element={<DashboardTeacher />} path="/teacher/dashboard" />

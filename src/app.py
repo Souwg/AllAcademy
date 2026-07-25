@@ -36,7 +36,7 @@ static_file_dir = os.path.join(os.path.dirname(
 app = Flask(__name__)
 CORS(app, resources={
     r"/api/*": {
-        "origins": ["http://localhost:3000","http://localhost:54464",],
+        "origins": "*",
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
         "supports_credentials": True
@@ -79,6 +79,8 @@ def check_user_blocked():
     public_paths = [
         "/api/signup",
         "/api/login",
+        "/api/auth/forgot-password",
+        "/api/auth/reset-password",
         "/api/courses",
         "/"
     ]

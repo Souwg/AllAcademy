@@ -17,13 +17,12 @@ export const CourseDetails = () => {
   const [loadingPayPal, setLoadingPayPal] = useState(false);
   const user = JSON.parse(localStorage.getItem("user"));
   const userCountry = user?.country;
-  console.log("🌍 User country:", userCountry);
   const [showVenezuelaModal, setShowVenezuelaModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [clientSecret, setClientSecret] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [searchParams] = useSearchParams(); // ✅ esto crea la variable correctamente
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const paypalSuccess = searchParams.get("paypal_success");
@@ -36,7 +35,6 @@ export const CourseDetails = () => {
           .capturePaypalOrder(token)
           .then((res) => {
             if (!res.error) {
-              console.log("✅ Pago capturado correctamente:", res);
               actions.setLastPaymentId(res?.order?.id || token);
               setShowSuccessModal(true);
             } else {
@@ -59,7 +57,6 @@ export const CourseDetails = () => {
   const handlePayPal = async () => {
     if (!user) return navigate("/login");
 
-    // 🛑 👉 Aquí agregamos la validación del horario seleccionado
     if (!selectedSchedule || isNaN(selectedSchedule)) {
       actions.showNotification("error", "Por favor selecciona un horario");
       return;
@@ -69,7 +66,7 @@ export const CourseDetails = () => {
       setLoadingPayPal(true);
       const order = await actions.createPaypalOrder(
         course.id,
-        selectedSchedule
+        selectedSchedule,
       );
       if (!order || !order.links) {
         actions.showNotification("error", "No se pudo iniciar PayPal");
@@ -144,7 +141,7 @@ export const CourseDetails = () => {
       setLoadingPayment(true);
       const payment = await actions.createPaymentIntent(
         course.id,
-        selectedSchedule
+        selectedSchedule,
       );
 
       if (payment && payment.clientSecret) {
@@ -481,7 +478,7 @@ export const CourseDetails = () => {
                             if (!selectedSchedule) {
                               actions.showNotification(
                                 "error",
-                                "Por favor selecciona un horario"
+                                "Por favor selecciona un horario",
                               );
                               return;
                             }
@@ -655,10 +652,8 @@ export const CourseDetails = () => {
                 className="payment-method-option-modern paypal"
                 onClick={() => {
                   const url = `https://api.whatsapp.com/send?phone=584123421868&text=${encodeURIComponent(
-                    `Hola, quiero pagar el curso ${course.title}`
+                    `Hola, quiero pagar el curso ${course.title}`,
                   )}`;
-
-                  console.log("🔗 WhatsApp URL:", url);
                   window.open(url, "_blank");
                 }}
               >

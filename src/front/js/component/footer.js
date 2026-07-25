@@ -32,51 +32,49 @@ export const Footer = () => {
                   lineHeight: "1.5",
                 }}
               >
-                We're always in search for talented and motivated people. Don't
-                be shy introduce yourself!
+                Allcademy es una plataforma creada para acercar el aprendizaje a
+                más personas, con contenidos claros, prácticos y pensados para
+                avanzar paso a paso.
               </p>
             </div>
 
             {/**********Courses**********/}
             <div className="col-6 col-md-3 pt-4">
-              <h5 className="text-light mb-4">Courses</h5>
+              <h5 className="text-light mb-4">Contenido</h5>
               <Link to="/" className="text-light text-decoration-none d-block">
-                <p className="mb-3">- Website Development</p>
+                <p className="mb-3">- Cursos disponibles</p>
               </Link>
               <Link to="/" className="text-light text-decoration-none d-block">
-                <p className="mb-3">- Digital Marketing</p>
+                <p className="mb-3">- Clases en vivo</p>
               </Link>
               <Link to="/" className="text-light text-decoration-none d-block">
-                <p className="mb-3">- Graphic Design</p>
+                <p className="mb-3">- Próximamente</p>
               </Link>
               <Link to="/" className="text-light text-decoration-none d-block">
-                <p className="mb-3">- Creative Writing</p>
-              </Link>
-              <Link to="/" className="text-light text-decoration-none d-block">
-                <p className="mb-3">- Social Marketing</p>
+                <p className="mb-3">- Recursos de aprendizaje</p>
               </Link>
             </div>
 
             {/**********Company**********/}
             <div className="col-6 col-md-3 pt-4">
-              <h5 className="text-light mb-4">Company</h5>
+              <h5 className="text-light mb-4">Allcademy</h5>
               <Link to="/" className="text-light text-decoration-none d-block">
-                <p className="mb-3">- About Us</p>
+                <p className="mb-3">- Sobre nosotros</p>
               </Link>
               <Link to="/" className="text-light text-decoration-none d-block">
-                <p className="mb-3">- Knowledge Base</p>
+                <p className="mb-3">- Nuestra misión</p>
               </Link>
               <Link to="/" className="text-light text-decoration-none d-block">
-                <p className="mb-3">- Program</p>
+                <p className="mb-3">- Comunidad</p>
               </Link>
               <Link to="/" className="text-light text-decoration-none d-block">
-                <p className="mb-3">- Community</p>
+                <p className="mb-3">- Contacto</p>
               </Link>
             </div>
 
             {/***********Contact Info***********/}
             <div className="col-12 col-md-3 pt-4 mt-4 mt-md-0">
-              <h5 className="text-light mb-4">Contact Info</h5>
+              <h5 className="text-light mb-4">Contacto</h5>
               <div className="row mb-3 align-items-center">
                 <div className="col-auto pe-0 me-3 mb-3">
                   {" "}
@@ -87,22 +85,14 @@ export const Footer = () => {
                   ></i>
                 </div>
                 <div className="col ps-0 text-light">
-                  <h5 className="mb-0">Phone number</h5>
-                  <p>+58 4140000000</p>
+                  <h5 className="mb-0">Teléfono</h5>
+                  <p>+584123633743</p>
                 </div>
               </div>
               <div className="row align-items-center">
                 <div className="col-auto pe-0 me-3 mb-3">
                   {" "}
                   {/* Añadí me-3 para margen derecho */}
-                  <i
-                    className="fa-solid fa-envelope"
-                    style={{ fontSize: "25px", color: "#fff" }}
-                  ></i>
-                </div>
-                <div className="col ps-0 text-light">
-                  <h5 className="mb-0">Email Address</h5>
-                  <p>info@allacademy.com</p>
                 </div>
               </div>
             </div>
@@ -125,8 +115,8 @@ export const Footer = () => {
               className="col-12 col-md-9 text-light text-center text-md-start mb-3 mb-md-0"
               style={{ fontSize: "16px", fontWeight: "600" }}
             >
-              <i className="fa-regular fa-copyright"></i> 2025. All Right
-              Reserved.
+              <i className="fa-regular fa-copyright"></i> 2025 Allcademy. Todos
+              los derechos reservados.
             </div>
             <div className="col-12 col-md-3 d-flex flex-column flex-md-row justify-content-md-between">
               <Link
@@ -134,7 +124,7 @@ export const Footer = () => {
                 className="text-light text-decoration-none text-center text-md-start mb-2 mb-md-0"
               >
                 <p style={{ fontSize: "16px", fontWeight: "600" }}>
-                  Terms and Conditions
+                  Términos y condiciones
                 </p>
               </Link>
               <Link
@@ -142,7 +132,7 @@ export const Footer = () => {
                 className="text-light text-decoration-none text-center text-md-start"
               >
                 <p style={{ fontSize: "16px", fontWeight: "600" }}>
-                  Privacy Policy
+                  Política de privacidad
                 </p>
               </Link>
             </div>

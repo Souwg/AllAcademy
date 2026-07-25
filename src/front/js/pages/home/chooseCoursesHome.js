@@ -28,11 +28,11 @@ export const ChooseCourses = () => {
         <div className="row">
           <div className="popular-courses-header">
             <div className="title-with-line">
-              <h2>POPULAR COURSES</h2>
+              <h2>CONTENIDO DESTACADO</h2>
               <div className="title-line"></div>
             </div>
             <p>
-              Choose Our <span className="underline">Top Courses</span>
+              Explora <span className="underline">lo que puedes aprender</span>
             </p>
           </div>
         </div>
@@ -40,7 +40,7 @@ export const ChooseCourses = () => {
 
       {/* Loading / Error */}
       {coursesLoading && (
-        <p className="text-center text-muted">Loading courses...</p>
+        <p className="text-center text-muted">Cargando cursos...</p>
       )}
       {coursesError && (
         <p className="text-center text-danger">{coursesError}</p>
@@ -96,7 +96,7 @@ export const ChooseCourses = () => {
 
                   <div className="course-footer">
                     {course.isDummy ? (
-                      <span className="coming-soon">Coming Soon</span>
+                      <span className="coming-soon">Próximamente</span>
                     ) : (
                       <>
                         <div className="course-stats">

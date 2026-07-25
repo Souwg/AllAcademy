@@ -7,7 +7,7 @@ const getState = ({ getStore, getActions, setStore }) => {
     if (!userId) return;
     localStorage.setItem(
       `notifications_${userId}`,
-      JSON.stringify(notifications)
+      JSON.stringify(notifications),
     );
     setStore({ notifications });
   };
@@ -23,7 +23,7 @@ const getState = ({ getStore, getActions, setStore }) => {
     if (!userId) return;
     localStorage.setItem(
       `lastNotifiedMessage_${userId}`,
-      JSON.stringify(updated)
+      JSON.stringify(updated),
     );
     setStore({ lastNotifiedMessage: updated });
   };
@@ -65,8 +65,8 @@ const getState = ({ getStore, getActions, setStore }) => {
           localStorage.getItem(
             `lastNotifiedMessage_${
               JSON.parse(localStorage.getItem("user"))?.id
-            }`
-          )
+            }`,
+          ),
         ) || {},
     },
     actions: {
@@ -94,14 +94,14 @@ const getState = ({ getStore, getActions, setStore }) => {
           if (!resp.ok) {
             return {
               success: false,
-              message: data.msg || "Registration failed",
+              message: data.msg || "No se pudo completar el registro",
             };
           }
 
           return { success: true, user: data.user };
         } catch (err) {
           console.error("❌ Error in signupUser:", err);
-          return { success: false, message: "Connection error" };
+          return { success: false, message: "Error de conexión" };
         }
       },
 
@@ -140,7 +140,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
           getActions().showNotification(
             "success",
-            "Profile updated successfully!"
+            "Perfil actualizado correctamente",
           );
           return true;
         } catch (err) {
@@ -159,7 +159,8 @@ const getState = ({ getStore, getActions, setStore }) => {
           });
 
           const data = await resp.json();
-          if (!resp.ok) throw new Error(data.msg || "Login failed");
+          if (!resp.ok)
+            throw new Error(data.msg || "No se pudo iniciar sesión");
 
           // 🧠 Guardar credenciales
           localStorage.setItem("token", data.token);
@@ -168,14 +169,14 @@ const getState = ({ getStore, getActions, setStore }) => {
           // 🛎️ Recuperar notificaciones pendientes del localStorage
           const userId = data.user.id;
           const storedNotifications = localStorage.getItem(
-            `notifications_${userId}`
+            `notifications_${userId}`,
           );
           const notifications = storedNotifications
             ? JSON.parse(storedNotifications)
             : [];
 
           const storedLastNotified = localStorage.getItem(
-            `lastNotifiedMessage_${userId}`
+            `lastNotifiedMessage_${userId}`,
           );
           const lastNotifiedMessage = storedLastNotified
             ? JSON.parse(storedLastNotified)
@@ -196,6 +197,77 @@ const getState = ({ getStore, getActions, setStore }) => {
         }
       },
 
+      requestPasswordReset: async (email) => {
+        try {
+          const resp = await fetch(`${API_BASE}/auth/forgot-password`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email }),
+          });
+
+          const data = await resp.json();
+
+          if (!resp.ok) {
+            return {
+              success: false,
+              message:
+                data.msg || "No se pudo enviar el correo de recuperación",
+            };
+          }
+
+          return {
+            success: true,
+            message:
+              data.msg ||
+              "Si el correo está registrado, recibirás instrucciones para restablecer tu contraseña.",
+          };
+        } catch (err) {
+          console.error("❌ Error in requestPasswordReset:", err);
+          return {
+            success: false,
+            message: "Error de conexión",
+          };
+        }
+      },
+
+      resetPassword: async (token, newPassword, confirmPassword) => {
+        try {
+          const resp = await fetch(`${API_BASE}/auth/reset-password`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              token,
+              new_password: newPassword,
+              confirm_password: confirmPassword,
+            }),
+          });
+
+          const data = await resp.json();
+
+          if (!resp.ok) {
+            return {
+              success: false,
+              message: data.msg || "No se pudo actualizar la contraseña",
+            };
+          }
+
+          return {
+            success: true,
+            message: data.msg || "Contraseña actualizada correctamente",
+          };
+        } catch (err) {
+          console.error("❌ Error in resetPassword:", err);
+          return {
+            success: false,
+            message: "Error de conexión",
+          };
+        }
+      },
+
       clearSession: () => {
         const userId = getStore().user?.id;
         if (userId) {
@@ -205,7 +277,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           const unreadOnly = stored.filter((n) => !n.is_read);
           localStorage.setItem(
             `notifications_${userId}`,
-            JSON.stringify(unreadOnly)
+            JSON.stringify(unreadOnly),
           );
         }
 
@@ -244,10 +316,10 @@ const getState = ({ getStore, getActions, setStore }) => {
 
           const dummyCourses = Array.from({ length: missing }, (_, index) => ({
             id: `dummy-${index}`,
-            title: "Coming Soon",
-            short_description:
-              "We are excited to let you know that we are preparing new courses for you.",
-            description: "We will soon publish more courses in this category.",
+            title: "Próximamente",
+            short_description: "Estamos preparando nuevos cursos para ti.",
+            description:
+              "Muy pronto publicaremos más cursos en esta categoría.",
             image_url: "",
             instructor: "CodeFlow Academy",
             isDummy: true,
@@ -356,13 +428,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             throw new Error("Error al obtener los mensajes del chat");
 
           const data = await resp.json();
-          console.log(
-            "📩 Mensajes del curso",
-            courseId,
-            "grupo:",
-            scheduleId,
-            data
-          );
           return data;
         } catch (err) {
           console.error("Error en getCourseChat:", err);
@@ -412,11 +477,11 @@ const getState = ({ getStore, getActions, setStore }) => {
           const totalCourses = data.length;
           const totalStudents = data.reduce(
             (acc, course) => acc + (course.total_students || 0),
-            0
+            0,
           );
           const totalGroups = data.reduce(
             (acc, course) => acc + (course.schedules?.length || 0),
-            0
+            0,
           );
 
           // 🆕 Calcular chats activos
@@ -428,7 +493,7 @@ const getState = ({ getStore, getActions, setStore }) => {
               for (const sched of course.schedules) {
                 const messages = await actions.getCourseChat(
                   course.id,
-                  sched.id
+                  sched.id,
                 );
                 if (messages.length > 0) {
                   totalActiveChats++;
@@ -512,7 +577,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 "Content-Type": "application/json",
                 Authorization: "Bearer " + token,
               },
-            }
+            },
           );
 
           if (!resp.ok) throw new Error("Error fetching course students");
@@ -614,7 +679,7 @@ const getState = ({ getStore, getActions, setStore }) => {
         }
 
         const updated = store.notifications.map((n) =>
-          n.id === id ? { ...n, is_read: true } : n
+          n.id === id ? { ...n, is_read: true } : n,
         );
 
         saveNotifications(updated);
@@ -656,7 +721,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             if (!schedule) {
               console.warn(
                 "⚠️ Este enrollment no tiene schedule asignado:",
-                item.course_id
+                item.course_id,
               );
               continue;
             }
@@ -665,7 +730,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 .getCourseChat(item.course_id, schedule.id)
                 .then((messages) => {
                   return { course: courseData, sched: schedule, messages };
-                })
+                }),
             );
           } else {
             // 👨‍🏫 CASO PROFESOR
@@ -678,7 +743,7 @@ const getState = ({ getStore, getActions, setStore }) => {
               fetches.push(
                 actions.getCourseChat(item.id, sched.id).then((messages) => {
                   return { course: item, sched, messages };
-                })
+                }),
               );
             }
           }
@@ -722,7 +787,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             // 🧭 3. Evitar notificaciones duplicadas
             const alreadyExists = store.notifications.find(
-              (n) => n.id === msg.id
+              (n) => n.id === msg.id,
             );
             if (alreadyExists) {
               return;
@@ -734,7 +799,7 @@ const getState = ({ getStore, getActions, setStore }) => {
               course_id: course.id,
               schedule_id: sched.id,
               message: `👤 ${msg.user_name} (${
-                msg.user_role === "teacher" ? "Teacher" : "Student"
+                msg.user_role === "teacher" ? "Profesor" : "Estudiante"
               }) escribió en ${course.title} - ${sched.group_name || "Grupo"}`,
               timestamp: new Date().toISOString(),
             });
@@ -752,7 +817,7 @@ const getState = ({ getStore, getActions, setStore }) => {
         if (userId) {
           localStorage.setItem(
             `notifications_${userId}`,
-            JSON.stringify(notifications)
+            JSON.stringify(notifications),
           );
         }
         setStore({ notifications });
@@ -775,15 +840,6 @@ const getState = ({ getStore, getActions, setStore }) => {
           if (!resp.ok) throw new Error("Error al obtener grabaciones");
           const data = await resp.json();
 
-          console.log(
-            "🎥 Grabaciones recibidas para curso:",
-            courseId,
-            "horario:",
-            scheduleId,
-            data
-          );
-
-          // 🧠 Agregar al store todas las grabaciones para todos los cursos
           const store = getStore();
           setStore({
             videos: [
@@ -867,7 +923,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 Authorization: "Bearer " + token,
               },
               body: JSON.stringify({ is_published: isPublished }),
-            }
+            },
           );
 
           if (!resp.ok) throw new Error("Error al actualizar publicación");
@@ -876,7 +932,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           const store = getStore();
           setStore({
             videos: (store.videos || []).map((v) =>
-              v.id === recordingId ? { ...v, is_published: isPublished } : v
+              v.id === recordingId ? { ...v, is_published: isPublished } : v,
             ),
           });
 
@@ -907,7 +963,7 @@ const getState = ({ getStore, getActions, setStore }) => {
           const store = getStore();
           setStore({
             videos: (store.videos || []).map((v) =>
-              v.id === recordingId ? { ...v, ...data.recording } : v
+              v.id === recordingId ? { ...v, ...data.recording } : v,
             ),
           });
 
@@ -968,8 +1024,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 
           if (!resp.ok) throw new Error("Error al crear PaymentIntent");
           const data = await resp.json();
-
-          console.log("💳 PaymentIntent creado:", data);
           return data;
         } catch (err) {
           console.error("❌ Error en createPaymentIntent:", err);
@@ -979,16 +1033,11 @@ const getState = ({ getStore, getActions, setStore }) => {
 
       createPaypalOrder: async (course_id, schedule_id) => {
         try {
-          const token = localStorage.getItem("token"); // 👈 SIN JSON.parse
+          const token = localStorage.getItem("token");
           if (!token) {
             console.error("No JWT token in localStorage");
             return null;
           }
-
-          // 🧭 DEBUG
-          console.log("🧭 DEBUG PAYPAL ORDER:");
-          console.log("course_id:", course_id);
-          console.log("schedule_id:", schedule_id);
 
           const resp = await fetch(`${API_BASE}/paypal/create-order`, {
             method: "POST",
@@ -1028,7 +1077,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
               },
-            }
+            },
           );
 
           const data = await resp.json().catch(() => null);
@@ -1049,7 +1098,7 @@ const getState = ({ getStore, getActions, setStore }) => {
         title,
         course_id,
         schedule_id = null,
-        lessons = []
+        lessons = [],
       ) => {
         try {
           const token = localStorage.getItem("token");
@@ -1078,7 +1127,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
           getActions().showNotification(
             "success",
-            "Video uploaded successfully!"
+            "Video subido correctamente",
           );
 
           return data.recording;
@@ -1103,14 +1152,13 @@ const getState = ({ getStore, getActions, setStore }) => {
                 title: data.title,
                 description: data.description,
               }),
-            }
+            },
           );
 
-          if (!resp.ok) throw new Error("Error creating assignment");
+          if (!resp.ok) throw new Error("Error al crear la tarea");
 
           return true;
         } catch (err) {
-          console.log("❌ Error creating assignment:", err);
           return false;
         }
       },
@@ -1124,7 +1172,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 "Content-Type": "application/json",
                 Authorization: "Bearer " + localStorage.getItem("token"),
               },
-            }
+            },
           );
 
           if (!resp.ok) throw new Error("Error fetching assignments");
@@ -1148,7 +1196,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
           });
 
-          if (!resp.ok) throw new Error("Failed to fetch assignments overview");
+          if (!resp.ok) throw new Error("Error al cargar el resumen de tareas");
 
           const data = await resp.json();
           setStore({ assignmentsOverview: data });
@@ -1171,7 +1219,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 Authorization: "Bearer " + localStorage.getItem("token"),
               },
               body: JSON.stringify(data),
-            }
+            },
           );
 
           if (!resp.ok) {
@@ -1180,8 +1228,6 @@ const getState = ({ getStore, getActions, setStore }) => {
           }
 
           const result = await resp.json();
-          console.log("✅ Assignment updated:", result);
-
           return true;
         } catch (err) {
           console.error("❌ Error:", err);
@@ -1206,7 +1252,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 "Content-Type": "application/json",
                 Authorization: "Bearer " + token,
               },
-            }
+            },
           );
 
           const data = await resp.json();
@@ -1216,11 +1262,10 @@ const getState = ({ getStore, getActions, setStore }) => {
             return { success: false, msg: data.msg };
           }
 
-          console.log("🗑 Assignment deleted successfully");
-          return { success: true, msg: "Assignment deleted successfully" };
+          return { success: true, msg: "Tarea eliminada correctamente" };
         } catch (error) {
           console.error("❌ Error deleting assignment:", error);
-          return { success: false, msg: "Server error" };
+          return { success: false, msg: "Error del servidor" };
         }
       },
 
@@ -1245,8 +1290,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             console.error("❌ Error fetching assignments:", data.msg);
             return [];
           }
-
-          console.log("📚 Student assignments:", data);
           return data;
         } catch (err) {
           console.error("❌ Error in getStudentAssignmentsBySchedule:", err);
@@ -1266,7 +1309,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 "Content-Type": "application/json",
                 Authorization: "Bearer " + token,
               },
-            }
+            },
           );
 
           const data = await resp.json();
@@ -1275,12 +1318,10 @@ const getState = ({ getStore, getActions, setStore }) => {
             console.error("❌ Error submitting assignment:", data.msg);
             return { success: false, msg: data.msg };
           }
-
-          console.log("📬 Assignment submitted:", data);
           return { success: true, data };
         } catch (err) {
           console.error("❌ Error:", err);
-          return { success: false, msg: "Network error" };
+          return { success: false, msg: "Error de conexión" };
         }
       },
 
@@ -1300,7 +1341,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 status: status,
                 feedback: feedback,
               }),
-            }
+            },
           );
 
           const data = await resp.json();
@@ -1310,7 +1351,6 @@ const getState = ({ getStore, getActions, setStore }) => {
             return { success: false, msg: data.msg };
           }
 
-          console.log("✅ Review success:", data);
           return { success: true };
         } catch (err) {
           console.error("❌ Fatal error in reviewAssignment:", err);
@@ -1333,11 +1373,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
           const data = await resp.json();
           if (!resp.ok) return;
-
-          // Aquí se actualizan los enrollments que incluyen "progress"
           setStore({ user: data });
-
-          console.log("🔄 Progress refreshed:", data);
         } catch (err) {
           console.error("❌ Error refreshing progress:", err);
         }

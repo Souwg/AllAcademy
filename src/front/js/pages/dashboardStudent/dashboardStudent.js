@@ -24,7 +24,6 @@ export const DashboardStudent = () => {
   useEffect(() => {
     if (activeView === "dashboard" || activeView === "my-courses") {
       if (user && myEnrollments.length > 0) {
-        console.log("🔄 Refreshing student progress...");
         actions.refreshStudentProgress();
       }
     }
@@ -43,7 +42,7 @@ export const DashboardStudent = () => {
   const loadAssignments = async (courseId, scheduleId) => {
     const assignments = await actions.getStudentAssignmentsBySchedule(
       courseId,
-      scheduleId
+      scheduleId,
     );
     setStudentAssignments((prev) => ({
       ...prev,
@@ -55,7 +54,7 @@ export const DashboardStudent = () => {
     const resp = await actions.submitAssignment(assignmentId);
 
     if (!resp || resp.success === false) {
-      alert(resp?.msg || "Error submitting assignment");
+      alert(resp?.msg || "Error al entregar la tarea");
       return;
     }
 
@@ -77,8 +76,6 @@ export const DashboardStudent = () => {
   };
 
   useEffect(() => {
-    console.log("📚 myEnrollments:", myEnrollments);
-
     if (myEnrollments.length > 0) {
       const uniqueTeachers = [];
       const seenIds = new Set();
@@ -89,15 +86,13 @@ export const DashboardStudent = () => {
           seenIds.add(course.teacher_id);
           uniqueTeachers.push({
             id: course.teacher_id,
-            name: course.instructor || "Unknown Teacher",
+            name: course.instructor || "Profesor desconocido",
             bio: course.instructorBio || "",
             avatar_url:
               course.instructorImage || "https://via.placeholder.com/80",
           });
         }
       });
-
-      console.log("👩‍🏫 Teachers detectados:", uniqueTeachers);
       setTeachers(uniqueTeachers);
     }
   }, [myEnrollments]);
@@ -113,14 +108,13 @@ export const DashboardStudent = () => {
   }, [user, actions]);
 
   useEffect(() => {
-    console.log("📚 myEnrollments:", myEnrollments);
     actions.getMyEnrollments();
   }, []);
 
   useEffect(() => {
-    if (user && user.role === "student" && myEnrollments.length > 0) {
+    if (user && user.role === "estudiante" && myEnrollments.length > 0) {
       const interval = setInterval(() => {
-        actions.checkNewNotifications("student");
+        actions.checkNewNotifications("estudiante");
       }, 10000); // ⏳ cada 10 segundos
 
       return () => clearInterval(interval);
@@ -168,15 +162,15 @@ export const DashboardStudent = () => {
                 </div>
                 <div>
                   <h2 className="banner-title">
-                    Welcome back,{" "}
+                    Bienvenido/a de nuevo,{" "}
                     <span className="banner-name">
-                      {user?.first_name || "student"}
+                      {user?.first_name || "estudiante"}
                     </span>{" "}
                     👋
                   </h2>
                   <p className="banner-subtitle">
-                    Here’s a personalized overview of your teaching activity
-                    today.
+                    Aquí tienes un resumen personalizado de tu actividad de
+                    aprendizaje de hoy.
                   </p>
                 </div>
               </div>
@@ -192,7 +186,7 @@ export const DashboardStudent = () => {
                       <i className="fa-solid fa-book fa-5x"></i>
                     </div>
                     <div>
-                      <h6 className="text-muted mb-1">Enrolled Courses</h6>
+                      <h6 className="text-muted mb-1">Cursos inscritos</h6>
                       <h2 className="fw-bold text-center text-primary mb-0">
                         {myEnrollments?.length || 0}
                       </h2>
@@ -204,7 +198,7 @@ export const DashboardStudent = () => {
                       <i className="fa-solid fa-check-circle fa-5x"></i>
                     </div>
                     <div>
-                      <h6 className="text-muted mb-1">Completed</h6>
+                      <h6 className="text-muted mb-1">Completados</h6>
                       <h2 className="fw-bold text-center text-success mb-0">
                         {myEnrollments?.filter((e) => e.progress === 100)
                           .length || 0}
@@ -217,10 +211,10 @@ export const DashboardStudent = () => {
                       <i className="fa-solid fa-hourglass-half fa-5x"></i>
                     </div>
                     <div>
-                      <h6 className="text-muted mb-1">In Progress</h6>
+                      <h6 className="text-muted mb-1">En progreso</h6>
                       <h2 className="fw-bold text-center text-warning mb-0">
                         {myEnrollments?.filter(
-                          (e) => e.progress > 0 && e.progress < 100
+                          (e) => e.progress > 0 && e.progress < 100,
                         ).length || 0}
                       </h2>
                     </div>
@@ -230,7 +224,7 @@ export const DashboardStudent = () => {
                 {/* 📚 Courses */}
                 <div className="mt-5">
                   <h4 className="fw-bold mb-4 subtitled-dashboard">
-                    <i className="fa-regular fa-bookmark me-2"></i> My Courses
+                    <i className="fa-regular fa-bookmark me-2"></i> Mis cursos
                   </h4>
 
                   <div className="row g-4 mb-4">
@@ -245,7 +239,7 @@ export const DashboardStudent = () => {
                               <img
                                 src={enroll.course?.image_url || noImage}
                                 className="card-img-top img-fluid modern-img"
-                                alt={enroll.course?.title || "Course"}
+                                alt={enroll.course?.title || "Untitled Course"}
                               />
                             </div>
                             <div className="card-body d-flex flex-column">
@@ -253,7 +247,7 @@ export const DashboardStudent = () => {
                                 {enroll.course?.title || "Untitled Course"}
                               </h5>
                               <p className="instructor-name text-muted mb-2">
-                                By {enroll.course?.instructor || "Instructor"}
+                                Por {enroll.course?.instructor || "Instructor"}
                               </p>
 
                               <div className="mt-auto">
@@ -270,7 +264,7 @@ export const DashboardStudent = () => {
                                   ></div>
                                 </div>
                                 <small className="d-block mt-2 text-muted">
-                                  Progress: {enroll.progress || 0}%
+                                  Progreso: {enroll.progress || 0}%
                                 </small>
                               </div>
 
@@ -282,7 +276,7 @@ export const DashboardStudent = () => {
                                   }
                                 >
                                   <i className="fa-solid fa-play me-1"></i>{" "}
-                                  Continue
+                                  Continuar
                                 </button>
 
                                 <button
@@ -299,7 +293,7 @@ export const DashboardStudent = () => {
                       ))
                     ) : (
                       <div className="text-center py-5 text-muted">
-                        <p>You haven't enrolled in any courses yet.</p>
+                        <p>Aún no te has inscrito en ningún curso.</p>
                       </div>
                     )}
                   </div>
@@ -330,14 +324,16 @@ export const DashboardStudent = () => {
                       </div>
 
                       <h5 className="mb-0 fw-semibold text-dark notification-title">
-                        Notifications
+                        Notificaciones{" "}
                       </h5>
                     </div>
 
                     <button
                       className="btn btn-sm btn-success p-2 mt-2 mt-md-0"
                       style={{ borderRadius: "15px" }}
-                      onClick={() => actions.checkNewNotifications("student")}
+                      onClick={() =>
+                        actions.checkNewNotifications("estudiante")
+                      }
                     >
                       <i className="fa-solid fa-rotate"></i>
                     </button>
@@ -362,7 +358,7 @@ export const DashboardStudent = () => {
                           onClick={async () => {
                             if (n.type === "group") {
                               const enrollment = myEnrollments.find(
-                                (e) => e.course.id === n.course_id
+                                (e) => e.course.id === n.course_id,
                               );
 
                               if (enrollment) {
@@ -376,7 +372,7 @@ export const DashboardStudent = () => {
                                 // 3) Carga los mensajes del grupo correcto
                                 const msgs = await actions.getCourseChat(
                                   n.course_id,
-                                  n.schedule_id
+                                  n.schedule_id,
                                 );
 
                                 // 4) Guarda el curso seleccionado con mensajes y el ID al que se debe scrollear
@@ -403,10 +399,10 @@ export const DashboardStudent = () => {
                           <small>
                             <strong>
                               {n.type === "group"
-                                ? "Group message: "
+                                ? "Mensaje grupal: "
                                 : n.type === "private"
-                                ? "Private message: "
-                                : "Notification: "}
+                                ? "Mensaje privado: "
+                                : "Notificación: "}
                             </strong>
                             {n.message}
                           </small>
@@ -414,7 +410,7 @@ export const DashboardStudent = () => {
                       ))
                     ) : (
                       <div className="text-center text-muted py-3">
-                        <small>No notifications yet.</small>
+                        <small>No hay notificaciones aún.</small>
                       </div>
                     )}
                   </div>
@@ -432,11 +428,11 @@ export const DashboardStudent = () => {
                 <i className="fa-solid fa-chalkboard-user"></i>
               </div>
               <div className="banner-content">
-                <h2 className="banner-title">My Teachers</h2>
+                <h2 className="banner-title">Mis Profesores</h2>
                 <p className="banner-subtitle">
-                  Here you can view all the teachers of the courses you’re
-                  enrolled in. Connect with them, ask questions, and stay
-                  updated with your learning journey✨.
+                  Aquí puedes ver a todos los profesores de los cursos en los
+                  que estás inscrito. Conéctate con ellos, haz preguntas y
+                  mantente actualizado con tu trayectoria de aprendizaje✨.
                 </p>
               </div>
             </div>
@@ -474,7 +470,7 @@ export const DashboardStudent = () => {
                 ))
               ) : (
                 <p className="text-muted text-center">
-                  You don't have any teachers yet.
+                  Aún no tienes profesores.
                 </p>
               )}
             </div>
@@ -489,9 +485,9 @@ export const DashboardStudent = () => {
                 <i className="fa-solid fa-chalkboard-user"></i>
               </div>
               <div className="banner-content">
-                <h2 className="banner-title">My Class Recordings</h2>
+                <h2 className="banner-title">Mis Grabaciones de Clase</h2>
                 <p className="banner-subtitle">
-                  Watch the recordings published by your teachers.
+                  Mira las grabaciones publicadas por tus profesores.
                 </p>
               </div>
             </div>
@@ -500,7 +496,7 @@ export const DashboardStudent = () => {
                 const course = enroll.course;
                 const courseVideos =
                   (store.videos || []).filter(
-                    (v) => v.course_id === course.id && v.is_published
+                    (v) => v.course_id === course.id && v.is_published,
                   ) || [];
 
                 if (courseVideos.length === 0) return null;
@@ -583,7 +579,7 @@ export const DashboardStudent = () => {
                                 >
                                   {video.created_at
                                     ? new Date(
-                                        video.created_at
+                                        video.created_at,
                                       ).toLocaleDateString()
                                     : "No date"}
                                 </div>
@@ -609,7 +605,7 @@ export const DashboardStudent = () => {
                                         {Object.values(lessonsByModule)
                                           .sort(
                                             (a, b) =>
-                                              a.module_order - b.module_order
+                                              a.module_order - b.module_order,
                                           )
                                           .map((module) => (
                                             <li
@@ -626,7 +622,7 @@ export const DashboardStudent = () => {
                                               <ul className="mt-1">
                                                 {module.lessons
                                                   .sort(
-                                                    (a, b) => a.order - b.order
+                                                    (a, b) => a.order - b.order,
                                                   )
                                                   .map((lesson) => (
                                                     <li
@@ -693,7 +689,7 @@ export const DashboardStudent = () => {
               })
             ) : (
               <div className="text-center text-muted py-5">
-                <p>You haven't enrolled in any courses yet.</p>
+                <p>Aún no tienes grabaciones de clase.</p>
               </div>
             )}
           </div>
@@ -714,15 +710,16 @@ export const DashboardStudent = () => {
                 <i className="fa-solid fa-list-check"></i>
               </div>
               <div className="banner-content">
-                <h2 className="banner-title">My Assignments</h2>
+                <h2 className="banner-title">Mis Tareas</h2>
                 <p className="banner-subtitle">
-                  View your tasks, check your progress, and submit your work ✨
+                  Visualiza tus tareas, verifica tu progreso y envía tu trabajo
+                  ✨
                 </p>
               </div>
             </div>
 
             {myEnrollments.length === 0 ? (
-              <p className="text-muted">You are not enrolled in any course.</p>
+              <p className="text-muted">No estás inscrito en ningún curso.</p>
             ) : (
               myEnrollments.map((enroll) => {
                 const course = enroll.course;
@@ -755,7 +752,7 @@ export const DashboardStudent = () => {
                     </h4>
 
                     {assignments.length === 0 ? (
-                      <p className="text-muted">No assignments loaded.</p>
+                      <p className="text-muted">No hay tareas cargadas.</p>
                     ) : (
                       assignments
                         .flatMap((r) => r.assignments)
@@ -826,7 +823,7 @@ export const DashboardStudent = () => {
                                       submitAssignment(
                                         a.assignment_id,
                                         course.id,
-                                        schedule.id
+                                        schedule.id,
                                       )
                                     }
                                     style={{

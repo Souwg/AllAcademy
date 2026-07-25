@@ -92,7 +92,7 @@ export const DashboardTeacher = () => {
 
     const success = await actions.updateAssignment(
       editingAssignment.assignment_id,
-      body
+      body,
     );
 
     if (success) {
@@ -123,9 +123,6 @@ export const DashboardTeacher = () => {
   };
 
   const handleCreateAssignment = async () => {
-    console.log("🎥 Selected recording:", selectedRecording);
-    console.log("📌 recording_id:", selectedRecording?.id);
-
     if (!assignmentTitle) {
       actions.showNotification("warning", "Please enter a title.");
       return;
@@ -162,7 +159,7 @@ export const DashboardTeacher = () => {
     if (!editTitle || !editUrl) {
       actions.showNotification(
         "warning",
-        "Please complete all fields before saving."
+        "Please complete all fields before saving.",
       );
 
       return;
@@ -177,14 +174,14 @@ export const DashboardTeacher = () => {
     if (success) {
       actions.showNotification(
         "success",
-        "The recording has been successfully updated."
+        "The recording has been successfully updated.",
       );
       setShowEditModal(false);
       setEditingVideo(null);
     } else {
       actions.showNotification(
         "error",
-        "Something went wrong while updating the recording."
+        "Something went wrong while updating the recording.",
       );
     }
   };
@@ -212,7 +209,7 @@ export const DashboardTeacher = () => {
         recordingTitle,
         selectedCourse.id,
         selectedGroupId ? Number(selectedGroupId) : null,
-        selectedLessons
+        selectedLessons,
       );
 
       Swal.close();
@@ -306,7 +303,7 @@ export const DashboardTeacher = () => {
         enrolled_at: student.enrolled_at,
       });
       return acc;
-    }, {})
+    }, {}),
   );
 
   const filteredStudents = groupedStudents.filter((student) => {
@@ -359,12 +356,8 @@ export const DashboardTeacher = () => {
       messages: msgs,
     }));
   };
-  // ✨ Abre el modal del perfil con datos actualizados del localStorage
   const handleOpenProfileModal = () => {
     const localUser = JSON.parse(localStorage.getItem("user"));
-
-    // Verifica que existe y muestra un log temporal
-    console.log("🧩 Usuario local con imagen:", localUser?.image_url);
 
     setProfileData({
       first_name: localUser?.first_name || "",
@@ -373,7 +366,7 @@ export const DashboardTeacher = () => {
       country: localUser?.country || "",
       id_number: localUser?.id_number || "",
       bio: localUser?.bio || "",
-      image_url: localUser?.image_url || "", // 🧠 viene directo del localStorage
+      image_url: localUser?.image_url || "",
       image: null,
       preview: null,
     });
@@ -579,7 +572,7 @@ export const DashboardTeacher = () => {
                                               onClick={() =>
                                                 openStudentsModal(
                                                   course,
-                                                  group.id
+                                                  group.id,
                                                 )
                                               }
                                             >
@@ -592,7 +585,7 @@ export const DashboardTeacher = () => {
                                               onClick={() =>
                                                 openGroupManagementModal(
                                                   course,
-                                                  group
+                                                  group,
                                                 )
                                               }
                                             >
@@ -671,7 +664,7 @@ export const DashboardTeacher = () => {
                             onClick={async () => {
                               if (n.type === "group") {
                                 const course = store.courses.find(
-                                  (c) => c.id === n.course_id
+                                  (c) => c.id === n.course_id,
                                 );
                                 if (course) {
                                   // 1) Limpia estado para evitar parpadeos
@@ -684,7 +677,7 @@ export const DashboardTeacher = () => {
                                   // 3) Carga mensajes DEL GRUPO correcto
                                   const msgs = await actions.getCourseChat(
                                     course.id,
-                                    n.schedule_id
+                                    n.schedule_id,
                                   );
 
                                   // 4) Pinta el curso con mensajes + marca el mensaje objetivo
@@ -804,9 +797,9 @@ export const DashboardTeacher = () => {
                           {new Date(
                             Math.max(
                               ...student.courses.map(
-                                (c) => new Date(c.enrolled_at)
-                              )
-                            )
+                                (c) => new Date(c.enrolled_at),
+                              ),
+                            ),
                           ).toLocaleDateString()}
                         </td>
                         <td>
@@ -950,7 +943,7 @@ export const DashboardTeacher = () => {
                                     <div className="small text-muted">
                                       {video.created_at
                                         ? new Date(
-                                            video.created_at
+                                            video.created_at,
                                           ).toLocaleDateString()
                                         : "No date"}
                                     </div>
@@ -975,7 +968,7 @@ export const DashboardTeacher = () => {
                                               acc[key].lessons.push(lesson);
                                               return acc;
                                             },
-                                            {}
+                                            {},
                                           );
 
                                         // Paso 2: renderizar agrupado
@@ -985,7 +978,7 @@ export const DashboardTeacher = () => {
                                               .sort(
                                                 (a, b) =>
                                                   a.module_order -
-                                                  b.module_order
+                                                  b.module_order,
                                               )
                                               .map((module) => (
                                                 <li
@@ -1005,7 +998,7 @@ export const DashboardTeacher = () => {
                                                     {module.lessons
                                                       .sort(
                                                         (a, b) =>
-                                                          a.order - b.order
+                                                          a.order - b.order,
                                                       )
                                                       .map((lesson) => (
                                                         <li
@@ -1032,7 +1025,7 @@ export const DashboardTeacher = () => {
                                       <button
                                         onClick={() => {
                                           setSelectedVideoUrl(
-                                            video.recording_url
+                                            video.recording_url,
                                           );
                                           setSelectedVideoTitle(video.title);
                                           setShowVideoModal(true);
@@ -1076,7 +1069,7 @@ export const DashboardTeacher = () => {
                                           const result =
                                             await actions.togglePublishRecording(
                                               video.id,
-                                              newStatus
+                                              newStatus,
                                             );
                                           if (result) {
                                             Swal.fire({
@@ -1343,7 +1336,7 @@ export const DashboardTeacher = () => {
                                 .sort(
                                   (a, b) =>
                                     new Date(b.created_at) -
-                                    new Date(a.created_at)
+                                    new Date(a.created_at),
                                 )
                                 .map((a) => (
                                   <div
@@ -1424,7 +1417,7 @@ export const DashboardTeacher = () => {
 
                                                   <td className="submitted-date">
                                                     {new Date(
-                                                      s.submitted_at
+                                                      s.submitted_at,
                                                     ).toLocaleString()}
                                                   </td>
 
@@ -1444,7 +1437,7 @@ export const DashboardTeacher = () => {
                                                         onClick={async () => {
                                                           await actions.reviewAssignment(
                                                             s.submission_id,
-                                                            "approved"
+                                                            "approved",
                                                           );
                                                           actions.getTeacherAssignmentsOverview();
                                                         }}
@@ -1467,7 +1460,7 @@ export const DashboardTeacher = () => {
                                                           await actions.reviewAssignment(
                                                             s.submission_id,
                                                             "rejected",
-                                                            fb || ""
+                                                            fb || "",
                                                           );
 
                                                           actions.getTeacherAssignmentsOverview();
@@ -1545,7 +1538,7 @@ export const DashboardTeacher = () => {
                       if (!acc[groupName]) acc[groupName] = [];
                       acc[groupName].push(student);
                       return acc;
-                    }, {})
+                    }, {}),
                   )
                     .sort(([a], [b]) => a.localeCompare(b))
                     .map(([groupName, students]) => (
@@ -1857,7 +1850,7 @@ export const DashboardTeacher = () => {
                                 setSelectedLessons((prev) =>
                                   prev.includes(id)
                                     ? prev.filter((l) => l !== id)
-                                    : [...prev, id]
+                                    : [...prev, id],
                                 );
                               }}
                             />
@@ -2188,13 +2181,13 @@ export const DashboardTeacher = () => {
 
                         // 👇 Limpia también la versión de localStorage para forzar el rerender
                         const storedUser = JSON.parse(
-                          localStorage.getItem("user")
+                          localStorage.getItem("user"),
                         );
                         if (storedUser) {
                           storedUser.image_url = "";
                           localStorage.setItem(
                             "user",
-                            JSON.stringify(storedUser)
+                            JSON.stringify(storedUser),
                           );
                         }
                       }}

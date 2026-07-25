@@ -4,15 +4,27 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 import os
 import traceback
 import requests
-from flask import Flask, json, request, jsonify, url_for, Blueprint
+import re
+import secrets
+import hashlib
+from flask import (
+    Flask,
+    json,
+    request,
+    jsonify,
+    url_for,
+    Blueprint,
+    current_app
+)
 from sqlalchemy import extract, func
+from src.api.email_service import send_password_reset_email
 from psycopg2 import IntegrityError
-from src.api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment, CourseChatMessage, PrivateChatMessage, CourseSchedule, Recording, RecordingLesson, Purchase, Assignment, AssignmentSubmission  
+from src.api.models import CourseLevel, db, User, BlockedTokenList, Course, Module, Lesson, LearningObjective, Requirement, Enrollment, CourseChatMessage, PrivateChatMessage, CourseSchedule, PasswordResetToken, Recording, RecordingLesson, Purchase, Assignment, AssignmentSubmission  
 from src.api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, get_jwt
-from datetime import datetime
+from datetime import datetime, timedelta
 from slugify import slugify
 import calendar
 import stripe
@@ -43,6 +55,11 @@ def get_paypal_access_token():
     )
     r.raise_for_status()
     return r.json()["access_token"]
+
+def hash_reset_token(token):
+    return hashlib.sha256(
+        token.encode("utf-8")
+    ).hexdigest()
 
 # Allow CORS requests to this API
 #CORS(api, resources={
@@ -178,6 +195,203 @@ def user_login():
         "role": user.role
     })
 
+@api.route("/auth/forgot-password", methods=["POST"])
+def forgot_password():
+    body = request.get_json(silent=True) or {}
+
+    email = body.get("email")
+
+    if email:
+        email = str(email).strip().lower()
+
+    if not email:
+        return jsonify({
+            "msg": "El correo electrónico es obligatorio"
+        }), 400
+
+    if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
+        return jsonify({
+            "msg": "El correo electrónico no es válido"
+        }), 400
+
+    user = User.query.filter_by(email=email).first()
+
+    generic_response = {
+        "msg": (
+            "Si el correo está registrado, recibirás instrucciones "
+            "para restablecer tu contraseña."
+        )
+    }
+
+    # No revelamos si el usuario existe.
+    if not user or not user.is_active:
+        return jsonify(generic_response), 200
+
+    try:
+        now = datetime.utcnow()
+
+        # Invalidar enlaces anteriores que todavía no se hayan usado.
+        PasswordResetToken.query.filter(
+            PasswordResetToken.user_id == user.id,
+            PasswordResetToken.used_at.is_(None)
+        ).update(
+            {
+                PasswordResetToken.used_at: now
+            },
+            synchronize_session=False
+        )
+
+        raw_token = secrets.token_urlsafe(32)
+        token_hash = hash_reset_token(raw_token)
+
+        reset_token = PasswordResetToken(
+            user_id=user.id,
+            token_hash=token_hash,
+            expires_at=now + timedelta(minutes=30)
+        )
+
+        db.session.add(reset_token)
+        db.session.commit()
+
+        frontend_url = os.getenv(
+            "FRONTEND_URL",
+            "http://localhost:3000"
+        ).rstrip("/")
+
+        reset_url = (
+            f"{frontend_url}/reset-password"
+            f"?token={raw_token}"
+        )
+
+        recipient_name = (
+            f"{user.first_name} {user.last_name}"
+        ).strip()
+
+        try:
+            send_password_reset_email(
+                recipient_email=user.email,
+                recipient_name=recipient_name,
+                reset_url=reset_url
+            )
+
+        except Exception:
+            # Eliminar el token si el correo no pudo enviarse.
+            db.session.delete(reset_token)
+            db.session.commit()
+
+            current_app.logger.exception(
+                "No se pudo enviar el correo de recuperación"
+            )
+
+            return jsonify({
+                "msg": (
+                    "No pudimos enviar el correo de recuperación. "
+                    "Inténtalo nuevamente."
+                )
+            }), 500
+
+        return jsonify(generic_response), 200
+
+    except Exception:
+        db.session.rollback()
+
+        current_app.logger.exception(
+            "Error generando el enlace de recuperación"
+        )
+
+        return jsonify({
+            "msg": "Ocurrió un error procesando la solicitud"
+        }), 500
+    
+@api.route("/auth/reset-password", methods=["POST"])
+def reset_password():
+    body = request.get_json(silent=True) or {}
+
+    token = body.get("token")
+    new_password = body.get("new_password")
+    confirm_password = body.get("confirm_password")
+
+    if not token:
+        return jsonify({
+            "msg": "El token de recuperación es obligatorio"
+        }), 400
+
+    if not new_password:
+        return jsonify({
+            "msg": "La nueva contraseña es obligatoria"
+        }), 400
+
+    new_password = str(new_password)
+
+    if len(new_password) < 8:
+        return jsonify({
+            "msg": "La contraseña debe tener al menos 8 caracteres"
+        }), 400
+
+    if new_password != confirm_password:
+        return jsonify({
+            "msg": "Las contraseñas no coinciden"
+        }), 400
+
+    token_hash = hash_reset_token(str(token))
+
+    reset_token = PasswordResetToken.query.filter_by(
+        token_hash=token_hash,
+        used_at=None
+    ).first()
+
+    if not reset_token:
+        return jsonify({
+            "msg": "El enlace no es válido o ya fue utilizado"
+        }), 400
+
+    if reset_token.is_expired():
+        return jsonify({
+            "msg": "El enlace expiró. Solicita uno nuevo."
+        }), 400
+
+    user = User.query.get(reset_token.user_id)
+
+    if not user or not user.is_active:
+        return jsonify({
+            "msg": "El usuario ya no está disponible"
+        }), 404
+
+    try:
+        user.password = bcrypt.generate_password_hash(
+            new_password
+        ).decode("utf-8")
+
+        reset_token.used_at = datetime.utcnow()
+
+        # Invalida cualquier otro enlace activo del usuario.
+        PasswordResetToken.query.filter(
+            PasswordResetToken.user_id == user.id,
+            PasswordResetToken.id != reset_token.id,
+            PasswordResetToken.used_at.is_(None)
+        ).update(
+            {
+                PasswordResetToken.used_at: datetime.utcnow()
+            },
+            synchronize_session=False
+        )
+
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Contraseña actualizada correctamente"
+        }), 200
+
+    except Exception:
+        db.session.rollback()
+
+        current_app.logger.exception(
+            "No se pudo actualizar la contraseña"
+        )
+
+        return jsonify({
+            "msg": "No se pudo actualizar la contraseña"
+        }), 500
 
 @api.route('/logout', methods=["POST"])
 @jwt_required()

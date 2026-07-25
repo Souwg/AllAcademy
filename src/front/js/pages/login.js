@@ -110,7 +110,7 @@ export const Login = () => {
           JSON.stringify({
             email: formData.email,
             password: formData.password,
-          })
+          }),
         );
       } else {
         localStorage.removeItem("rememberMeCredentials");
@@ -173,9 +173,9 @@ export const Login = () => {
           <div className="card login-card shadow-lg border-0 w-100 my-4">
             <div className="card-body px-3 px-md-5 py-4">
               <div className="text-center mb-4">
-                <h3 className="fw-bold mb-3">Welcome back</h3>
+                <h3 className="fw-bold mb-3">Bienvenido de nuevo</h3>
                 <p className="text-muted">
-                  Sign in to your account to continue
+                  Inicia sesión en tu cuenta para continuar
                 </p>
               </div>
 
@@ -184,24 +184,6 @@ export const Login = () => {
                   {error}
                 </div>
               )}
-
-              <div className="d-flex justify-content-center gap-2 mb-4">
-                <button className="btn btn-social btn-google">
-                  <i className="fab fa-google"></i>
-                </button>
-                <button className="btn btn-social btn-facebook">
-                  <i className="fab fa-facebook-f"></i>
-                </button>
-                <button className="btn btn-social btn-apple">
-                  <i className="fab fa-apple"></i>
-                </button>
-              </div>
-
-              <div className="divider d-flex align-items-center my-4">
-                <p className="text-center text-muted mx-3 mb-0">
-                  or sign in with email
-                </p>
-              </div>
 
               <form onSubmit={handleSubmit}>
                 <div className="form-floating mb-3">
@@ -215,7 +197,7 @@ export const Login = () => {
                     onChange={handleChange}
                     required
                   />
-                  <label htmlFor="email">Email address</label>
+                  <label htmlFor="email">Email</label>
                 </div>
 
                 <div className="form-floating mb-3">
@@ -229,7 +211,7 @@ export const Login = () => {
                     onChange={handleChange}
                     required
                   />
-                  <label htmlFor="password">Password</label>
+                  <label htmlFor="password">Contraseña</label>
                 </div>
 
                 <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
@@ -246,14 +228,14 @@ export const Login = () => {
                       className="form-check-label small"
                       htmlFor="rememberMe"
                     >
-                      Remember me
+                      Recordarme
                     </label>
                   </div>
                   <Link
                     to="/forgot-password"
                     className="small text-nowrap text-decoration-none"
                   >
-                    Forgot password?
+                    ¿Olvidaste tu contraseña?
                   </Link>
                 </div>
 
@@ -272,14 +254,14 @@ export const Login = () => {
                       Signing in...
                     </>
                   ) : (
-                    "Sign In"
+                    "Iniciar sesión"
                   )}
                 </button>
 
                 <p className="text-center text-muted mb-0">
-                  Don't have an account?{" "}
+                  ¿No tienes una cuenta?{" "}
                   <Link to="/signup" className="text-decoration-none fw-bold">
-                    Sign up
+                    Registrarme
                   </Link>
                 </p>
               </form>
