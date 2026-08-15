@@ -7,6 +7,7 @@ import requests
 import re
 import secrets
 import hashlib
+from urllib.parse import quote
 from flask import (
     Flask,
     json,
@@ -42,6 +43,15 @@ PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID")
 PAYPAL_SECRET = os.getenv("PAYPAL_SECRET")
 PAYPAL_API_BASE = os.getenv("PAYPAL_API_BASE", "https://api-m.sandbox.paypal.com")
 
+WHATSAPP_SUPPORT_NUMBER = re.sub(
+    r"\D",
+    "",
+    os.getenv(
+        "WHATSAPP_SUPPORT_NUMBER",
+        "584123633743"
+    )
+)
+
 # ============================
 # PAYPAL HELPER
 # ============================
@@ -60,6 +70,66 @@ def hash_reset_token(token):
     return hashlib.sha256(
         token.encode("utf-8")
     ).hexdigest()
+
+def generate_payment_request_code():
+    """
+    Genera un código único para identificar la solicitud.
+    Ejemplo: PAY-2026-A12B3C
+    """
+    year = datetime.utcnow().year
+
+    while True:
+        random_part = secrets.token_hex(3).upper()
+        request_code = f"PAY-{year}-{random_part}"
+
+        existing = Purchase.query.filter_by(
+            request_code=request_code
+        ).first()
+
+        if not existing:
+            return request_code
+
+
+def build_payment_whatsapp_url(purchase):
+    """
+    Construye el enlace de WhatsApp con los datos de la solicitud.
+    """
+    schedule_text = "Sin horario seleccionado"
+
+    if purchase.schedule:
+        group_name = (
+            purchase.schedule.group_name
+            or "Grupo sin nombre"
+        )
+
+        schedule_text = (
+            f"{group_name} | "
+            f"{purchase.schedule.day_of_week} | "
+            f"{purchase.schedule.start_time.strftime('%H:%M')} - "
+            f"{purchase.schedule.end_time.strftime('%H:%M')} | "
+            f"{purchase.schedule.timezone}"
+        )
+
+    amount_formatted = purchase.amount / 100
+
+    message = (
+        "Hola, deseo completar el pago de un curso en Allcademy.\n\n"
+        f"Código de solicitud: {purchase.request_code}\n"
+        f"Estudiante: {purchase.user.first_name} "
+        f"{purchase.user.last_name}\n"
+        f"Correo: {purchase.user.email}\n"
+        f"Curso: {purchase.course.title}\n"
+        f"Horario: {schedule_text}\n"
+        f"Monto: ${amount_formatted:.2f} {purchase.currency}\n\n"
+        "Por favor, indíquenme los datos y pasos para realizar el pago."
+    )
+
+    encoded_message = quote(message, safe="")
+
+    return (
+        f"https://wa.me/{WHATSAPP_SUPPORT_NUMBER}"
+        f"?text={encoded_message}"
+    )
 
 # Allow CORS requests to this API
 #CORS(api, resources={
@@ -1395,7 +1465,7 @@ def financial_overview():
             return jsonify({"msg": "Acceso no autorizado"}), 403
 
         # Filtrar compras completadas o exitosas
-        completed_status = ["succeeded", "completed"]
+        completed_status = ["succeeded", "completed", "approved"]
         purchases = Purchase.query.filter(Purchase.status.in_(completed_status)).all()
 
         total_revenue = sum(p.amount for p in purchases) / 100  # 💰 Convertir de centavos a dólares
@@ -1439,51 +1509,17 @@ def get_course_by_slug(slug):
 # ============================
 # ENROLLMENTS
 # ============================
-    
-@api.route('/enroll/<int:course_id>', methods=['POST'])
+
+@api.route("/enroll/<int:course_id>", methods=["POST"])
 @jwt_required()
 def enroll_course(course_id):
-    """
-    📌 Endpoint to enroll the authenticated user in a course.
-    """
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-    course = Course.query.get(course_id)
-    data = request.get_json()
-    schedule_id = data.get("schedule_id")
-
-    if not course:
-        return jsonify({"msg": "Course not found"}), 404
-
-    if not course.is_published:
-        return jsonify({"msg": "Course is not published"}), 400
-
-    
-    existing = Enrollment.query.filter_by(student_id=user.id, course_id=course.id).first()
-    if existing:
-        return jsonify({"msg": "Already enrolled"}), 400
-
-    
-    if schedule_id:
-        schedule = CourseSchedule.query.filter_by(id=schedule_id, course_id=course_id).first()
-        if not schedule:
-            return jsonify({"msg": "Invalid schedule"}), 400
-    else:
-        schedule = None
-
-    enrollment = Enrollment(
-        student_id=user.id,
-        course_id=course.id,
-        schedule_id=schedule_id if schedule else None
-    )
-
-    db.session.add(enrollment)
-    db.session.commit()
-
     return jsonify({
-        "msg": "Enrolled successfully",
-        "enrollment": enrollment.serialize()
-    }), 201
+        "msg": (
+            "La inscripción directa está deshabilitada. "
+            "El acceso al curso se activa después de que "
+            "el administrador aprueba el pago."
+        )
+    }), 403
 
 @api.route('/my-enrollments', methods=['GET'])
 @jwt_required()
@@ -2282,7 +2318,495 @@ def paypal_webhook():
         return jsonify({"msg": "Error processing webhook", "error": str(e)}), 500
 
 
+# ==================================================
+# SOLICITUDES DE PAGO MANUAL POR WHATSAPP
+# ==================================================
 
+
+@api.route("/payment-requests", methods=["POST"])
+@jwt_required()
+def create_payment_request():
+    """
+    Crea una solicitud pendiente antes de abrir WhatsApp.
+    No crea todavía el Enrollment.
+    """
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+
+        if not user:
+            return jsonify({
+                "msg": "Usuario no encontrado"
+            }), 404
+
+        if user.role != "student":
+            return jsonify({
+                "msg": (
+                    "Solo los estudiantes pueden solicitar "
+                    "la inscripción a un curso"
+                )
+            }), 403
+
+        body = request.get_json(silent=True) or {}
+
+        course_id = body.get("course_id")
+        schedule_id = body.get("schedule_id")
+        customer_note = body.get("customer_note")
+
+        if not course_id:
+            return jsonify({
+                "msg": "El curso es obligatorio"
+            }), 400
+
+        try:
+            course_id = int(course_id)
+        except (TypeError, ValueError):
+            return jsonify({
+                "msg": "El identificador del curso no es válido"
+            }), 400
+
+        if schedule_id not in (None, ""):
+            try:
+                schedule_id = int(schedule_id)
+            except (TypeError, ValueError):
+                return jsonify({
+                    "msg": "El horario seleccionado no es válido"
+                }), 400
+        else:
+            schedule_id = None
+
+        course = Course.query.get(course_id)
+
+        if not course:
+            return jsonify({
+                "msg": "Curso no encontrado"
+            }), 404
+
+        if not course.is_published:
+            return jsonify({
+                "msg": "El curso no está disponible"
+            }), 400
+
+        # Validar que no esté inscrito previamente.
+        existing_enrollment = Enrollment.query.filter_by(
+            student_id=user.id,
+            course_id=course.id
+        ).first()
+
+        if existing_enrollment:
+            return jsonify({
+                "msg": "Ya estás inscrito en este curso"
+            }), 409
+
+        # Si el curso tiene horarios, uno debe ser seleccionado.
+        course_has_schedules = (
+            CourseSchedule.query.filter_by(
+                course_id=course.id
+            ).first()
+            is not None
+        )
+
+        if course_has_schedules and not schedule_id:
+            return jsonify({
+                "msg": "Debes seleccionar un horario"
+            }), 400
+
+        schedule = None
+
+        if schedule_id:
+            schedule = CourseSchedule.query.filter_by(
+                id=schedule_id,
+                course_id=course.id
+            ).first()
+
+            if not schedule:
+                return jsonify({
+                    "msg": (
+                        "El horario seleccionado no pertenece "
+                        "a este curso"
+                    )
+                }), 400
+
+        # Evita crear varias solicitudes pendientes
+        # para el mismo estudiante y curso.
+        existing_request = Purchase.query.filter(
+            Purchase.user_id == user.id,
+            Purchase.course_id == course.id,
+            Purchase.status == "pending",
+            Purchase.request_code.isnot(None)
+        ).first()
+
+        if existing_request:
+            return jsonify({
+                "msg": (
+                    "Ya tienes una solicitud pendiente "
+                    "para este curso"
+                ),
+                "existing": True,
+                "payment_request": existing_request.serialize(),
+                "whatsapp_url": build_payment_whatsapp_url(
+                    existing_request
+                )
+            }), 200
+
+        effective_price = (
+            course.discount_price
+            if course.discount_price is not None
+            else course.price
+        )
+
+        amount_in_cents = int(
+            round(float(effective_price) * 100)
+        )
+
+        if amount_in_cents < 0:
+            return jsonify({
+                "msg": "El precio del curso no es válido"
+            }), 400
+
+        normalized_customer_note = None
+
+        if customer_note:
+            normalized_customer_note = (
+                str(customer_note).strip()[:1000]
+                or None
+            )
+
+        payment_request = Purchase(
+            user_id=user.id,
+            course_id=course.id,
+            schedule_id=schedule.id if schedule else None,
+            request_code=generate_payment_request_code(),
+            payment_intent_id=None,
+            payment_method="whatsapp",
+            amount=amount_in_cents,
+            currency="USD",
+            status="pending",
+            customer_note=normalized_customer_note
+        )
+
+        db.session.add(payment_request)
+        db.session.commit()
+
+        return jsonify({
+            "msg": (
+                "Solicitud creada. Continúa el proceso "
+                "por WhatsApp."
+            ),
+            "existing": False,
+            "payment_request": payment_request.serialize(),
+            "whatsapp_url": build_payment_whatsapp_url(
+                payment_request
+            )
+        }), 201
+
+    except Exception as error:
+        db.session.rollback()
+
+        current_app.logger.exception(
+            "Error creando solicitud de pago"
+        )
+
+        return jsonify({
+            "msg": "No se pudo crear la solicitud de pago",
+            "error": str(error)
+        }), 500
+
+
+@api.route("/my-payment-requests", methods=["GET"])
+@jwt_required()
+def get_my_payment_requests():
+    """
+    Devuelve las solicitudes manuales del usuario autenticado.
+    """
+    try:
+        user_id = int(get_jwt_identity())
+
+        payment_requests = (
+            Purchase.query
+            .filter(
+                Purchase.user_id == user_id,
+                Purchase.request_code.isnot(None)
+            )
+            .order_by(Purchase.created_at.desc())
+            .all()
+        )
+
+        return jsonify([
+            payment_request.serialize()
+            for payment_request in payment_requests
+        ]), 200
+
+    except Exception as error:
+        current_app.logger.exception(
+            "Error consultando solicitudes del estudiante"
+        )
+
+        return jsonify({
+            "msg": "No se pudieron cargar las solicitudes",
+            "error": str(error)
+        }), 500
+
+
+@api.route("/admin/payment-requests", methods=["GET"])
+@jwt_required()
+def get_admin_payment_requests():
+    """
+    Devuelve las solicitudes manuales para el administrador.
+
+    Puede filtrar con:
+    /admin/payment-requests?status=pending
+    """
+    try:
+        claims = get_jwt()
+
+        if claims.get("role") != "admin":
+            return jsonify({
+                "msg": "Acceso no autorizado"
+            }), 403
+
+        requested_status = request.args.get("status")
+
+        allowed_statuses = {
+            "pending",
+            "approved",
+            "rejected",
+            "cancelled"
+        }
+
+        if (
+            requested_status
+            and requested_status not in allowed_statuses
+        ):
+            return jsonify({
+                "msg": "El estado solicitado no es válido"
+            }), 400
+
+        query = Purchase.query.filter(
+            Purchase.request_code.isnot(None)
+        )
+
+        if requested_status:
+            query = query.filter(
+                Purchase.status == requested_status
+            )
+
+        payment_requests = (
+            query
+            .order_by(Purchase.created_at.desc())
+            .all()
+        )
+
+        return jsonify({
+            "total": len(payment_requests),
+            "payment_requests": [
+                payment_request.serialize()
+                for payment_request in payment_requests
+            ]
+        }), 200
+
+    except Exception as error:
+        current_app.logger.exception(
+            "Error consultando solicitudes administrativas"
+        )
+
+        return jsonify({
+            "msg": "No se pudieron cargar las solicitudes",
+            "error": str(error)
+        }), 500
+
+
+@api.route(
+    "/admin/payment-requests/<int:request_id>/approve",
+    methods=["PUT"]
+)
+@jwt_required()
+def approve_payment_request(request_id):
+    """
+    Aprueba el pago y crea el Enrollment.
+    """
+    try:
+        claims = get_jwt()
+        admin_id = int(get_jwt_identity())
+
+        if claims.get("role") != "admin":
+            return jsonify({
+                "msg": "Acceso no autorizado"
+            }), 403
+
+        payment_request = Purchase.query.get(request_id)
+
+        if (
+            not payment_request
+            or not payment_request.request_code
+        ):
+            return jsonify({
+                "msg": "Solicitud de pago no encontrada"
+            }), 404
+
+        if payment_request.status == "approved":
+            return jsonify({
+                "msg": "La solicitud ya fue aprobada",
+                "payment_request": payment_request.serialize()
+            }), 200
+
+        if payment_request.status != "pending":
+            return jsonify({
+                "msg": (
+                    "Solo las solicitudes pendientes "
+                    "pueden aprobarse"
+                )
+            }), 400
+
+        body = request.get_json(silent=True) or {}
+
+        admin_note = body.get("admin_note")
+        payment_method = body.get("payment_method")
+
+        student = User.query.get(
+            payment_request.user_id
+        )
+
+        course = Course.query.get(
+            payment_request.course_id
+        )
+
+        if not student or not course:
+            return jsonify({
+                "msg": (
+                    "El estudiante o el curso "
+                    "ya no está disponible"
+                )
+            }), 400
+
+        existing_enrollment = Enrollment.query.filter_by(
+            student_id=payment_request.user_id,
+            course_id=payment_request.course_id
+        ).first()
+
+        enrollment_created = False
+
+        if not existing_enrollment:
+            enrollment = Enrollment(
+                student_id=payment_request.user_id,
+                course_id=payment_request.course_id,
+                schedule_id=payment_request.schedule_id,
+                enrolled_at=datetime.utcnow()
+            )
+
+            db.session.add(enrollment)
+            enrollment_created = True
+
+        if payment_method:
+            payment_request.payment_method = (
+                str(payment_method).strip()[:30]
+            )
+
+        payment_request.status = "approved"
+        payment_request.reviewed_by = admin_id
+        payment_request.reviewed_at = datetime.utcnow()
+        payment_request.admin_note = (
+            str(admin_note).strip()[:1000]
+            if admin_note
+            else None
+        )
+
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Pago aprobado e inscripción activada",
+            "enrollment_created": enrollment_created,
+            "payment_request": payment_request.serialize()
+        }), 200
+
+    except Exception as error:
+        db.session.rollback()
+
+        current_app.logger.exception(
+            "Error aprobando solicitud de pago"
+        )
+
+        return jsonify({
+            "msg": "No se pudo aprobar la solicitud",
+            "error": str(error)
+        }), 500
+
+
+@api.route(
+    "/admin/payment-requests/<int:request_id>/reject",
+    methods=["PUT"]
+)
+@jwt_required()
+def reject_payment_request(request_id):
+    """
+    Rechaza una solicitud pendiente sin crear Enrollment.
+    """
+    try:
+        claims = get_jwt()
+        admin_id = int(get_jwt_identity())
+
+        if claims.get("role") != "admin":
+            return jsonify({
+                "msg": "Acceso no autorizado"
+            }), 403
+
+        payment_request = Purchase.query.get(request_id)
+
+        if (
+            not payment_request
+            or not payment_request.request_code
+        ):
+            return jsonify({
+                "msg": "Solicitud de pago no encontrada"
+            }), 404
+
+        if payment_request.status == "rejected":
+            return jsonify({
+                "msg": "La solicitud ya fue rechazada",
+                "payment_request": payment_request.serialize()
+            }), 200
+
+        if payment_request.status != "pending":
+            return jsonify({
+                "msg": (
+                    "Solo las solicitudes pendientes "
+                    "pueden rechazarse"
+                )
+            }), 400
+
+        body = request.get_json(silent=True) or {}
+        admin_note = body.get("admin_note")
+
+        if not admin_note or not str(admin_note).strip():
+            return jsonify({
+                "msg": "Debes indicar el motivo del rechazo"
+            }), 400
+
+        payment_request.status = "rejected"
+        payment_request.reviewed_by = admin_id
+        payment_request.reviewed_at = datetime.utcnow()
+        payment_request.admin_note = (
+            str(admin_note).strip()[:1000]
+        )
+
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Solicitud rechazada",
+            "payment_request": payment_request.serialize()
+        }), 200
+
+    except Exception as error:
+        db.session.rollback()
+
+        current_app.logger.exception(
+            "Error rechazando solicitud de pago"
+        )
+
+        return jsonify({
+            "msg": "No se pudo rechazar la solicitud",
+            "error": str(error)
+        }), 500
 
 # ============================
 # STRIPE INTEGRATION

@@ -553,31 +553,186 @@ class PrivateChatMessage(db.Model):
             "content": self.content,
             "timestamp": self.timestamp.isoformat()
         }
+
+
 class Purchase(db.Model):
     __tablename__ = "purchases"
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
-    payment_intent_id = db.Column(db.String(255), nullable=False, unique=True)
-    amount = db.Column(db.Integer, nullable=False)  # en centavos 💰
-    currency = db.Column(db.String(10), nullable=False)
-    status = db.Column(db.String(50), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Relaciones
-    user = db.relationship("User", backref="purchases")
-    course = db.relationship("Course", backref="purchases")
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("user.id"),
+        nullable=False
+    )
+
+    course_id = db.Column(
+        db.Integer,
+        db.ForeignKey("course.id"),
+        nullable=False
+    )
+
+    schedule_id = db.Column(
+        db.Integer,
+        db.ForeignKey("course_schedule.id"),
+        nullable=True
+    )
+
+    request_code = db.Column(
+        db.String(30),
+        unique=True,
+        nullable=True
+    )
+
+    payment_intent_id = db.Column(
+        db.String(255),
+        unique=True,
+        nullable=True
+    )
+
+    payment_method = db.Column(
+        db.String(30),
+        nullable=True,
+        default="whatsapp"
+    )
+
+    amount = db.Column(
+        db.Integer,
+        nullable=False
+    )
+
+    currency = db.Column(
+        db.String(10),
+        nullable=False,
+        default="usd"
+    )
+
+    status = db.Column(
+        db.String(50),
+        nullable=False,
+        default="pending"
+    )
+
+    customer_note = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    admin_note = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    reviewed_by = db.Column(
+        db.Integer,
+        db.ForeignKey("user.id"),
+        nullable=True
+    )
+
+    reviewed_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=True
+    )
+
+    user = db.relationship(
+        "User",
+        foreign_keys=[user_id],
+        backref="purchases"
+    )
+
+    reviewer = db.relationship(
+        "User",
+        foreign_keys=[reviewed_by],
+        backref="reviewed_purchases"
+    )
+
+    course = db.relationship(
+        "Course",
+        backref="purchases"
+    )
+
+    schedule = db.relationship(
+        "CourseSchedule",
+        backref="payment_requests"
+    )
 
     def serialize(self):
         return {
             "id": self.id,
+            "request_code": self.request_code,
+
             "user_id": self.user_id,
+            "user_name": (
+                f"{self.user.first_name} {self.user.last_name}"
+                if self.user
+                else None
+            ),
+            "user_email": self.user.email if self.user else None,
+
             "course_id": self.course_id,
+            "course_title": (
+                self.course.title
+                if self.course
+                else None
+            ),
+
+            "schedule_id": self.schedule_id,
+            "schedule": (
+                self.schedule.serialize()
+                if self.schedule
+                else None
+            ),
+
             "payment_intent_id": self.payment_intent_id,
+            "payment_method": self.payment_method,
+
             "amount": self.amount,
+            "amount_formatted": round(self.amount / 100, 2),
             "currency": self.currency,
             "status": self.status,
-            "created_at": self.created_at.isoformat(),
-            "course_title": self.course.title if self.course else None,
-            "user_email": self.user.email if self.user else None
+
+            "customer_note": self.customer_note,
+            "admin_note": self.admin_note,
+
+            "reviewed_by": self.reviewed_by,
+            "reviewer_name": (
+                f"{self.reviewer.first_name} "
+                f"{self.reviewer.last_name}"
+                if self.reviewer
+                else None
+            ),
+
+            "reviewed_at": (
+                self.reviewed_at.isoformat()
+                if self.reviewed_at
+                else None
+            ),
+
+            "created_at": (
+                self.created_at.isoformat()
+                if self.created_at
+                else None
+            ),
+
+            "updated_at": (
+                self.updated_at.isoformat()
+                if self.updated_at
+                else None
+            ),
         }

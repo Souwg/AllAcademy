@@ -14,6 +14,8 @@ export const DashboardAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeView, setActiveView] = useState("dashboard");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("pending");
+  const [processingPaymentId, setProcessingPaymentId] = useState(null);
 
   const [teachers, setTeachers] = useState([]);
   const [teachersLoading, setTeachersLoading] = useState(false);
@@ -214,7 +216,7 @@ export const DashboardAdmin = () => {
             method: "PUT",
             headers: { Authorization: `Bearer ${token}` },
             body: formData,
-          }
+          },
         );
       } else {
         // 📦 Sin imagen → enviar JSON
@@ -228,7 +230,7 @@ export const DashboardAdmin = () => {
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify(formatted),
-          }
+          },
         );
       }
 
@@ -237,7 +239,7 @@ export const DashboardAdmin = () => {
 
       // 🔄 Actualizamos el estado local
       setCourses((prev) =>
-        prev.map((c) => (c.id === updateData.id ? data.course : c))
+        prev.map((c) => (c.id === updateData.id ? data.course : c)),
       );
 
       setNotification({
@@ -247,7 +249,7 @@ export const DashboardAdmin = () => {
       });
       setTimeout(
         () => setNotification({ show: false, type: "", message: "" }),
-        3000
+        3000,
       );
 
       setShowEditCourseModal(false);
@@ -421,7 +423,7 @@ export const DashboardAdmin = () => {
         const token = localStorage.getItem("token");
         if (!token) {
           redirectToLogin(
-            "Sesión expirada. Por favor inicia sesión nuevamente."
+            "Sesión expirada. Por favor inicia sesión nuevamente.",
           );
           return;
         }
@@ -436,7 +438,7 @@ export const DashboardAdmin = () => {
 
         if (response.status === 401) {
           redirectToLogin(
-            "Sesión expirada. Por favor inicia sesión nuevamente."
+            "Sesión expirada. Por favor inicia sesión nuevamente.",
           );
           return;
         }
@@ -463,7 +465,7 @@ export const DashboardAdmin = () => {
           err.message.includes("Token has expired")
         ) {
           redirectToLogin(
-            "Sesión expirada. Por favor inicia sesión nuevamente."
+            "Sesión expirada. Por favor inicia sesión nuevamente.",
           );
         }
       } finally {
@@ -514,6 +516,219 @@ export const DashboardAdmin = () => {
     }
   }, [activeView]);
 
+  useEffect(() => {
+    if (activeView === "payments") {
+      actions.getAdminPaymentRequests(paymentStatusFilter);
+    }
+  }, [activeView, paymentStatusFilter]);
+
+  const handleRefreshPaymentRequests = async () => {
+    await actions.getAdminPaymentRequests(paymentStatusFilter);
+  };
+
+  const handleApprovePaymentRequest = async (paymentRequest) => {
+    const result = await Swal.fire({
+      title: "Confirmar pago",
+      html: `
+      <div style="text-align: left;">
+        <p style="margin-bottom: 8px;">
+          <strong>Solicitud:</strong>
+          ${paymentRequest.request_code}
+        </p>
+
+        <p style="margin-bottom: 8px;">
+          <strong>Estudiante:</strong>
+          ${paymentRequest.user_name}
+        </p>
+
+        <p style="margin-bottom: 8px;">
+          <strong>Curso:</strong>
+          ${paymentRequest.course_title}
+        </p>
+
+        <p style="margin-bottom: 16px;">
+          <strong>Monto:</strong>
+          $${Number(paymentRequest.amount_formatted || 0).toFixed(2)}
+        </p>
+
+        <label
+          for="payment-method"
+          style="display:block; font-weight:600; margin-bottom:6px;"
+        >
+          Método de pago
+        </label>
+
+        <select
+          id="payment-method"
+          class="swal2-select"
+          style="width:100%; margin:0 0 16px;"
+        >
+          <option value="mobile_payment">
+            Pago móvil
+          </option>
+
+          <option value="bank_transfer">
+            Transferencia bancaria
+          </option>
+
+          <option value="binance_pay">
+            Binance Pay
+          </option>
+
+          <option value="zelle">
+            Zelle
+          </option>
+
+          <option value="cash">
+            Efectivo
+          </option>
+
+          <option value="other">
+            Otro
+          </option>
+        </select>
+
+        <label
+          for="payment-note"
+          style="display:block; font-weight:600; margin-bottom:6px;"
+        >
+          Nota administrativa
+        </label>
+
+        <textarea
+          id="payment-note"
+          class="swal2-textarea"
+          placeholder="Referencia, banco u observaciones..."
+          style="width:100%; margin:0;"
+        ></textarea>
+      </div>
+    `,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Aprobar y activar acceso",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#198754",
+      focusConfirm: false,
+
+      preConfirm: () => {
+        const paymentMethod = document.getElementById("payment-method")?.value;
+
+        const adminNote = document.getElementById("payment-note")?.value || "";
+
+        if (!paymentMethod) {
+          Swal.showValidationMessage("Selecciona el método de pago");
+
+          return false;
+        }
+
+        return {
+          paymentMethod,
+          adminNote,
+        };
+      },
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      setProcessingPaymentId(paymentRequest.id);
+
+      const response = await actions.approvePaymentRequest(
+        paymentRequest.id,
+        result.value.paymentMethod,
+        result.value.adminNote,
+      );
+
+      if (!response?.success) {
+        throw new Error(response?.message || "No se pudo aprobar el pago");
+      }
+
+      await Swal.fire({
+        icon: "success",
+        title: "Pago aprobado",
+        text: response.message || "La inscripción fue activada correctamente.",
+        confirmButtonText: "Aceptar",
+      });
+
+      await Promise.all([
+        actions.getAdminPaymentRequests(paymentStatusFilter),
+        actions.getFinancialOverview(),
+      ]);
+    } catch (error) {
+      await Swal.fire({
+        icon: "error",
+        title: "No se pudo aprobar",
+        text: error.message || "Ocurrió un error al aprobar el pago.",
+      });
+    } finally {
+      setProcessingPaymentId(null);
+    }
+  };
+
+  const handleRejectPaymentRequest = async (paymentRequest) => {
+    const result = await Swal.fire({
+      title: "Rechazar solicitud",
+      text: `${paymentRequest.user_name} — ${paymentRequest.course_title}`,
+      icon: "warning",
+      input: "textarea",
+      inputLabel: "Motivo del rechazo",
+      inputPlaceholder: "Ejemplo: No se pudo verificar el comprobante...",
+      inputAttributes: {
+        "aria-label": "Motivo del rechazo",
+      },
+      showCancelButton: true,
+      confirmButtonText: "Rechazar solicitud",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#dc3545",
+
+      inputValidator: (value) => {
+        if (!value || !value.trim()) {
+          return "Debes indicar el motivo del rechazo";
+        }
+
+        return null;
+      },
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      setProcessingPaymentId(paymentRequest.id);
+
+      const response = await actions.rejectPaymentRequest(
+        paymentRequest.id,
+        result.value.trim(),
+      );
+
+      if (!response?.success) {
+        throw new Error(
+          response?.message || "No se pudo rechazar la solicitud",
+        );
+      }
+
+      await Swal.fire({
+        icon: "success",
+        title: "Solicitud rechazada",
+        text: response.message || "La solicitud fue rechazada.",
+        confirmButtonText: "Aceptar",
+      });
+
+      await actions.getAdminPaymentRequests(paymentStatusFilter);
+    } catch (error) {
+      await Swal.fire({
+        icon: "error",
+        title: "No se pudo rechazar",
+        text: error.message || "Ocurrió un error al rechazar la solicitud.",
+      });
+    } finally {
+      setProcessingPaymentId(null);
+    }
+  };
+
   /* ==============================
    * 2. ELIMINAR USUARIO
    * ============================== */
@@ -529,7 +744,7 @@ export const DashboardAdmin = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -597,7 +812,7 @@ export const DashboardAdmin = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ reason }),
-        }
+        },
       );
       if (!response.ok) {
         const errorData = await response.json();
@@ -613,7 +828,7 @@ export const DashboardAdmin = () => {
               block_reason: reason,
               block_count: updatedUser.block_count,
             }
-          : user
+          : user,
       );
       setUsers(updatedUsers);
 
@@ -625,7 +840,7 @@ export const DashboardAdmin = () => {
 
       setTimeout(
         () => setNotification({ show: false, type: "", message: "" }),
-        3000
+        3000,
       );
     } catch (err) {
       Swal.fire({
@@ -760,7 +975,7 @@ export const DashboardAdmin = () => {
           .map((module) => ({
             ...module,
             lessons: module.lessons.filter(
-              (lesson) => lesson.title.trim() !== ""
+              (lesson) => lesson.title.trim() !== "",
             ),
           }))
           .filter((module) => module.title.trim() !== ""),
@@ -820,7 +1035,7 @@ export const DashboardAdmin = () => {
 
       setTimeout(
         () => setNotification({ show: false, type: "", message: "" }),
-        4000
+        4000,
       );
 
       // ✅ Limpiar formulario después de crear
@@ -896,7 +1111,7 @@ export const DashboardAdmin = () => {
       });
       setTimeout(
         () => setNotification({ show: false, type: "", message: "" }),
-        4000
+        4000,
       );
     }
   };
@@ -935,7 +1150,7 @@ export const DashboardAdmin = () => {
         Swal.fire(
           "deleted!",
           "The course has been successfully deleted.",
-          "success"
+          "success",
         );
       }
     } catch (err) {
@@ -993,7 +1208,7 @@ export const DashboardAdmin = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -1003,7 +1218,7 @@ export const DashboardAdmin = () => {
       const updatedUsers = users.map((user) =>
         user.id === userId
           ? { ...user, is_blocked: false, block_reason: null }
-          : user
+          : user,
       );
       setUsers(updatedUsers);
 
@@ -1015,7 +1230,7 @@ export const DashboardAdmin = () => {
 
       setTimeout(
         () => setNotification({ show: false, type: "", message: "" }),
-        3000
+        3000,
       );
     } catch (err) {
       setNotification({
@@ -1056,14 +1271,14 @@ export const DashboardAdmin = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ role: selectedRole }),
-        }
+        },
       );
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.msg || "Error al actualizar rol");
 
       setUsers(
-        users.map((u) => (u.id === user.id ? { ...u, role: selectedRole } : u))
+        users.map((u) => (u.id === user.id ? { ...u, role: selectedRole } : u)),
       );
 
       setNotification({
@@ -1103,7 +1318,7 @@ export const DashboardAdmin = () => {
       .filter((user) =>
         `${user.first_name} ${user.last_name} ${user.email}`
           .toLowerCase()
-          .includes(searchTerm.toLowerCase())
+          .includes(searchTerm.toLowerCase()),
       );
   };
 
@@ -1183,6 +1398,15 @@ export const DashboardAdmin = () => {
           updateSchedule={updateSchedule}
           toggleScheduleDay={toggleScheduleDay}
           financialOverview={store.financialOverview}
+          paymentRequests={store.adminPaymentRequests || []}
+          paymentRequestsLoading={store.paymentRequestsLoading}
+          paymentRequestsError={store.paymentRequestsError}
+          paymentStatusFilter={paymentStatusFilter}
+          setPaymentStatusFilter={setPaymentStatusFilter}
+          processingPaymentId={processingPaymentId}
+          onRefreshPaymentRequests={handleRefreshPaymentRequests}
+          onApprovePaymentRequest={handleApprovePaymentRequest}
+          onRejectPaymentRequest={handleRejectPaymentRequest}
         />
 
         {/* Modales */}

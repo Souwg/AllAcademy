@@ -1,11 +1,8 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useContext, useState } from "react";
 import { Context } from "../store/appContext";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import noImage from "../../img/noImage.jpg";
 import "../../styles/courseDetails.css";
-import { StripeModal } from "./stripeModal";
-import { ConfettiCanvas } from "../component/confettiCanvas";
-import { useSearchParams } from "react-router-dom";
 
 export const CourseDetails = () => {
   const navigate = useNavigate();
@@ -13,81 +10,10 @@ export const CourseDetails = () => {
   const { store, actions } = useContext(Context);
   const { courses, coursesLoading, coursesError } = store;
   const [selectedSchedule, setSelectedSchedule] = useState("");
-  const [loadingPayment, setLoadingPayment] = useState(false);
-  const [loadingPayPal, setLoadingPayPal] = useState(false);
+
+  const [loadingPaymentRequest, setLoadingPaymentRequest] = useState(false);
+
   const user = JSON.parse(localStorage.getItem("user"));
-  const userCountry = user?.country;
-  const [showVenezuelaModal, setShowVenezuelaModal] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showStripeModal, setShowStripeModal] = useState(false);
-  const [clientSecret, setClientSecret] = useState("");
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [searchParams] = useSearchParams();
-
-  useEffect(() => {
-    const paypalSuccess = searchParams.get("paypal_success");
-    const paypalCancel = searchParams.get("paypal_cancel");
-
-    if (paypalSuccess === "true") {
-      const token = searchParams.get("token");
-      if (token) {
-        actions
-          .capturePaypalOrder(token)
-          .then((res) => {
-            if (!res.error) {
-              actions.setLastPaymentId(res?.order?.id || token);
-              setShowSuccessModal(true);
-            } else {
-              actions.showNotification("error", "Error capturando el pago");
-            }
-          })
-          .catch((err) => {
-            console.error("❌ Error en captura PayPal:", err);
-          });
-      } else {
-        console.warn("⚠️ No se encontró token de PayPal en la URL");
-      }
-    }
-
-    if (paypalCancel === "true") {
-      actions.showNotification("error", "Payment was cancelled");
-    }
-  }, [searchParams]);
-
-  const handlePayPal = async () => {
-    if (!user) return navigate("/login");
-
-    if (!selectedSchedule || isNaN(selectedSchedule)) {
-      actions.showNotification("error", "Por favor selecciona un horario");
-      return;
-    }
-
-    try {
-      setLoadingPayPal(true);
-      const order = await actions.createPaypalOrder(
-        course.id,
-        selectedSchedule,
-      );
-      if (!order || !order.links) {
-        actions.showNotification("error", "No se pudo iniciar PayPal");
-        return;
-      }
-
-      const approve = order.links.find((l) => l.rel === "approve");
-      if (approve?.href) {
-        localStorage.setItem("pp_course_id", course.id);
-        localStorage.setItem("pp_schedule_id", selectedSchedule);
-        window.location.href = approve.href; // 👉 Redirección al checkout de PayPal
-      } else {
-        actions.showNotification("error", "No se obtuvo link de aprobación");
-      }
-    } catch (e) {
-      console.error(e);
-      actions.showNotification("error", "Error iniciando PayPal");
-    } finally {
-      setLoadingPayPal(false);
-    }
-  };
 
   useEffect(() => {
     if (courses.length === 0) {
@@ -126,35 +52,70 @@ export const CourseDetails = () => {
     );
   }
 
-  const handleBuyNow = async () => {
+  const handlePaymentRequest = async () => {
     if (!user) {
       navigate("/login");
       return;
     }
 
-    if (!selectedSchedule) {
+    const hasSchedules =
+      Array.isArray(course.schedules) && course.schedules.length > 0;
+
+    if (hasSchedules && !selectedSchedule) {
       actions.showNotification("error", "Por favor selecciona un horario");
       return;
     }
 
     try {
-      setLoadingPayment(true);
-      const payment = await actions.createPaymentIntent(
+      setLoadingPaymentRequest(true);
+
+      const result = await actions.createPaymentRequest(
         course.id,
-        selectedSchedule,
+        selectedSchedule || null,
       );
 
-      if (payment && payment.clientSecret) {
-        setClientSecret(payment.clientSecret);
-        setShowStripeModal(true);
-      } else {
-        actions.showNotification("error", "Error al iniciar el pago");
+      if (!result?.success) {
+        actions.showNotification(
+          "error",
+          result?.message || "No se pudo crear la solicitud",
+        );
+        return;
       }
+
+      const response = result.data;
+
+      if (!response?.whatsapp_url) {
+        actions.showNotification(
+          "error",
+          "No se recibió el enlace de WhatsApp",
+        );
+        return;
+      }
+
+      if (response.existing) {
+        actions.showNotification(
+          "info",
+          "Ya tenías una solicitud pendiente. Te llevaremos nuevamente a WhatsApp.",
+        );
+      } else {
+        actions.showNotification("success", "Solicitud creada correctamente");
+      }
+
+      /*
+       * Redirección en la misma pestaña.
+       * En teléfonos normalmente abrirá la aplicación
+       * de WhatsApp.
+       */
+      window.location.href = response.whatsapp_url;
     } catch (error) {
-      console.error("❌ Error en handleBuyNow:", error);
-      actions.showNotification("error", "Error al procesar la compra");
+      console.error("❌ Error solicitando inscripción:", error);
+
+      actions.showNotification(
+        "error",
+        "Ocurrió un error creando la solicitud",
+      );
     } finally {
-      setLoadingPayment(false);
+      setLoadingPaymentRequest(false);
     }
   };
 
@@ -453,7 +414,9 @@ export const CourseDetails = () => {
                             className="form-select"
                             value={selectedSchedule}
                             onChange={(e) =>
-                              setSelectedSchedule(Number(e.target.value))
+                              setSelectedSchedule(
+                                e.target.value ? Number(e.target.value) : "",
+                              )
                             }
                           >
                             <option value="">Choose a group...</option>
@@ -468,31 +431,32 @@ export const CourseDetails = () => {
 
                       <div className="d-grid gap-2 mb-4">
                         <button
-                          className="btn btn-primary"
-                          onClick={() => {
-                            if (!user) {
-                              navigate("/login");
-                              return;
-                            }
-
-                            if (!selectedSchedule) {
-                              actions.showNotification(
-                                "error",
-                                "Por favor selecciona un horario",
-                              );
-                              return;
-                            }
-
-                            // 🔑 AQUÍ USAS userCountry
-                            if (userCountry === "VE") {
-                              setShowVenezuelaModal(true);
-                            } else {
-                              setShowPaymentModal(true);
-                            }
-                          }}
+                          className="btn btn-success py-3"
+                          onClick={handlePaymentRequest}
+                          disabled={loadingPaymentRequest}
                         >
-                          Buy Now
+                          {loadingPaymentRequest ? (
+                            <>
+                              <span
+                                className="spinner-border spinner-border-sm me-2"
+                                role="status"
+                                aria-hidden="true"
+                              ></span>
+                              Creando solicitud...
+                            </>
+                          ) : (
+                            <>
+                              <i className="fa-brands fa-whatsapp me-2"></i>
+                              Solicitar inscripción por WhatsApp
+                            </>
+                          )}
                         </button>
+
+                        <div className="alert alert-light border mt-2 mb-0 small">
+                          <i className="fa-solid fa-circle-info me-2 text-primary"></i>
+                          Tu acceso al curso será activado cuando el
+                          administrador confirme el pago.
+                        </div>
 
                         <button className="btn btn-outline-secondary py-3">
                           Add to Wishlist
@@ -609,183 +573,6 @@ export const CourseDetails = () => {
           </div>
         </div>
       </div>
-      {showVenezuelaModal && (
-        <div className="payment-method-modal-overlay-modern">
-          <div className="payment-method-modal-modern p-4 shadow-lg">
-            {/* Header */}
-            <div className="payment-method-header-modern text-center mb-4">
-              <i className="fa-solid fa-flag fa-2x text-warning mb-2"></i>
-              <h5 className="fw-bold mb-0">Payment methods for Venezuela</h5>
-              <p className="text-muted small mt-1">
-                Choose the payment option that works best for you
-              </p>
-            </div>
-
-            {/* Opciones */}
-            <div className="d-grid gap-3">
-              {/* STRIPE */}
-              <button
-                className="payment-method-option-modern stripe"
-                onClick={() => {
-                  setShowVenezuelaModal(false);
-                  setTimeout(() => handleBuyNow(), 300);
-                }}
-              >
-                <i className="fa-brands fa-stripe"></i>
-                Pay with Stripe
-              </button>
-
-              {/* PAYPAL */}
-              <button
-                className="payment-method-option-modern paypal"
-                onClick={() => {
-                  setShowVenezuelaModal(false);
-                  handlePayPal();
-                }}
-              >
-                <i className="fa-brands fa-paypal"></i>
-                Pay with PayPal
-              </button>
-
-              {/* WHATSAPP */}
-              <button
-                className="payment-method-option-modern paypal"
-                onClick={() => {
-                  const url = `https://api.whatsapp.com/send?phone=584123421868&text=${encodeURIComponent(
-                    `Hola, quiero pagar el curso ${course.title}`,
-                  )}`;
-                  window.open(url, "_blank");
-                }}
-              >
-                <i className="fa-brands fa-whatsapp"></i>
-                WhatsApp (Pago móvil y Binance Pay)
-              </button>
-
-              {/* CANCEL */}
-              <button
-                className="payment-method-option-modern cancel"
-                onClick={() => setShowVenezuelaModal(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 💳 Modal único de selección de método de pago (Moderno) */}
-      {showPaymentModal && (
-        <div className="payment-method-modal-overlay-modern">
-          <div className="payment-method-modal-modern p-4 shadow-lg">
-            {/* 🪙 Título */}
-            <div className="payment-method-header-modern text-center mb-4">
-              <i className="fa-solid fa-wallet fa-2x text-success mb-2"></i>
-              <h5 className="fw-bold mb-0">Select a payment method</h5>
-              <p className="text-muted small mt-1">
-                Choose how you want to securely make your payment
-              </p>
-            </div>
-
-            {/* 🔘 Botones */}
-            <div className="d-grid gap-3">
-              <button
-                className="payment-method-option-modern stripe"
-                onClick={() => {
-                  // Cerramos el modal de método de pago
-                  setShowPaymentModal(false);
-
-                  // Esperamos a que se desmonte el DOM (300ms)
-                  setTimeout(() => {
-                    handleBuyNow(); // luego abrimos Stripe
-                  }, 350);
-                }}
-              >
-                <i className="fa-brands fa-stripe"></i>
-                <span>Pay with Stripe</span>
-              </button>
-
-              <button
-                className="payment-method-option-modern paypal"
-                onClick={() => {
-                  setShowPaymentModal(false);
-                  handlePayPal();
-                }}
-              >
-                <i className="fa-brands fa-paypal"></i>
-                <span>Pay with PayPal</span>
-              </button>
-
-              <button
-                className="payment-method-option-modern cancel"
-                onClick={() => setShowPaymentModal(false)}
-              >
-                <span>Cancel</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      <StripeModal
-        show={showStripeModal}
-        onClose={() => setShowStripeModal(false)}
-        clientSecret={clientSecret}
-        onSuccess={() => setShowSuccessModal(true)}
-      />
-      {showSuccessModal && (
-        <div className="stripe-overlay">
-          <ConfettiCanvas />
-          <div className="stripe-modal">
-            <div className="stripe-header bg-success">
-              <h5>
-                <i className="fa-solid fa-check-circle me-2"></i>
-                Payment Successful
-              </h5>
-            </div>
-
-            <div className="stripe-body text-center">
-              <p className="text-muted mb-3">
-                Your payment has been processed successfully.
-              </p>
-
-              {/* 🧾 Mini Recibo */}
-              <div
-                className="receipt-card text-start mx-auto p-3 border rounded-3 shadow-sm"
-                style={{ maxWidth: "320px", background: "#fff" }}
-              >
-                <h6 className="text-center mb-3 fw-bold text-success">
-                  Payment Receipt
-                </h6>
-                <p className="mb-1">
-                  <strong>Course:</strong> {course.title}
-                </p>
-                <p className="mb-1">
-                  <strong>Amount:</strong> $
-                  {course.discount_price || course.price}
-                </p>
-                <p className="mb-1">
-                  <strong>Transaction ID:</strong>{" "}
-                  <span className="text-muted small">
-                    {store.lastPaymentId || "pi_8A2bXk12demo"}
-                  </span>
-                </p>
-                <p className="mb-1">
-                  <strong>Date:</strong> {new Date().toLocaleDateString()}
-                </p>
-                <p className="mb-0">
-                  <strong>User:</strong> {user?.email}
-                </p>
-              </div>
-
-              <button
-                className="btn btn-primary mt-4"
-                onClick={() => setShowSuccessModal(false)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

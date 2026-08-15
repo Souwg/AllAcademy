@@ -76,6 +76,16 @@ export const AdminContent = ({
   imageFile,
   setImageFile,
   imageInputRef,
+
+  paymentRequests,
+  paymentRequestsLoading,
+  paymentRequestsError,
+  paymentStatusFilter,
+  setPaymentStatusFilter,
+  processingPaymentId,
+  onRefreshPaymentRequests,
+  onApprovePaymentRequest,
+  onRejectPaymentRequest,
 }) => {
   const renderUserTable = (usersToRender) => {
     if (usersToRender.length === 0) {
@@ -263,7 +273,47 @@ export const AdminContent = ({
 
     return roles[role] || "Usuario";
   };
+  const getPaymentStatusData = (status) => {
+    const statuses = {
+      pending: {
+        label: "Pendiente",
+        className: "bg-warning text-dark",
+      },
 
+      approved: {
+        label: "Aprobado",
+        className: "bg-success",
+      },
+
+      rejected: {
+        label: "Rechazado",
+        className: "bg-danger",
+      },
+
+      cancelled: {
+        label: "Cancelado",
+        className: "bg-secondary",
+      },
+    };
+
+    return (
+      statuses[status] || {
+        label: status || "Desconocido",
+        className: "bg-secondary",
+      }
+    );
+  };
+
+  const formatPaymentDate = (date) => {
+    if (!date) {
+      return "Sin fecha";
+    }
+
+    return new Date(date).toLocaleString("es-VE", {
+      dateStyle: "short",
+      timeStyle: "short",
+    });
+  };
   const renderDashboard = () => {
     const userStats = getUserStats();
     const courseStats = getCourseStats();
@@ -1509,7 +1559,272 @@ export const AdminContent = ({
       </div>
     );
   };
+  const renderPaymentsView = () => {
+    const requests = Array.isArray(paymentRequests) ? paymentRequests : [];
 
+    const statusCounts = {
+      total: requests.length,
+      pending: requests.filter((item) => item.status === "pending").length,
+      approved: requests.filter((item) => item.status === "approved").length,
+      rejected: requests.filter((item) => item.status === "rejected").length,
+    };
+
+    return (
+      <div className="payment-requests-view">
+        <div className="users-tabs-container">
+          <div className="tabs-header">
+            {[
+              {
+                value: "",
+                label: "Todos",
+              },
+              {
+                value: "pending",
+                label: "Pendientes",
+              },
+              {
+                value: "approved",
+                label: "Aprobados",
+              },
+              {
+                value: "rejected",
+                label: "Rechazados",
+              },
+            ].map((tab) => (
+              <button
+                key={tab.value || "all"}
+                type="button"
+                className={`tab-button ${
+                  paymentStatusFilter === tab.value ? "active" : ""
+                }`}
+                onClick={() => setPaymentStatusFilter(tab.value)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="tab-content">
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+              <div>
+                <h4 className="mb-1">Solicitudes de pago</h4>
+
+                <p className="text-muted mb-0">
+                  Revisa los pagos enviados por los estudiantes y activa su
+                  inscripción.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-outline-primary"
+                onClick={onRefreshPaymentRequests}
+                disabled={paymentRequestsLoading}
+              >
+                <i className="fa-solid fa-rotate me-2"></i>
+
+                {paymentRequestsLoading ? "Actualizando..." : "Actualizar"}
+              </button>
+            </div>
+
+            {paymentRequestsError && (
+              <div className="alert alert-danger">
+                <i className="fa-solid fa-triangle-exclamation me-2"></i>
+                {paymentRequestsError}
+              </div>
+            )}
+
+            {paymentRequestsLoading ? (
+              <div className="text-center py-5">
+                <div
+                  className="spinner-border text-primary"
+                  role="status"
+                ></div>
+
+                <p className="text-muted mt-3">Cargando solicitudes...</p>
+              </div>
+            ) : requests.length === 0 ? (
+              <div className="empty-state">
+                <span
+                  style={{
+                    fontSize: "2.5rem",
+                    display: "block",
+                    marginBottom: "0.75rem",
+                  }}
+                >
+                  💳
+                </span>
+
+                <p>No hay solicitudes para este estado.</p>
+              </div>
+            ) : (
+              <div className="table-wrapper">
+                <table className="user-table">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Estudiante</th>
+                      <th>Curso</th>
+                      <th>Horario</th>
+                      <th>Monto</th>
+                      <th>Método</th>
+                      <th>Estado</th>
+                      <th>Fecha</th>
+                      <th>Revisión</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {requests.map((paymentRequest) => {
+                      const statusData = getPaymentStatusData(
+                        paymentRequest.status,
+                      );
+
+                      const isProcessing =
+                        processingPaymentId === paymentRequest.id;
+
+                      return (
+                        <tr key={paymentRequest.id}>
+                          <td>
+                            <strong>{paymentRequest.request_code}</strong>
+                          </td>
+
+                          <td>
+                            <div>
+                              <strong>
+                                {paymentRequest.user_name || "Sin nombre"}
+                              </strong>
+
+                              <small className="d-block text-muted">
+                                {paymentRequest.user_email}
+                              </small>
+                            </div>
+                          </td>
+
+                          <td>
+                            {paymentRequest.course_title ||
+                              "Curso no disponible"}
+                          </td>
+
+                          <td>
+                            {paymentRequest.schedule ? (
+                              <div>
+                                <strong>
+                                  {paymentRequest.schedule.group_name ||
+                                    "Grupo"}
+                                </strong>
+
+                                <small className="d-block text-muted">
+                                  {paymentRequest.schedule.day_of_week}
+                                </small>
+
+                                <small className="d-block text-muted">
+                                  {paymentRequest.schedule.start_time}
+                                  {" - "}
+                                  {paymentRequest.schedule.end_time}
+                                </small>
+                              </div>
+                            ) : (
+                              <span className="text-muted">Sin horario</span>
+                            )}
+                          </td>
+
+                          <td>
+                            <strong>
+                              $
+                              {Number(
+                                paymentRequest.amount_formatted || 0,
+                              ).toFixed(2)}
+                            </strong>
+
+                            <small className="d-block text-muted">
+                              {paymentRequest.currency || "USD"}
+                            </small>
+                          </td>
+
+                          <td>
+                            {paymentRequest.payment_method || "Por confirmar"}
+                          </td>
+
+                          <td>
+                            <span className={`badge ${statusData.className}`}>
+                              {statusData.label}
+                            </span>
+                          </td>
+
+                          <td>
+                            {formatPaymentDate(paymentRequest.created_at)}
+                          </td>
+
+                          <td>
+                            {paymentRequest.reviewed_at ? (
+                              <div>
+                                <small className="d-block">
+                                  {paymentRequest.reviewer_name}
+                                </small>
+
+                                <small className="d-block text-muted">
+                                  {formatPaymentDate(
+                                    paymentRequest.reviewed_at,
+                                  )}
+                                </small>
+
+                                {paymentRequest.admin_note && (
+                                  <small
+                                    className="d-block text-muted"
+                                    title={paymentRequest.admin_note}
+                                  >
+                                    {paymentRequest.admin_note}
+                                  </small>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-muted">Sin revisar</span>
+                            )}
+                          </td>
+
+                          <td>
+                            {paymentRequest.status === "pending" ? (
+                              <div className="action-buttons">
+                                <button
+                                  type="button"
+                                  className="action-btn unblock-btn"
+                                  disabled={isProcessing}
+                                  onClick={() =>
+                                    onApprovePaymentRequest(paymentRequest)
+                                  }
+                                >
+                                  {isProcessing ? "Procesando..." : "Aprobar"}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="action-btn delete-btn"
+                                  disabled={isProcessing}
+                                  onClick={() =>
+                                    onRejectPaymentRequest(paymentRequest)
+                                  }
+                                >
+                                  Rechazar
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-muted">Procesado</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
   const renderHeader = () => {
     const titles = {
       dashboard: (
@@ -1530,6 +1845,13 @@ export const AdminContent = ({
           Gestión de cursos
         </>
       ),
+
+      payments: (
+        <>
+          <i className="fa-solid fa-credit-card me-2"></i>
+          Gestión de pagos
+        </>
+      ),
       settings: (
         <>
           <i className="fa-solid fa-cog me-2"></i>
@@ -1543,6 +1865,8 @@ export const AdminContent = ({
       courses: "Gestiona los cursos disponibles",
       users: "Gestiona los usuarios",
       settings: "Configura las opciones del sistema",
+      payments:
+        "Confirma los pagos y activa las inscripciones de los estudiantes",
     };
 
     return (
@@ -1590,6 +1914,8 @@ export const AdminContent = ({
             {renderCourseCreation()}
             {renderCoursesList()}
           </div>
+        ) : activeView === "payments" ? (
+          renderPaymentsView()
         ) : (
           <strong>Vista en desarrollo...</strong>
         )}

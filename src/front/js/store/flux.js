@@ -43,7 +43,16 @@ const getState = ({ getStore, getActions, setStore }) => {
       studentsByTeacher: [],
       courses: [],
       myEnrollments: [],
-      teacherStats: { total_courses: 0, total_students: 0 },
+
+      myPaymentRequests: [],
+      adminPaymentRequests: [],
+      paymentRequestsLoading: false,
+      paymentRequestsError: null,
+
+      teacherStats: {
+        total_courses: 0,
+        total_students: 0,
+      },
       coursesLoading: false,
       notification: { show: false, type: "", message: "" },
       coursesError: null,
@@ -288,10 +297,13 @@ const getState = ({ getStore, getActions, setStore }) => {
           user: null,
           token: null,
           notifications: [],
-          // 👇 mantenemos lastNotifiedMessage intacto
           studentsByTeacher: [],
           courses: [],
           myEnrollments: [],
+          myPaymentRequests: [],
+          adminPaymentRequests: [],
+          paymentRequestsLoading: false,
+          paymentRequestsError: null,
         });
       },
 
@@ -406,6 +418,289 @@ const getState = ({ getStore, getActions, setStore }) => {
           setStore({ myEnrollments: data });
         } catch (err) {
           console.error("Error in getMyEnrollments:", err);
+        }
+      },
+
+      createPaymentRequest: async (
+        courseId,
+        scheduleId = null,
+        customerNote = "",
+      ) => {
+        try {
+          const token = localStorage.getItem("token");
+
+          if (!token) {
+            return {
+              success: false,
+              message: "Debes iniciar sesión para solicitar la inscripción",
+            };
+          }
+
+          const resp = await fetch(`${API_BASE}/payment-requests`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              course_id: courseId,
+              schedule_id: scheduleId || null,
+              customer_note: customerNote || null,
+            }),
+          });
+
+          const data = await resp.json().catch(() => null);
+
+          if (!resp.ok) {
+            return {
+              success: false,
+              status: resp.status,
+              message:
+                data?.msg || "No se pudo crear la solicitud de inscripción",
+            };
+          }
+
+          return {
+            success: true,
+            data,
+            message: data?.msg,
+          };
+        } catch (error) {
+          console.error("❌ Error creando solicitud de pago:", error);
+
+          return {
+            success: false,
+            message: "Error de conexión con el servidor",
+          };
+        }
+      },
+
+      getMyPaymentRequests: async () => {
+        try {
+          const token = localStorage.getItem("token");
+
+          if (!token) {
+            setStore({
+              myPaymentRequests: [],
+              paymentRequestsLoading: false,
+            });
+
+            return [];
+          }
+
+          setStore({
+            paymentRequestsLoading: true,
+            paymentRequestsError: null,
+          });
+
+          const resp = await fetch(`${API_BASE}/my-payment-requests`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const data = await resp.json().catch(() => []);
+
+          if (!resp.ok) {
+            throw new Error(
+              data?.msg || "No se pudieron cargar las solicitudes",
+            );
+          }
+
+          setStore({
+            myPaymentRequests: Array.isArray(data) ? data : [],
+            paymentRequestsLoading: false,
+            paymentRequestsError: null,
+          });
+
+          return Array.isArray(data) ? data : [];
+        } catch (error) {
+          console.error("❌ Error cargando solicitudes de pago:", error);
+
+          setStore({
+            myPaymentRequests: [],
+            paymentRequestsLoading: false,
+            paymentRequestsError: error.message,
+          });
+
+          return [];
+        }
+      },
+
+      getAdminPaymentRequests: async (status = "") => {
+        try {
+          const token = localStorage.getItem("token");
+
+          if (!token) {
+            return [];
+          }
+
+          setStore({
+            paymentRequestsLoading: true,
+            paymentRequestsError: null,
+          });
+
+          let url = `${API_BASE}/admin/payment-requests`;
+
+          if (status) {
+            url += `?status=${encodeURIComponent(status)}`;
+          }
+
+          const resp = await fetch(url, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const data = await resp.json().catch(() => null);
+
+          if (!resp.ok) {
+            throw new Error(
+              data?.msg || "No se pudieron cargar las solicitudes de pago",
+            );
+          }
+
+          const paymentRequests = Array.isArray(data?.payment_requests)
+            ? data.payment_requests
+            : [];
+
+          setStore({
+            adminPaymentRequests: paymentRequests,
+            paymentRequestsLoading: false,
+            paymentRequestsError: null,
+          });
+
+          return paymentRequests;
+        } catch (error) {
+          console.error(
+            "❌ Error cargando solicitudes administrativas:",
+            error,
+          );
+
+          setStore({
+            adminPaymentRequests: [],
+            paymentRequestsLoading: false,
+            paymentRequestsError: error.message,
+          });
+
+          return [];
+        }
+      },
+
+      approvePaymentRequest: async (
+        requestId,
+        paymentMethod = "whatsapp",
+        adminNote = "",
+      ) => {
+        try {
+          const token = localStorage.getItem("token");
+
+          const resp = await fetch(
+            `${API_BASE}/admin/payment-requests/${requestId}/approve`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                payment_method: paymentMethod,
+                admin_note: adminNote || null,
+              }),
+            },
+          );
+
+          const data = await resp.json().catch(() => null);
+
+          if (!resp.ok) {
+            return {
+              success: false,
+              message: data?.msg || "No se pudo aprobar la solicitud",
+            };
+          }
+
+          const store = getStore();
+
+          setStore({
+            adminPaymentRequests: store.adminPaymentRequests.map((item) =>
+              item.id === requestId ? data.payment_request : item,
+            ),
+          });
+
+          return {
+            success: true,
+            message: data?.msg || "Pago aprobado e inscripción activada",
+            paymentRequest: data.payment_request,
+            enrollmentCreated: data.enrollment_created,
+          };
+        } catch (error) {
+          console.error("❌ Error aprobando solicitud:", error);
+
+          return {
+            success: false,
+            message: "Error de conexión con el servidor",
+          };
+        }
+      },
+
+      rejectPaymentRequest: async (requestId, adminNote) => {
+        try {
+          const token = localStorage.getItem("token");
+
+          if (!adminNote || !adminNote.trim()) {
+            return {
+              success: false,
+              message: "Debes indicar el motivo del rechazo",
+            };
+          }
+
+          const resp = await fetch(
+            `${API_BASE}/admin/payment-requests/${requestId}/reject`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                admin_note: adminNote.trim(),
+              }),
+            },
+          );
+
+          const data = await resp.json().catch(() => null);
+
+          if (!resp.ok) {
+            return {
+              success: false,
+              message: data?.msg || "No se pudo rechazar la solicitud",
+            };
+          }
+
+          const store = getStore();
+
+          setStore({
+            adminPaymentRequests: store.adminPaymentRequests.map((item) =>
+              item.id === requestId ? data.payment_request : item,
+            ),
+          });
+
+          return {
+            success: true,
+            message: data?.msg || "Solicitud rechazada",
+            paymentRequest: data.payment_request,
+          };
+        } catch (error) {
+          console.error("❌ Error rechazando solicitud:", error);
+
+          return {
+            success: false,
+            message: "Error de conexión con el servidor",
+          };
         }
       },
 

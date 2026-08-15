@@ -1,7 +1,7 @@
 """add password reset tokens
 
 Revision ID: 22e4c58893ea
-Revises: 4524b3dd7265
+Revises: b46325a8442d
 Create Date: 2026-07-07 01:19:51.976821
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '22e4c58893ea'
-down_revision = '4524b3dd7265'
+down_revision = 'b46325a8442d'
 branch_labels = None
 depends_on = None
 
